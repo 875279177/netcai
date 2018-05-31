@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.BuyerTypeDao">
+
+  <resultMap type="com.netcai.buyer.entity.BuyerType" id="buyerTypeMap">
+     <result column="id" property="id"/>
+     <result column="type_name" property="typeName"/>
+     <result column="create_time" property="createTime"/>
+  </resultMap>
+	
+  <!-- 获取类型 -->
+  <select id="getAllBuyerType"  resultMap="buyerTypeMap">
+         select * from buyer_type ORDER BY id ASC
+  </select>
+</mapper>

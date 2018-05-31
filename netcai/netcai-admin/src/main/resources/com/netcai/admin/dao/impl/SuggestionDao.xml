@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 平台建议信息 -->
+<mapper namespace="com.netcai.admin.dao.SuggestionDao">
+
+	<resultMap type="com.netcai.admin.entity.Suggestion" id="suggestionMap">
+		<result column="id" property="id" />
+		<result column="suggestion_content" property="suggestionContent" />
+		<result column="suggestion_imgs" property="suggestionImgs" />
+		<result column="user_id" property="userId" />
+		<result column="true_name" property="userName" />
+		<result column="account" property="account" />
+		<result column="type" property="type" />
+		<result column="create_time" property="createTime" />
+		<result column="shop_name" property="shopName" />
+	</resultMap>
+	
+	<sql id="filterCondition">
+	  <trim prefix="where" prefixOverrides="and">
+	    <if test="suggestion.type != null ">
+	        and users.type = #{suggestion.type}
+	    </if>
+	    <if test="suggestion.startTime != null ">
+	        and suggestion.create_time <![CDATA[ >= #{suggestion.startTime}]]>
+	    </if>
+	    <if test="suggestion.endTime != null ">
+	        and suggestion.create_time <![CDATA[ <= #{suggestion.endTime}]]>
+	    </if>
+	  </trim>
+	</sql>
+    <!-- 分页查询平台建议信息  -->
+	<select id="getAll" resultMap="suggestionMap">
+		SELECT 
+		suggestion.*,
+		users.true_name,
+		users.account,
+		CASE WHEN s.seller_id IS NOT NULL THEN s.seller_name ELSE b.buyer_name END shop_name,
+		users.type 
+		FROM 
+		suggestion 
+		INNER JOIN users ON suggestion.user_id=users.id
+		LEFT JOIN seller s ON s.seller_id = suggestion.user_id
+		LEFT JOIN buyer b ON b.buyer_id = suggestion.user_id
+        <include refid="filterCondition"></include>
+		ORDER BY suggestion.create_time DESC LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		SELECT count(1) FROM suggestion
+		INNER JOIN users ON suggestion.user_id=users.id
+		LEFT JOIN seller s ON s.seller_id = suggestion.user_id
+		LEFT JOIN buyer b ON b.buyer_id = suggestion.user_id
+		<include refid="filterCondition"></include>
+	</select>
+</mapper>

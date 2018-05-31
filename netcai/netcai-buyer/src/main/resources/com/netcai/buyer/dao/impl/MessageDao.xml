@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.MessageDao">
+
+  <resultMap type="com.netcai.buyer.entity.Message" id="messageMap">
+     <result column="msg_id" property="msgId"/>
+     <result column="user_id" property="userId"/>
+     <result column="msg_name" property="msgName"/>
+     <result column="msg_content" property="msgContent"/>
+     <result column="msg_type" property="msgType"/>
+     <result column="create_time" property="createTime"/>
+  </resultMap>
+
+  <!-- 获取单个消息 -->
+  <select id="getMessageById"  resultMap="messageMap">
+      SELECT * from message where msg_id=#{msgId]
+  </select>
+
+  <!-- 获取所有的消息 -->
+  <select id="getAllMessage"  resultMap="messageMap">
+      SELECT * from message where user_id=#{userId} and status=1 ORDER BY create_time desc
+  </select>
+  
+  <!-- 统计消息 -->
+  <select id="getCountMessage" resultType="int">
+      SELECT count(*) from message where status=1 and user_id=#{userId}
+  </select>
+  
+  <!-- 打标删除 -->
+  <update id="deleteMessage">
+      update message set status=-1 where msg_id=#{msgId}
+  </update>
+  
+  <insert id="saveBatch" parameterType="java.util.List">
+	  insert into message(
+	      user_id ,
+	      msg_name ,
+	      msg_content,
+	      msg_type,
+	      status,
+	      create_time)
+			values
+	 <foreach collection="messages" item="item" separator=",">
+	 	  (
+	      #{item.userId },
+	      #{item.msgName},
+	      #{item.msgContent},
+	      #{item.msgType},
+	      #{item.status},
+	      #{item.createTime})
+	   </foreach>
+  </insert>
+  
+</mapper>

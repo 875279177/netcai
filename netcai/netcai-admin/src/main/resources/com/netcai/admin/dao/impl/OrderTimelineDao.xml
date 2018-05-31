@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.OrderTimelineDao">
+  <resultMap id="orderTimelineMap" type="com.netcai.admin.entity.OrderTimeline" >
+    <id column="id" property="id" />
+    <result column="item_id" property="itemId"/>
+    <result column="remarks" property="remarks" />
+    <result column="create_time" property="createTime" />
+  </resultMap>
+  
+  <select id="getList" resultMap="orderTimelineMap" parameterType="java.lang.Long" >
+    select 
+    	remarks,
+    	create_time
+    from order_timeline
+    where 
+    item_id = #{itemId}
+  </select>
+  
+  <!-- 新增 -->
+  <insert id="insert" parameterType="com.netcai.admin.entity.OrderTimeline">
+	  insert into order_timeline
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+	    <if test=" itemId != null">
+			item_id,
+		</if>
+	    <if test=" remarks != null">
+			remarks,
+		</if>
+		<if test=" createTime != null">
+			create_time,
+		</if>
+	  </trim>
+	  <trim prefix="values (" suffix=")" suffixOverrides=",">
+	    <if test=" itemId != null">
+			#{itemId},
+		</if>
+		<if test=" remarks != null">
+			#{remarks},
+		</if>
+		<if test=" createTime != null">
+			#{createTime},
+		</if>
+	  </trim>
+  </insert>
+</mapper>

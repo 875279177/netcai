@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.OrderCancelLogsDao">
+  <resultMap id="orderCancelLogsMap" type="com.netcai.admin.entity.OrderCancelLogs" >
+    <id column="id" property="id"/>
+    <result column="buyer_id" property="buyerId" />
+    <result column="order_sn" property="orderSn" />
+    <result column="trade_money" property="tradeMoney"/>
+    <result column="current_money" property="currentMoney" />
+    <result column="last_money" property="lastMoney" />
+    <result column="remarks" property="remarks"  />
+    <result column="create_time" property="createTime"  />
+    <result column="order_create_time" property="orderCreateTime"  />
+    <result column="buyer_name" property="buyerName"/>
+     <result column="boss_tel" property="bossTel"/>
+    <result column="area_name" property="areaName"/>
+    <result column="true_name" property="trueName"/>
+    <result column="area_id" property="areaId"/>
+    <result column="order_number" property="orderNumber"/>
+  </resultMap>
+
+	<sql id="select">
+	  	SELECT
+			ocl.*,
+			b.buyer_name,
+			b.boss_tel,
+			s.true_name,
+			CASE WHEN ocl.remarks = '整个订单取消' THEN oi.order_number ELSE oim.order_number END order_number,
+			CASE WHEN ocl.remarks = '整个订单取消' THEN oi.create_time ELSE oim.create_time END order_create_time,
+			a.area_name
+		FROM
+			order_cancel_logs ocl
+			INNER JOIN buyer b ON b.buyer_id = ocl.buyer_id
+			LEFT JOIN sales s ON b.sale_id = s.id
+			LEFT JOIN area a ON a.id = b.region_id
+			LEFT JOIN order_info oi ON oi.order_id = ocl.order_sn
+			LEFT JOIN order_item oim ON oim.item_id = ocl.order_sn
+	  </sql>
+	  
+	  <sql id="where">
+	  	WHERE
+			1=1
+			<if test="o.areaId != null">
+	 			AND a.id = #{o.areaId}
+			</if>
+			<if test="o.bossTel != null and o.bossTel != ''">
+	 			AND b.boss_tel like '%${o.bossTel}%'
+			</if>
+			<if test="o.buyerName != null and o.buyerName != ''">
+	 			AND b.buyer_name like '%${o.buyerName}%'
+			</if>
+			<if test="o.trueName != null and o.trueName != ''">
+	 			AND s.true_name like '%${o.trueName}%'
+			</if>
+	  </sql>
+	  
+	  <!-- 排序-->
+	<sql id="orderBy">
+			ORDER BY ocl.create_time DESC
+	</sql>
+	
+	<!-- 分组-->
+	<sql id="limit">
+		<if test="pageNum != null and pageSize != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+	
+	<!-- 根据买家ID查询所有-->
+	<select id="getList" parameterType="OrderCancelLogs" resultMap="orderCancelLogsMap">
+		<include refid="select" />
+		<include refid="where" />
+		<include refid="orderBy" />
+		<include refid="limit" />
+	</select>
+	
+	<!-- 根据买家ID查询所有-->
+	<select id="getCount" parameterType="OrderCancelLogs" resultType="int">
+		SELECT
+			count(1)
+		FROM
+			order_cancel_logs ocl
+			INNER JOIN buyer b ON b.buyer_id = ocl.buyer_id
+			LEFT JOIN sales s ON b.sale_id = s.id
+			LEFT JOIN area a ON a.id = b.region_id
+			LEFT JOIN order_info oi ON oi.order_id = ocl.order_sn
+			LEFT JOIN order_item oim ON oim.item_id = ocl.order_sn
+		<include refid="where" />
+	</select>
+	
+	<insert id="addOrderCancelLogs">
+		insert into
+		order_cancel_logs(buyer_id,order_sn,trade_money,current_money,last_money,remarks,create_time)
+		values(#{buyerId},#{orderSn},#{tradeMoney},#{currentMoney},#{lastMoney},#{remarks},#{createTime})
+	</insert>
+</mapper>

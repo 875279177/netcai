@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.netcai.buyer.dao.BuyerDao">
+	<resultMap type="com.netcai.buyer.entity.Buyer" id="buyerMap">
+		<result property="buyerId" column="buyer_id" />
+		<result property="buyerName" column="buyer_name" />
+		<result property="buyerAddress" column="buyer_address" />
+		<result property="lng" column="lng" />
+		<result property="lat" column="lat" />
+		<result property="provinceId" column="province_id" />
+		<result property="cityId" column="city_id" />
+		<result property="regionId" column="region_id" />
+		<result property="bossName" column="boss_name" />
+		<result property="bossTel" column="boss_tel" />
+		<result property="balanceMoney" column="balance_money" />
+		<result property="remark" column="remark" />
+		<result property="saleId" column="sale_id" />
+		<association property="users" javaType="com.netcai.buyer.entity.Users">
+            <result property="id" column="id" />
+			<result property="password" column="password" />
+			<result property="status" column="status" />
+			<result property="createTime" column="create_time" />
+        </association>
+	</resultMap>
+	
+	<sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and ">
+	    <if test="buyer.buyerName != null and buyer.buyerName!='' ">
+	        and buyer_name like '%${buyer.buyerName}%'
+	    </if>
+	    <if test="buyer.bossName != null and buyer.bossName!='' ">
+	        and boss_name like '%${buyer.bossName}%'
+	    </if>
+	    <if test="buyer.buyerAddress != null and buyer.buyerAddress!='' ">
+	        and buyer_address like '%${buyer.buyerAddress}%'
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 分页查询买家信息  -->
+	<select id="getAllBuyer" resultMap="buyerMap">
+		SELECT users.password,users.status,users.create_time,buyer.* FROM buyer 
+		    LEFT JOIN users ON users.id=buyer.buyer_id
+        <include refid="filterCondition"></include>
+		order by buyer_id desc limit #{offset},#{pageSize}
+	</select>
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		select count(buyer_id) from buyer
+		<include refid="filterCondition"></include>
+	</select>
+	<!-- 根据id查询单条数据 -->
+	<select id="getBuyerById" parameterType="Long" resultMap="buyerMap">
+	    SELECT users.password,users.status,users.create_time,buyer.* FROM buyer 
+	        LEFT JOIN users ON users.id=buyer.buyer_id where buyer_id=#{id}
+	</select>
+	
+	<!-- 根据userId查询单条数据 -->
+	<select id="getBuyerByUserId" parameterType="Long" resultMap="buyerMap">
+	    select * from buyer where buyer_id=#{userId}
+	</select>
+	
+	<!-- 更新卖家的余额信息-->
+	<update id="updateBuyerBalanceToZero">
+	     update buyer set balance_money=0 where buyer_id=#{userId}
+	</update>
+	
+	<!-- 改变余额 -->
+	<update id="updateBuyerBalance">
+		update buyer set balance_money = #{balanceMoney} where buyer_id = #{buyerId}
+	</update>
+	
+	<!-- 更新买家信息-->
+	<update id="updateBuyer" parameterType="com.netcai.buyer.entity.Buyer" >
+	    update buyer 
+	    <set>
+	      <trim>
+			<if test=" buyerName != null and buyerName != '' ">
+		        buyer_name = #{buyerName},
+		    </if>
+		    <if test=" buyerAddress != null and buyerAddress != '' ">
+		        buyer_address = #{buyerAddress},
+		    </if>
+		    <if test=" lng != null and lng != '' ">
+				lng = #{lng},
+			</if>
+		    <if test=" lat != null and lat != '' ">
+		        lat = #{lat},
+		    </if>
+		    <if test=" provinceId != null">
+				province_id = #{provinceId},
+			</if>
+			<if test=" cityId != null">
+				city_id = #{cityId},
+			</if>
+			<if test=" regionId != null">
+				region_id = #{regionId},
+			</if>
+			<if test=" bossName != null and bossName != ''">
+				boss_name = #{bossName},
+			</if>
+			<if test=" bossTel != null and bossTel != ''">
+				boss_tel = #{bossTel},
+			</if>
+			<if test=" balanceMoney != null">
+				balance_money = #{balanceMoney},
+			</if>
+			<if test=" remark != null and remark != ''">
+				remark = #{remark},
+			</if>
+			<if test=" saleId != null">
+				sale_id = #{saleId},
+			</if>
+			buyer_type = #{buyerType},
+	      </trim>
+	    </set>
+	    where buyer_id = #{buyerId}
+	</update>
+	
+	<!-- 新增买家信息- -->
+	<insert id="insertBuyer" parameterType="com.netcai.buyer.entity.Buyer">
+	  insert into buyer
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+	    <if test=" buyerId != null ">
+	        buyer_id ,
+	    </if>
+		<if test=" buyerName != null and buyerName != '' ">
+	        buyer_name ,
+	    </if>
+	    <if test=" buyerAddress != null and buyerAddress != '' ">
+	        buyer_address ,
+	    </if>
+	    <if test=" lng != null and lng != '' ">
+			lng ,
+		</if>
+	    <if test=" lat != null and lat != '' ">
+	        lat ,
+	    </if>
+	    <if test=" provinceId != null">
+			province_id ,
+		</if>
+		<if test=" cityId != null">
+			city_id ,
+		</if>
+		<if test=" regionId != null">
+			region_id ,
+		</if> 
+		<if test=" bossName != null and bossName != '' ">
+			boss_name ,
+		</if>
+		<if test=" bossTel != null and bossTel != '' ">
+			boss_tel ,
+		</if>
+		<if test=" balanceMoney != null">
+			balance_money ,
+		</if>
+		<if test=" remark != null and remark != '' ">
+			remark ,
+		</if>
+		<if test=" saleId != null">
+			sale_id ,
+		</if>
+	  </trim>
+	  <trim prefix="values (" suffix=")" suffixOverrides=",">
+	    <if test=" buyerId != null ">
+	        #{buyerId},
+	    </if>
+		<if test=" buyerName != null and buyerName != '' ">
+	        #{buyerName},
+	    </if>
+	    <if test=" buyerAddress != null and buyerAddress != '' ">
+	        #{buyerAddress},
+	    </if>
+	    <if test=" lng != null and lng != '' ">
+			#{lng},
+		</if>
+	    <if test=" lat != null and lat != '' ">
+	        #{lat},
+	    </if>
+	    <if test=" provinceId != null">
+		   #{provinceId},
+		</if>
+		<if test=" cityId != null">
+			#{cityId},
+		</if>
+		<if test=" regionId != null">
+			#{regionId},
+		</if>
+		<if test=" bossName != null and bossName != '' ">
+			#{bossName},
+		</if>
+		<if test=" bossTel != null and bossTel != '' ">
+			#{bossTel},
+		</if>
+		<if test=" balanceMoney != null">
+			#{balanceMoney},
+		</if>
+		<if test=" remark != null and remark != '' ">
+		    #{remark},
+		</if>
+		<if test=" saleId != null">
+			#{saleId},
+		</if>
+	  </trim>
+	</insert>
+	
+    <!-- 常用清单-->
+	<resultMap type="com.netcai.buyer.vo.CommonListVo" id="commonResult">
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_name" property="sellerName" />
+		<result column="seller_alias" property="sellerAlias" />
+		<result column="seller_logo" property="sellerLogo" />
+		<result column="seller_rank" property="sellerRank" />
+		<result column="seller_grade" property="sellerGrade" />
+		<!-- 店铺商品集合 -->
+		<collection property="goodsList" ofType="com.netcai.buyer.vo.GoodsVo">
+		    <result column="bc_id" property="bcId" />
+			<result column="goods_id" property="goodsId" />
+			<result column="goods_name" property="goodsName" />
+			<result column="goods_as" property="goodsAs" />
+			<result column="goods_label" property="goodsLabel" />
+			<result column="goods_brand" property="goodsBrand" />
+			<result column="goods_desc" property="goodsDesc" />
+			<result column="goods_remark" property="goodsRemark" />
+			<!-- 商品图片集合 -->
+			<collection property="pictureList" ofType="com.netcai.buyer.vo.GoodsPictureVo">
+				<result column="pic_id" property="picId" />
+				<result column="pic_url" property="picUrl" />
+				<result column="is_main" property="isMain" />
+	        </collection>
+	        <!-- 商品规格集合 -->
+	        <collection property="formatList" ofType="com.netcai.buyer.vo.GoodsFormatVo">
+				<result column="format_id" property="formatId" />
+				<result column="unit_id" property="unitId" />
+				<result column="unit_Name" property="unitName" />
+				<result column="format_name" property="formatName" />
+				<result column="format_price" property="formatPrice" />
+				<result column="format_num" property="formatNum" />
+	        </collection>
+	        <!-- 商品加工方式集合 -->
+	        <collection property="methodList" ofType="com.netcai.buyer.vo.GoodsMethodVo">
+	            <result column="gm_id" property="gmId" />
+				<result column="method_id" property="methodId" />
+				<result column="method_Name" property="methodName" />
+	        </collection>
+        </collection>
+	</resultMap>
+	
+	<!-- 常用清单-->
+	<select id="getCommonList" resultMap="commonResult">
+	<!--
+	    select 
+			s.seller_id,s.seller_name,s.seller_alias,s.seller_logo,s.seller_rank,s.seller_grade,
+			g.goods_id,g.goods_name,g.goods_as,g.goods_label,
+			g.goods_brand,g.goods_desc,g.goods_remark,
+			gp.pic_id,gp.pic_url,gp.is_main,
+			gf.format_id,gf.unit_id,u.unit_name,gf.format_name,gf.format_price,gf.format_num,
+			gm.gm_id,gm.method_id,pm.method_name
+		from goods g 
+			inner join seller s on s.seller_id = g.user_id
+			left join goods_picture gp on g.goods_id=gp.goods_id 
+			left join goods_format gf on g.goods_id=gf.goods_id 
+			left join unit u on gf.unit_id=u.unit_id
+			left join goods_method gm on g.goods_id=gm.goods_id 
+			left join process_method pm on pm.method_id=gm.method_id
+		where g.goods_status=1 and gf.format_status=1
+		and exists (select 1 from order_item oi,goods_format ff where oi.format_id=ff.format_id and g.goods_id=ff.goods_id and oi.buyer_id=#{userId}) 
+		order by g.goods_seq, gp.pic_seq, gf.format_seq
+	-->	
+		select 
+			s.seller_id,s.seller_name,s.seller_alias,s.seller_logo,s.seller_rank,s.seller_grade,
+			g.goods_id,g.goods_name,g.goods_as,g.goods_label,
+			g.goods_brand,g.goods_desc,g.goods_remark,
+			gp.pic_id,gp.pic_url,gp.is_main,
+			gf.format_id,gf.unit_id,u.unit_name,gf.format_name,gf.format_price,gf.format_num,
+			gm.gm_id,gm.method_id,pm.method_name
+		from order_item oi
+            inner join goods_format gf on gf.format_id=oi.format_id 
+            inner join goods g on g.goods_id=gf.goods_id 
+			inner join seller s on s.seller_id = g.user_id
+			inner join users us on us.id=s.seller_id
+			left join goods_picture gp on g.goods_id=gp.goods_id 
+			left join unit u on gf.unit_id=u.unit_id
+			left join goods_method gm on g.goods_id=gm.goods_id 
+			left join process_method pm on pm.method_id=gm.method_id
+		where oi.buyer_id=#{userId} and g.goods_status=1 and gf.format_status=1 and us.status=3
+        group by oi.format_id
+		order by g.goods_seq, gp.pic_seq, gf.format_seq
+	</select>
+	
+    <!-- 添加商品收藏 -->
+	<insert id="insertBuyerCollect">
+		 insert into buyer_collect(buyer_id,goods_id,create_time)
+		 select #{userId},#{goodsId},now()
+		 from dual where not exists(select 1  from buyer_collect  where buyer_id = #{userId}  and goods_id = #{goodsId})
+	</insert>
+	
+	<!-- 取消商品收藏 -->
+	<delete id="deleteBuyerCollect">
+		 delete from buyer_collect where bc_id=#{bcId}
+	</delete>
+	
+	<!-- 取消商品收藏 -->
+	<delete id="cancelBuyerCollect">
+		 delete from buyer_collect where buyer_id = #{userId}  and goods_id = #{goodsId}
+	</delete>
+	
+	<!-- 我的收藏-->
+	<select id="getCollectList" resultMap="commonResult">
+		select 
+			s.seller_id,s.seller_name,s.seller_alias,s.seller_logo,s.seller_rank,s.seller_grade,
+			bc.bc_id,g.goods_id,g.goods_name,g.goods_as,g.goods_label,
+			g.goods_brand,g.goods_desc,g.goods_remark,
+			gp.pic_id,gp.pic_url,gp.is_main,
+			gf.format_id,gf.unit_id,u.unit_name,gf.format_name,gf.format_price,gf.format_num,
+			gm.gm_id,gm.method_id,pm.method_name
+		from buyer_collect bc
+		    inner join goods g on g.goods_id=bc.goods_id 
+            inner join goods_format gf on gf.goods_id=g.goods_id 
+			inner join seller s on s.seller_id = g.user_id
+			inner join users us on us.id=s.seller_id
+			left join goods_picture gp on g.goods_id=gp.goods_id 
+			left join unit u on gf.unit_id=u.unit_id
+			left join goods_method gm on g.goods_id=gm.goods_id 
+			left join process_method pm on pm.method_id=gm.method_id
+		where bc.buyer_id=#{userId} and g.goods_status=1 and gf.format_status=1 and us.status=3
+		and (select 1 from seller_category sc where g.category_id=sc.category_id and sc.user_id=g.user_id)
+		order by bc.create_time desc,g.goods_seq, gp.pic_seq, gf.format_seq
+	</select>
+	
+	<!-- 我的常用清单-->
+	<select id="getMyCommonList" resultMap="commonResult">
+		select 
+			s.seller_id,s.seller_name,s.seller_alias,s.seller_logo,s.seller_rank,s.seller_grade,
+			g.goods_id,g.goods_name,g.goods_as,g.goods_label,
+			g.goods_brand,g.goods_desc,g.goods_remark,
+			gp.pic_id,gp.pic_url,gp.is_main,
+			gf.format_id,gf.unit_id,u.unit_name,gf.format_name,gf.format_price,gf.format_num,
+			gm.gm_id,gm.method_id,pm.method_name
+		from buyer_common bc
+            inner join goods g on g.goods_id=bc.goods_id 
+            inner join goods_format gf on gf.goods_id=g.goods_id 
+			inner join seller s on s.seller_id = g.user_id
+			inner join users us on us.id=s.seller_id
+			left join goods_picture gp on g.goods_id=gp.goods_id 
+			left join unit u on gf.unit_id=u.unit_id
+			left join goods_method gm on g.goods_id=gm.goods_id 
+			left join process_method pm on pm.method_id=gm.method_id
+		where bc.buyer_id=#{userId} and g.goods_status=1 and gf.format_status=1 and us.status=3
+		and (select 1 from seller_category sc where g.category_id=sc.category_id and sc.user_id=g.user_id)
+		order by g.goods_seq, gp.pic_seq, gf.format_price
+	</select>
+	
+	<!-- 添加买家常用清单 -->
+	<insert id="insertBuyerCommon">
+		 insert into buyer_common(buyer_id,goods_id,create_time)
+		 select #{buyerId},goods_id,now()
+		 from sys_common where buyer_type_id=#{buyerType} and area_id=#{areaId}
+	</insert>
+	
+	<!-- 删除买家常用清单 -->
+	<insert id="deleteBuyerCommon">
+	     delete from buyer_common where buyer_id=#{userId} and goods_id=#{goodsId}
+	</insert>
+	
+	<!-- 配送人员坐标-->
+	<resultMap type="com.netcai.buyer.vo.DeliveryCoordinateVo" id="coordinateMap">
+		<result property="deliveryId" column="delivery_id" />
+		<result property="deliveryName" column="delivery_name" />
+		<result property="deliveryPhone" column="delivery_phone" />
+		<result property="lng" column="lng" />
+		<result property="lat" column="lat" />
+		<result property="address" column="address" />
+		<result property="createTime" column="create_time" />
+	</resultMap>
+	
+	<!-- 获取配送人员最新坐标-->
+	<select id="getNewDeliveryCoordinate" resultMap="coordinateMap">
+		select d.id as delivery_id,d.delivery_name,d.delivery_phone,dc.lng,dc.lat,dc.address,
+		date_format(dc.create_time,'%Y-%m-%d %H:%i:%s') as create_time 
+		from delivery_area da
+		inner join delivery_da dd on dd.dda_da_id=da.da_id
+		inner join delivery d  on d.id =  dd.dda_delivery_id
+		inner join buyer b on da.da_id = b.delivery_area_id 
+		inner join delivery_coordinate dc on dc.delivery_id=d.id
+		where  d.status=1 and d.permission_type=1 and b.buyer_id=#{userId}
+		order by dc.create_time desc limit 0,1
+	</select>
+	
+	<!-- 获取配送人员最新坐标-->
+	<select id="modifySales" resultMap="buyerMap">
+		select b.boss_name,b.boss_tel from buyer b
+		inner join users u on b.buyer_id=u.id
+		where u.status=3 and b.region_id = 4
+	</select>
+	
+	<!-- 我的信息 -->
+	<resultMap type="com.netcai.buyer.vo.MyIndexVo" id="myIndexMap">
+		<result property="noPayNum" column="no_pay_num" />
+		<result property="waitTakeNum" column="wait_take_num" />
+		<result property="finishNum" column="finish_num" />
+		<result property="msgNum" column="msg_num" />
+		<result property="redPacketNum" column="red_packet_num" />
+		<result property="couponReceiveNum" column="coupon_receive_num" />
+		<result property="balanceMoney" column="balance_money" />
+	</resultMap>
+	
+	<!-- 我的信息-->
+	<select id="getMyIndex" resultMap="myIndexMap">
+		SELECT
+			(SELECT COUNT(1) 
+			FROM order_info oi 
+			WHERE oi.buyer_id = b.buyer_id
+			AND oi.pay_status IN (1,3) and oi.order_type=0
+			AND oi.trade_status = 0
+			) no_pay_num,
+			(SELECT COUNT(1) 
+			FROM order_info oi 
+			WHERE oi.buyer_id = b.buyer_id
+			AND oi.pay_status IN (2,3)
+			AND oi.trade_status = 0
+			) wait_take_num,
+			(SELECT COUNT(1) 
+			FROM order_info oi 
+			WHERE oi.buyer_id = b.buyer_id
+			AND oi.pay_status IN (2,3,4)
+			AND oi.trade_status = 1
+			) finish_num,
+			(SELECT COUNT(1) 
+			FROM coupon_receive cr 
+			WHERE cr.buyer_id = b.buyer_id
+			AND cr.`status` IN (0)
+			) coupon_receive_num,
+			(SELECT COUNT(1) 
+			FROM message m 
+			WHERE m.user_id = b.buyer_id
+			) msg_num,
+			b.balance_money,
+			0 red_packet_num
+		FROM
+			buyer b
+		WHERE 
+			b.buyer_id = #{buyerId}
+	</select>
+</mapper>

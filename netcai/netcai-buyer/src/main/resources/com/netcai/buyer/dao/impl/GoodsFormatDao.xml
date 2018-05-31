@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商品规格xml anthor chenlei -->
+<mapper namespace="com.netcai.buyer.dao.GoodsFormatDao">
+
+	<resultMap type="com.netcai.buyer.entity.GoodsFormat" id="goodsFormatResult">
+		<result column="format_id" property="formatId" />
+		<result column="goods_id" property="goodsId" />
+		<result column="unit_id" property="unitId" />
+		<result column="format_name" property="formatName" />
+		<result column="format_price" property="formatPrice" />
+		<result column="format_num" property="formatNum" />
+		<result column="format_seq" property="formatSeq" />
+		<result column="format_status" property="formatStatus" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<resultMap type="com.netcai.buyer.vo.TransactionDetails" id="transactionResult">
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_name" property="sellerName" />
+		<result column="seller_logo" property="sellerLogo" />
+		<collection property="goodsDetailList" ofType="com.netcai.buyer.vo.GoodsDetailsVo">
+			<result column="format_id" property="formatId" />
+			<result column="format_name" property="formatName" />
+			<result column="method_id" property="methodId" />
+			<result column="method_name" property="methodName" />
+			<result column="format_price" property="formatPrice" />
+			<result column="format_num" property="formatNum" />
+			<result column="goods_name" property="goodsName" />
+			<result column="goods_label" property="goodsLabel" />
+			<result column="goods_brand" property="goodsBrand" />
+			<result column="unit_name" property="unitName" />
+			<result column="goods_remark" property="remark" />
+			<collection property="goodsPictureList" ofType="com.netcai.buyer.vo.GoodsPictureVo">
+				<result column="pic_id" property="picId" />
+				<result column="pic_url" property="picUrl" />
+				<result column="pic_seq" property="picSeq" />
+				<result column="is_main" property="isMain" />
+			</collection>
+		</collection>
+        
+	</resultMap>
+	
+	<!-- 批量新增商品规格-->
+	<insert id="batchInsertGoodsFormat" parameterType="com.netcai.buyer.entity.Goods">
+		insert into goods_format (goods_id,unit_id,format_name,format_price,format_num,format_status,create_time) values   
+		<foreach collection="formatList" item="item" separator=",">  
+		(#{goodsId},#{item.unitId},#{item.formatName},#{item.formatPrice},#{item.formatNum},#{item.formatStatus},#{createTime})  
+		</foreach>  
+	</insert>
+
+	<!-- 更新商品规格 -->
+	<update id="updateGoodsFromat" parameterType="com.netcai.buyer.entity.GoodsFormat">
+		update goods_format set format_name = #{formatName}, 
+		format_price = #{formatPrice},
+		format_num = #{formatNum},
+		format_status = #{formatStatus},
+		unit_id = #{unitId} 
+		where format_id = #{formatId}
+	</update>
+	
+	<!-- 根据formatId查询; -->
+	<select id="getById" parameterType="Long" resultMap="goodsFormatResult">
+		select
+		*
+		from
+		goods_format gf
+		where
+		gf.format_id = #{formatId}
+	</select>
+	
+	<!-- 根据formatId查询单价; -->
+	<select id="getFormatPriceById" parameterType="Long" resultType="java.math.BigDecimal">
+		select
+		format_price
+		from
+		goods_format gf
+		where
+		gf.format_id = #{formatId}
+		and format_status = 1
+	</select>
+	
+	<!-- 根据Id和FormatStatus查询FormatId; -->
+	<select id="getFormatIdByIdAndFormatStatus" parameterType="java.util.List" resultMap="goodsFormatResult">
+		select
+		format_id,
+		format_price
+		from
+		goods_format gf
+		where
+		gf.format_id in 
+		<foreach collection="orderItems" item="orderItem" open="(" separator="," close=")">
+			#{orderItem.formatId }
+		</foreach>
+		AND format_status = 1
+	</select>
+	
+	<!-- 根据Id和FormatStatus查询FormatId; -->
+	<select id="getByIdAndFormatStatus" parameterType="java.util.List" resultMap="goodsFormatResult">
+		select
+		format_id,
+		format_price
+		from
+		goods_format gf
+		where
+		gf.format_id in 
+		<foreach collection="goodsCarts" item="goodsCart" open="(" separator="," close=")">
+			#{goodsCart.formatId }
+		</foreach>
+		AND format_status = 1
+	</select>
+	
+	<!-- 根据一级节点查询所有的商品规格id -->
+	<select id="getFormatIdsByLevelOne" parameterType="Integer" resultType="Long">
+	    select gf.format_id from category c1 
+		inner join category c2 on c1.category_id=c2.parent_id
+		inner join category c3 on c2.category_id=c3.parent_id
+		inner join goods g on g.category_id=c3.category_id
+		inner join goods_format gf on g.goods_id=gf.goods_id
+		where c1.category_id=#{id} and gf.format_status=1
+	</select>
+	
+	<!-- 根据商品规格id查询上架的商品信息  -->
+	<select id="getGoodsDetailsByFormateIds" parameterType="String" resultMap="transactionResult">
+	    select gf.*,g.goods_name,g.goods_brand,g.goods_label,g.goods_remark,unit.unit_name,pm.method_id,pm.method_name,
+	           s.seller_id,s.seller_name,s.seller_logo,gp.*  from goods_format gf 
+		left join goods g on gf.goods_id=g.goods_id
+		left join seller s on g.user_id=s.seller_id
+		left join unit on gf.unit_id=unit.unit_id
+		left join goods_method gm on gf.goods_id=gm.goods_id
+		left join process_method pm on gm.method_id=pm.method_id
+		left join goods_picture gp on gf.goods_id=gp.goods_id
+		where gf.format_status=1 and g.goods_status=1 
+		<trim>
+		    <if test="formatId != null">
+		        and gf.format_id=#{formatId}
+		    </if>
+		    <if test="methodId != null">
+		        and pm.method_id=#{methodId}
+		    </if>
+		</trim>
+	</select>
+</mapper>

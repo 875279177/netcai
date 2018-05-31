@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.SuggestionReplyDao" >
+  <resultMap id="suggestionReplyMap" type="com.netcai.admin.entity.SuggestionReply" >
+    <id column="id" property="id"  />
+    <result column="suggestion_id" property="suggestionId" />
+    <result column="content" property="content"  />
+    <result column="create_time" property="createTime" />
+  </resultMap>
+  
+  <select id="getList" resultMap="suggestionReplyMap" parameterType="java.lang.Long" >
+    select 
+    *
+    from suggestion_reply
+    where suggestion_id = #{suggestionId}
+  </select>
+  
+  <insert id="insert" parameterType="com.netcai.admin.entity.SuggestionReply" >
+    insert into suggestion_reply
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="s.suggestionId != null" >
+        suggestion_id,
+      </if>
+      <if test="s.content != null" >
+        content,
+      </if>
+      <if test="s.createTime != null" >
+        create_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="s.suggestionId != null" >
+        #{s.suggestionId},
+      </if>
+      <if test="s.content != null" >
+        #{s.content},
+      </if>
+      <if test="s.createTime != null" >
+        #{s.createTime},
+      </if>
+    </trim>
+  </insert>
+</mapper>

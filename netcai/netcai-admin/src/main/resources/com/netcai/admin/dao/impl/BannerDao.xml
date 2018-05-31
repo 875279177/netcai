@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.BannerDao">
+	<resultMap type="com.netcai.admin.entity.Banner" id="bannerMap">
+		<result property="id" column="banner_id" />
+		<result property="provinceId" column="banner_province" />
+		<result property="cityId" column="banner_city" />
+		<result property="regionId" column="banner_region" />
+		<result property="province" column="province" />
+		<result property="city" column="city" />
+		<result property="region" column="region" />
+		<result property="title" column="banner_title" />
+		<result property="url" column="banner_url" />
+		<result property="bannerSeq" column="banner_seq" />
+		<result property="status" column="banner_status" />
+		<result property="bannerIds" column="banner_ids" />
+		<result property="createTime" column="create_time" />
+	</resultMap>
+	
+	<sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and ">
+	    <if test=" banner.title != null and banner.title != '' ">
+	      and banner_title like '%${banner.title}%'
+	    </if>
+	    <if test=" banner.status != null ">
+	      and banner_status = #{banner.status}
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 分页查询广告信息 -->
+	<select id="getAllBanners" resultMap="bannerMap">
+		SELECT banner.*,E.region,E.city,E.province FROM banner 
+		LEFT JOIN (SELECT C.*,D.area_name province 
+        FROM (SELECT B.id region_id,B.area_name region ,A.area_name city,A.parent_id 
+        FROM area A INNER JOIN area B ON A.id=B.parent_id)C 
+        INNER JOIN area D ON C.parent_id=D.id) E ON banner.banner_region=E.region_id
+        <include refid="filterCondition"></include>
+		order by create_time desc limit #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		select count(1) from banner
+	</select>
+	
+	<!-- 根据id查询单条数据 -->
+	<select id="getBannerById" parameterType="Long" resultMap="bannerMap">
+	    select * from banner where banner_id=#{id}
+	</select>
+	
+	<!-- 更新状态（启用）-->
+	<update id="enabledBanner" parameterType="Long" >
+	    update banner set banner_status=1 where banner_id=#{id}
+	</update>
+	
+	<!-- 更新状态（禁用）  -->
+	<update id="disabledBanner" parameterType="Long" >
+	    update banner set banner_status=-1 where banner_id=#{id}
+	</update>
+	
+	<!-- 删除数据 -->
+	<delete id="delete" parameterType="Long">
+	    delete from banner where banner_id=#{id}
+	</delete>
+	
+	<!-- 更新广告信息-->
+	<update id="updateBanner" parameterType="com.netcai.admin.entity.Banner" >
+	    update banner  
+	    <set>
+	      <trim>
+			<if test=" provinceId != null ">
+		        banner_province = #{provinceId},
+		    </if>
+		    <if test=" cityId != null ">
+		        banner_city = #{cityId},
+		    </if>
+		    <if test=" regionId != null ">
+		        banner_region = #{regionId},
+		    </if>
+		    <if test=" title != null and title != '' ">
+		        banner_title = #{title},
+		    </if>
+		    <if test=" url != null and url != ''">
+				banner_url = #{url},
+			</if>
+		    <if test=" bannerSeq != null ">
+		        banner_seq = #{bannerSeq},
+		    </if>
+		    <if test=" bannerIds != null and bannerIds != '' ">
+		        banner_ids = #{bannerIds},
+		    </if>
+	      </trim>
+	    </set>
+	    where banner_id = #{id}
+	</update>
+	
+	<!-- 新增广告信息 -->
+	<insert id="insertBanner" parameterType="com.netcai.admin.entity.Banner">
+	  insert into banner
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+        <if test=" provinceId != null ">
+	        banner_province ,
+	    </if>
+	    <if test=" cityId != null ">
+	        banner_city ,
+	    </if>
+	    <if test=" regionId != null ">
+	        banner_region ,
+	    </if>
+	    <if test=" title != null and title != '' ">
+	        banner_title ,
+	    </if>
+	    <if test=" url != null and url != ''">
+			banner_url ,
+		</if>
+	    <if test=" bannerSeq != null ">
+	        banner_seq ,
+	    </if>
+	    <if test=" status != null ">
+	        banner_status ,
+	    </if>
+	    <if test=" bannerIds != null and bannerIds != '' ">
+	        banner_ids ,
+	    </if>
+	    <if test=" createTime != null">
+			create_time ,
+		</if>
+	  </trim>
+	  <trim prefix="values (" suffix=")" suffixOverrides=",">
+        <if test=" provinceId != null ">
+	        #{provinceId},
+	    </if>
+	    <if test=" cityId != null ">
+	        #{cityId},
+	    </if>
+	    <if test=" regionId != null ">
+	        #{regionId},
+	    </if>
+	    <if test=" title != null and title != '' ">
+	        #{title},
+	    </if>
+	    <if test=" url != null and url != ''">
+			#{url},
+		</if>
+	    <if test=" bannerSeq != null ">
+	        #{bannerSeq},
+	    </if>
+	    <if test=" status != null ">
+	        #{status},
+	    </if>
+	    <if test=" bannerIds != null and bannerIds != '' ">
+	        #{bannerIds},
+	    </if>
+	    <if test=" createTime != null">
+			#{createTime},
+		</if>
+	  </trim>
+	</insert>
+</mapper>

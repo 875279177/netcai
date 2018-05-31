@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.SellerOrderDeliveryDao">
+	<resultMap type="com.netcai.admin.entity.SellerOrderDelivery"
+		id="sellerOrderDeliveryMap">
+		<result column="id" property="id" />
+		<result column="buyer_id" property="buyerId" />
+		<result column="seller_id" property="sellerId" />
+		<result column="order_id" property="orderId" />
+		<result column="order_number" property="orderNumber" />
+		<result column="delivery_money" property="deliveryMoney" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+
+	<!-- 根据卖家id查询今日总配送费 -->
+	<select id="getDeliveryAmountBySellerId" parameterType="Long" resultType="BigDecimal">
+		select sum(delivery_money) from seller_order_delivery where seller_id=#{sellerId} and DATE_FORMAT(create_time,'%y-%m-%d')= DATE_FORMAT(NOW(),'%y-%m-%d')
+	</select>
+
+</mapper>

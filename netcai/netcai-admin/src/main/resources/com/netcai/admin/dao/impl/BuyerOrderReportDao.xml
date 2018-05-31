@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.BuyerOrderReportDao" >
+
+  <resultMap id="buyerOrderReportMap" type="com.netcai.admin.entity.BuyerOrderReport" >
+    <id column="id" property="id" />
+    <result column="today" property="today" />
+    <result column="buyer_id" property="buyerId" />
+    <result column="order_money" property="orderMoney" />
+    <result column="warn" property="warn" />
+  </resultMap>
+  
+  <resultMap id="buyerOrderReportVoMap" type="com.netcai.admin.vo.BuyerOrderReportVo" >
+    <result column="name" property="name" />
+  	<result column="buyer_id" property="buyerId" />
+    <result column="today" property="today" />
+    <result column="yesterday" property="yesterday" />
+    <result column="anteayer" property="anteayer" />
+    <result column="warn_t" property="warnT" />
+    <result column="warn_y" property="warnY" />
+    <result column="warn_v" property="warnV" />
+    <result column="area_id" property="areaId"  />
+    <result column="date_time" property="dateTime"  />
+  </resultMap>
+  
+ <!--  统计买家订单报表; -->
+  <resultMap id="reportBuyerVoMap" type="com.netcai.admin.vo.ReportBuyerVo" >
+  	<result column="buyer_id" property="buyerId" />
+    <result property="buyerName" column="buyer_name" />
+    <result property="buyerAddress" column="buyer_address" />
+    <result property="bossName" column="boss_name" />
+	<result property="bossTel" column="boss_tel" />
+    <result column="delivery_area_name" property="deliveryAreaName" />
+    <result column="region_id" property="regionId" />
+    <result column="region_name" property="regionName" />
+    <result column="frequency" property="frequency" />
+    <result column="avg_money" property="avgMoney"  />
+    <result column="total_money" property="totalMoney"  />
+  </resultMap>
+  
+  <select id="selectListByDateByHz"  resultMap="reportBuyerVoMap">
+	  	select 
+			a.area_name region_name,
+			a.id region_id,
+			da.da_address delivery_area_name,
+			b.buyer_id,
+			b.buyer_name,
+			b.buyer_address,
+			b.boss_name,
+			b.boss_tel,
+			sum(o.total_amount) as total_money,
+			count(distinct(date_format(o.best_time,'%Y-%m-%d'))) as frequency,
+			round(sum(o.total_amount)/count(distinct(date_format(o.best_time,'%Y-%m-%d'))),2) as avg_money
+		FROM buyer b
+			LEFT JOIN order_info o ON o.buyer_id=b.buyer_id and o.trade_status!=2 and o.pay_status!=1 
+			INNER JOIN delivery_area da ON b.delivery_area_id=da.da_id
+			INNER JOIN area a ON a.id = b.region_id
+	 		WHERE
+	 		1=1
+		 	<if test="r.createTimeStart != null and r.createTimeStart != '' and r.createTimeStop != null and r.createTimeStop != ''">
+				 AND o.best_time <![CDATA[ >= #{r.createTimeStart}]]>
+				 AND o.best_time <![CDATA[ <=  #{r.createTimeStop}]]>
+			</if>
+			<if test="r.regionId != null and r.regionId != ''">
+				AND	a.id = #{r.regionId}
+			</if>
+			<if test="r.buyerName != null and r.buyerName != ''">
+				AND	b.buyer_name = #{r.buyerName}
+			</if>
+		GROUP BY b.buyer_id
+			<if test="r.more != null and r.more != '' and r.less != null and r.less != ''">
+				 HAVING frequency <![CDATA[ >=  #{r.more}]]> and frequency <![CDATA[ <= #{r.less}]]>
+			</if>
+		ORDER BY frequency DESC
+  </select>
+  
+  <!-- 查询所有 -->
+  <select id="selectList"  resultMap="buyerOrderReportVoMap"  >
+    SELECT
+    	b.buyer_id,
+    	CASE WHEN a.id IS NOT NULL THEN a.id ELSE 0 END area_id,
+    	D.date_time date_time,
+		CASE WHEN b.buyer_name IS NOT NULL THEN b.buyer_name ELSE b.boss_tel END name ,
+		CASE WHEN D.today IS NOT NULL THEN D.today ELSE 0 END today ,
+		CASE WHEN D.yesterday IS NOT NULL THEN D.yesterday ELSE 0 END yesterday,
+		CASE WHEN D.anteayer IS NOT NULL THEN D.anteayer ELSE 0 END	anteayer,
+		CASE WHEN D.warn_t IS NOT NULL THEN D.warn_t ELSE 1 END	warn_t,
+		CASE WHEN D.warn_y IS NOT NULL THEN D.warn_y ELSE 1 END	warn_y,
+		CASE WHEN D.warn_v IS NOT NULL THEN D.warn_v ELSE 1 END	warn_v
+	FROM buyer b LEFT JOIN
+		(SELECT
+			bor_t.buyer_id AS buyer_id,
+			bor_t.today AS date_time,
+			CASE WHEN bor_t.order_money IS NOT NULL THEN bor_t.order_money ELSE 0 END as today,
+			CASE WHEN bor_y.order_money IS NOT NULL THEN bor_y.order_money ELSE 0 END as yesterday,
+			CASE WHEN bor_v.order_money IS NOT NULL THEN bor_v.order_money ELSE 0 END as anteayer,
+			CASE WHEN bor_t.warn IS NOT NULL THEN bor_t.warn ELSE 1 END as warn_t,
+			CASE WHEN bor_y.warn IS NOT NULL THEN bor_y.warn ELSE 1 END as warn_y,
+			CASE WHEN bor_v.warn IS NOT NULL THEN bor_v.warn ELSE 1 END as warn_v
+		FROM buyer_order_report bor_t 
+			LEFT JOIN buyer_order_report bor_y ON bor_t.buyer_id = bor_y.buyer_id  AND DATEDIFF(bor_y.today,NOW())=#{b.time}-1
+			LEFT JOIN buyer_order_report bor_v ON bor_t.buyer_id = bor_v.buyer_id  AND DATEDIFF(bor_v.today,NOW())=#{b.time}-2
+		WHERE
+			DATEDIFF(bor_t.today,NOW())=#{b.time}
+		AND DATEDIFF(bor_t.today,NOW())=#{b.time}
+		GROUP BY bor_t.buyer_id)D ON b.buyer_id = D.buyer_id
+	LEFT JOIN area a ON a.id = b.region_id
+	WHERE 
+		1=1
+		<if test="b.areaId != null and b.areaId != ''">
+			AND	a.id = #{b.areaId}
+		</if>
+  </select>
+  
+   <!-- 批量新增 -->
+  <insert id="insertBatch" parameterType="com.netcai.admin.entity.BuyerOrderReport" >
+    insert into buyer_order_report 
+	    (warn, 
+	    buyer_id, 
+	    order_money, 
+	    today)
+    values 
+    <foreach collection="buyerOrderReports" item="list" separator=",">
+	    (#{list.warn}, 
+	    #{list.buyerId}, 
+	    #{list.orderMoney}, 
+	    #{list.today})
+    </foreach>
+  </insert>
+</mapper>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.CouponReceiveDao">
+	<resultMap type="com.netcai.buyer.entity.CouponReceive" id="couponReceiveMap">
+		<result column="id" property="id" />
+		<result column="buyer_id" property="buyerId" />
+		<result column="coupon_id" property="couponId" />
+		<result column="coupon_money" property="couponMoney" />
+		<result column="full_money" property="fullMoney" />
+		<result column="status" property="status" />
+		<result column="create_time" property="createTime" />
+		<result column="type" property="type" />
+		<result column="start_time" property="startTime" />
+		<result column="end_time" property="endTime" />
+		<result column="remarks" property="remarks" />
+	</resultMap>
+
+	<!-- 根据买家id查询所有的优惠券 -->
+	<select id="selectAllByBuyerId" parameterType="Long" resultMap="couponReceiveMap">
+		select cr.*,c.type,c.start_time,c.end_time,c.remarks from coupon_receive cr
+		INNER JOIN coupon c on cr.coupon_id=c.id
+		where <![CDATA[ c.end_time>NOW() ]]> and cr.buyer_id=#{buyerId} order by cr.create_time DESC
+	</select>
+
+	<!-- 根据id查询未使用过的优惠券 -->
+	<select id="selectById" parameterType="Long" resultMap="couponReceiveMap">
+		select *
+		from coupon_receive where status=0 and id=#{id}
+	</select>
+
+	<!-- 根据买家id查询是否有优惠券可以领取 -->
+	<select id="selectByBuyerId" resultMap="couponReceiveMap">
+		select cr.*,c.region_id
+		from coupon c inner join coupon_receive cr on c.id = cr.coupon_id
+		where c.status=1 and cr.buyer_id=#{buyerId} and
+		cr.coupon_id=#{couponId}
+		and c.region_id =(select a.id from buyer b
+		inner join area a ON
+		b.region_id=a.id where b.buyer_id=#{buyerId})
+	</select>
+
+	<!-- 根据买家和优惠券配置id查询买家优惠券 -->
+	<select id="selectByBuerIdAndCouponId" resultMap="couponReceiveMap">
+		select * from
+		coupon_receive where buyer_id=#{buyerId} and coupon_id=#{couponId}
+	</select>
+
+	<!-- 根据买家id查询可用的优惠券 -->
+	<select id="getAvailableByBuyerId" resultMap="couponReceiveMap">
+		select cr.* from coupon c inner join coupon_receive cr on
+		c.id = cr.coupon_id
+		where c. status = 1 and cr.status=0 and cr.buyer_id
+		= #{buyerId} and cr.coupon_id=#{couponId}
+	</select>
+
+	<!-- 新增 -->
+	<insert id="insert" parameterType="com.netcai.buyer.entity.CouponReceive">
+		insert into coupon_receive
+		(buyer_id,coupon_id,coupon_money,full_money,status,create_time)
+		values(#{buyerId},#{couponId},#{couponMoney},#{fullMoney},#{status},#{createTime})
+	</insert>
+	
+	<!-- 更新优惠券的状态 -->
+	<update id="update" parameterType="Long">
+	     update coupon_receive set status=1 where id=#{id}
+	</update>
+
+</mapper>

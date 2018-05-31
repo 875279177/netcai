@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.CompanyDao">
+	<resultMap type="com.netcai.admin.entity.Company" id="companyMap">
+		<result column="company_id" property="id" />
+		<result column="company_name" property="name" />
+		<result column="company_contact" property="contact" />
+		<result column="company_tel" property="phone" />
+		<result column="company_address" property="address" />
+		<result column="company_pid" property="parentId" />
+		<result column="remarks" property="remarks" />
+		<result column="status" property="status" />
+		<result column="create_time" property="createTime" />
+		
+		<result column="parent_company" property="parentCompany" />
+	</resultMap>
+
+	<!-- 查询全部 -->
+	<select id="getList" resultMap="companyMap">
+		select 
+			c.*,
+			cf.company_name parent_company 
+		from 
+			company c 
+		LEFT JOIN company cf ON cf.company_id = c.company_pid
+		ORDER BY c.create_time ASC
+	</select>
+
+	<!-- 查询全部 -->
+	<select id="getById" parameterType="long" resultMap="companyMap">
+		select 
+			c.*,
+			cf.company_name parent_company 
+		from 
+			company c 
+		LEFT JOIN company cf ON cf.company_id = c.company_pid
+		where c.company_id = #{id}
+	</select>
+
+	<!-- 新增公司信息 -->
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="company_id" parameterType="com.netcai.admin.entity.Company">
+		insert into company
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test=" name !=null">
+				company_name,
+			</if>
+			<if test=" contact != null">
+				company_contact,
+			</if>
+			<if test=" phone != null">
+				company_tel,
+			</if>
+			<if test="address != null">
+				company_address,
+			</if>
+			<if test=" parentId != null">
+				company_pid,
+			</if>
+			<if test=" remarks != null">
+				remarks,
+			</if>
+			<if test=" status != null">
+				status,
+			</if>
+			create_time,
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test=" name !=null">
+				#{name},
+			</if>
+			<if test=" contact != null">
+				#{contact},
+			</if>
+			<if test=" phone != null">
+				#{phone},
+			</if>
+			<if test="address != null">
+				#{address},
+			</if>
+			<if test=" parentId != null">
+				#{parentId},
+			</if>
+			<if test=" remarks != null">
+				#{remarks},
+			</if>
+			<if test=" status != null">
+				#{status},
+			</if>
+			now(),
+		</trim>
+	</insert>
+
+	<!-- 更新商品信息 -->
+	<update id="update" parameterType="com.netcai.admin.entity.Company">
+		update company
+		<set>
+			<trim suffixOverrides=",">
+				<if test=" name != null">
+					company_name = #{name},
+				</if>
+				<if test=" contact != null">
+					company_contact = #{contact},
+				</if>
+				<if test=" phone != null">
+					company_tel = #{phone},
+				</if>
+				<if test=" address != null">
+					company_address = #{address},
+				</if>
+				<if test=" parentId != null">
+					company_pid = #{parentId},
+				</if>
+				<if test=" remarks != null">
+					remarks = #{remarks},
+				</if>
+				<if test=" status != null">
+					status = #{status},
+				</if>
+			</trim>
+		</set>
+		where company_id = #{id}
+	</update>
+
+	<!-- 更新状态 -->
+	<update id="updateStatus">
+		update company set status=#{status} where company_id=#{id}
+	</update>
+	
+	<delete id="delete">
+		delete from company where company_id = #{companyId}
+	</delete>
+</mapper>

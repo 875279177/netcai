@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 角色xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.SysRoleDao">
+
+	<resultMap type="com.netcai.admin.entity.SysRole" id="roleResult">
+		<result column="id" property="id" />
+		<result column="role_name" property="roleName" />
+		<result column="role_desc" property="roleDesc" />
+		<result column="remarks" property="remarks" />
+		<result column="status" property="status" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<!-- 分页查询角色信息 -->
+	<select id="getAllSysRole" resultMap="roleResult">
+		select * from sys_role 
+		order by create_time desc
+		limit #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		select count(1) from sys_role 
+	</select>
+
+	<!-- 新增角色 -->
+	<insert id="insertSysRole" parameterType="com.netcai.admin.entity.SysRole">
+		insert into sys_role
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test=" roleName != null">
+				role_name,
+			</if>
+			<if test=" roleDesc !=null">
+				role_desc,
+			</if>
+			<if test=" remarks != null">
+				remarks,
+			</if>
+			<if test=" status != null">
+				status,
+			</if>
+			create_time,
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+		    <if test=" roleName != null">
+				#{roleName},
+			</if>
+			<if test=" roleDesc !=null">
+				#{roleDesc},
+			</if>
+			<if test=" remarks != null">
+				#{remarks},
+			</if>
+			<if test=" status != null">
+				#{status},
+			</if>
+			now(),
+		</trim>
+	</insert>
+
+	<!-- 更新角色 -->
+	<update id="updateSysRole" parameterType="com.netcai.admin.entity.SysRole">
+		update sys_role
+		<set>
+			<trim suffixOverrides=",">
+				<if test=" roleName != null">
+					role_name = #{roleName},
+				</if>
+				<if test=" roleDesc != null">
+					role_desc = #{roleDesc},
+				</if>
+				<if test=" remarks != null">
+					remarks = #{remarks},
+				</if>
+				<if test=" status != null">
+					status = #{status},
+				</if>
+			</trim>
+		</set>
+		where id = #{id}
+	</update>
+	
+	<!-- 根据id查找角色-->
+	<select id="getSysRoleById" parameterType="int" resultMap="roleResult">
+		select * from sys_role where id = #{id}
+	</select>
+	
+	<!-- 取得所有在用的角色 -->
+	<select id="getAllSysRoleByStatus" parameterType="com.netcai.admin.entity.SysRole" resultMap="roleResult">
+		select * from sys_role where status=1
+	</select>
+	
+	<!-- 用户角色信息 -->
+	<select id="getRoleByUserId" resultMap="roleResult">
+		select sr.* from sys_user_role sur
+		inner join  sys_role sr on sur.role_id=sr.id
+		where sur.user_id=#{userId}
+	</select>
+</mapper>

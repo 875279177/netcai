@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.CouponLogsDao">
+	<resultMap type="com.netcai.buyer.entity.CouponLogs" id="couponLogMap">
+		<result column="id" property="id" />
+		<result column="buyer_id" property="buyerId" />
+		<result column="coupon_receive_id" property="couponReceiveId" />
+		<result column="order_number" property="orderNumber" />
+		<result column="order_original_amount" property="originalOrderAmount" />
+		<result column="coupon_amount" property="couponAmount" />
+		<result column="order_final_amount" property="finalOrderAmount" />
+		<result column="create_time" property="createTime" />
+		<result column="status" property="status" />
+	</resultMap>
+	
+	<!-- 根据订单号查询日志 -->
+	<select id="getCouponIdByOrderNum" parameterType="String" resultType="Long">
+		select coupon_receive_id from coupon_logs where order_number=#{orderNum} 
+	</select>
+	
+	<!-- 根据订单号查询日志 -->
+	<select id="getLogByOrderNum" parameterType="String" resultMap="couponLogMap">
+		select * from coupon_logs where order_number=#{orderNum} and status=1
+	</select>
+	
+	<!-- 新增 -->
+	<insert id="insert" parameterType="com.netcai.buyer.entity.CouponLogs" >
+		 insert into coupon_logs (buyer_id,coupon_receive_id,order_number,order_original_amount,coupon_amount,order_final_amount,create_time) 
+		 values(#{buyerId},#{couponReceiveId},#{orderNumber},#{originalOrderAmount},#{couponAmount},#{finalOrderAmount},#{createTime})
+	</insert>
+	
+	<!-- 更新日志的状态 -->
+	<update id="updateStatus" parameterType="String">
+	     update coupon_logs set status=1 where order_number=#{orderNum}
+	</update>
+</mapper>

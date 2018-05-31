@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.CouponDao">
+
+	<resultMap type="com.netcai.buyer.entity.Coupon" id="couponMap">
+		<result column="id" property="id" />
+		<result column="region_id" property="regionId" />
+		<result column="type" property="type" />
+		<result column="name" property="name" />
+		<result column="img" property="img" />
+		<result column="start_time" property="startTime" />
+		<result column="end_time" property="endTime" />
+		<result column="money" property="money" />
+		<result column="full_money" property="fullMoney" />
+		<result column="remarks" property="remarks" />
+		<result column="status" property="status" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+
+	<!-- 查询买家可以参与的正在进行活动中的优惠券配置 -->
+	<select id="selectCoupon" parameterType="Long" resultMap="couponMap">
+		select * from coupon c where <![CDATA[ c.end_time>NOW() ]]> and c.status=1 and c.region_id in(select a.id from buyer b 
+		    inner join area a ON b.region_id=a.id where b.buyer_id=#{buyerId})
+	</select>
+	
+	<!-- 根据id正在进行活动中的优惠券配置 -->
+	<select id="selectCouponById" parameterType="Long" resultMap="couponMap">
+		select * from coupon where status=1 and id=#{id}
+	</select>
+
+</mapper>

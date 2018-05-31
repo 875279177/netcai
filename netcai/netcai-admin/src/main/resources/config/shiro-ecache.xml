@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache name="shirocache">
+    <!-- 磁盘的存储目录 -->
+    <diskStore path="/webser/logs/java/netcai-admin/shiro/ecache"/>
+     <defaultCache 
+        maxElementsInMemory="2000"
+        eternal="false"
+        overflowToDisk="false"
+        diskPersistent="false"
+        timeToIdleSeconds="120"
+        timeToLiveSeconds="120"/>
+</ehcache>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.SysCommonDao" >
+  <resultMap id="sysCommonMap" type="com.netcai.admin.entity.SysCommon" >
+	    <id column="sc_id" property="scId"/>
+	    <result column="buyer_type_id" property="buyerTypeId"/>
+	    <result column="area_id" property="areaId"/>
+	    <result column="goods_id" property="goodsId"/>
+	    <result column="create_time" property="createTime"/>
+  </resultMap>
+  
+  <resultMap id="sysCommonVoMap" type="com.netcai.admin.vo.SysCommonVo" >
+	    <id column="sc_id" property="scId"/>
+	    <result column="buyer_type_id" property="buyerTypeId"/>
+	    <result column="area_id" property="areaId"/>
+	    <result column="goods_id" property="goodsId"/>
+	    <result column="create_time" property="createTime"/>
+	    
+	    <result column="area_name" property="areaName"/>
+	    <result column="buyer_type" property="buyerType"/>
+	    
+	    <association property="goods" javaType="com.netcai.admin.entity.Goods">
+			<result column="goods_name" property="goodsName"/>
+			<result column="goods_as" property="goodsAs"/>
+			<result column="goods_label" property="goodsLabel"/>
+			<result column="goods_brand" property="goodsBrand"/>
+			<result column="goods_desc" property="goodsDesc"/>
+			<result column="goods_seq" property="goodsSeq"/>
+			<result column="goods_status" property="goodsStatus"/>
+			<result column="goods_remark" property="goodsRemark"/>
+			
+			<association property="seller" javaType="com.netcai.admin.entity.Seller">
+				<result column="seller_name" property="sellerName" />
+				<result column="seller_account" property="sellerAccount" />
+        	</association>
+			
+	    </association>
+  </resultMap>
+  
+ <!--  根据buyerTypeId and areaId删除 -->
+  <delete id="deleteAllByBuyerIdAndAreaId">
+  		delete from sys_common where buyer_type_id = #{buyerTypeId}
+  </delete>
+  
+  <!--  批量删除 -->
+  <delete id="deleteBatch">
+  		delete from sys_common where sc_id in
+  		(<foreach collection="ids" item="id" separator=",">
+            #{id}
+        </foreach>)
+  </delete>
+  
+  <!--  根据Id删除 -->
+  <delete id="delectById">
+  		delete from sys_common where sc_id = #{scId}
+  </delete>
+  
+	  <sql id="select">
+	  	SELECT
+			g.goods_name,
+			g.goods_as,
+			g.goods_label,
+			g.goods_brand,
+			g.goods_desc,
+			g.goods_seq,
+			g.goods_remark,
+			s.seller_name,
+			s.seller_account,
+			sc.create_time,
+			sc.buyer_type_id,
+			sc.goods_id,
+			sc.area_id,
+			sc.sc_id,
+			a.area_name,
+			bt.type_name buyer_type
+		FROM sys_common sc
+		INNER JOIN goods g ON sc.goods_id = g.goods_id AND goods_status = 1
+		INNER JOIN buyer_type bt ON bt.id = sc.buyer_type_id
+		INNER JOIN area a ON a.id = sc.area_id
+		LEFT JOIN seller s ON s.seller_id = g.user_id
+	  </sql>
+	  
+	  <sql id="where">
+	  	WHERE
+			1=1
+			<if test="s.buyerTypeId != null and s.buyerTypeId != ''">
+	 			AND sc.buyer_type_id = #{s.buyerTypeId}
+			</if>
+			<if test="s.areaId != null and s.areaId != ''">
+	 			AND  a.id = #{s.areaId}
+			</if>
+			<if test="s.goods!=null">
+				<if test="s.goods.seller!=null">
+					<if test="s.goods.seller.sellerName != null and s.goods.seller.sellerName != ''">
+			 			AND  s.seller_name like '%${s.goods.seller.sellerName}%' 
+					</if>
+				</if>
+			</if>
+	  </sql>
+  
+  	<!-- 排序-->
+	<sql id="orderBy">
+			ORDER BY sc.create_time DESC
+	</sql>
+	
+	<!-- 分组-->
+	<sql id="limit">
+		<if test="pageNum != null and pageSize != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  	<!-- 根据买家ID查询所有-->
+	<select id="getSysCommon" parameterType="SysCommonVo" resultMap="sysCommonVoMap">
+		<include refid="select" />
+		<include refid="where" />
+		<include refid="orderBy" />
+		<include refid="limit" />
+	</select>
+	
+	<!-- 根据买家ID查询所有-->
+	<select id="getCount" parameterType="SysCommonVo" resultType="int">
+		SELECT
+			count(1)
+		FROM sys_common sc
+		INNER JOIN goods g ON sc.goods_id = g.goods_id AND goods_status = 1
+		INNER JOIN buyer_type bt ON bt.id = sc.buyer_type_id
+		INNER JOIN area a ON a.id = sc.area_id
+		LEFT JOIN seller s ON s.seller_id = g.user_id
+		<include refid="where" />
+	</select>
+  
+  <!-- 批量新增 -->
+  <insert id="batchSave" parameterType="java.util.List" >
+    insert into sys_common(
+        buyer_type_id,
+        area_id,
+        goods_id,
+        create_time)
+        values
+    <foreach collection="list" item="item" separator=",">
+        (#{item.buyerTypeId},
+        #{item.areaId},
+        #{item.goodsId},
+        #{item.createTime})
+   </foreach>
+  </insert>
+</mapper>

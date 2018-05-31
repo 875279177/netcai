@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.WithdrawalLogsDao">
+
+  <resultMap type="com.netcai.admin.entity.WithdrawalLogs" id="withdrawalLogsMap">
+     <result column="id" property="id"/>
+     <result column="uid" property="uid"/>
+     <result column="status" property="status"/>
+     <result column="withdraw_order" property="withdrawOrder"/>
+     <result column="remark" property="remark"/>
+     <result column="create_by" property="createBy"/>
+     <result column="create_time" property="createTime"/>
+     
+     <!--   用户对象 -->
+     <association property="users" javaType="com.netcai.admin.entity.Users">
+     		<id column="uid" property="id"/>
+			<result column="true_name" property="trueName"/>
+			<result column="account" property="account"/>
+			<result column="type" property="type"/>
+	</association>
+  </resultMap>
+  
+  
+  
+  <!-- 查询的数据 -->
+  <sql id="WithdrawalLogsSelector">
+  		select
+			w.id ,
+			w.uid ,
+			w.status ,
+			w.withdraw_order,
+			w.remark ,
+			w.create_by ,
+			w.create_time ,
+			u.true_name ,
+			u.account ,
+			u.type
+		from 
+			withdrawal_logs w LEFT JOIN users u ON w.uid = u.id
+	</sql>
+  
+	<!-- 分页 -->
+	<sql id="WithdrawalLogsListLimit">
+		<if test="pageNum != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+	<!--   查询总数 -->
+  <select id="getPageCount" resultType="int">
+		select count(*) from withdrawal_logs
+	</select>
+	
+	<!-- 通过withdrawOrder查询单个 -->
+	<select id="getWithdrawalLogsByWithdrawOrder" parameterType="String" resultMap="withdrawalLogsMap">
+		<include refid="WithdrawalLogsSelector" />		
+		<where>
+			w.withdraw_order=#{withdrawOrder}
+		</where>
+	</select>
+	
+	<!-- 添加 -->
+	<insert id="insertWithdrawalLogs" parameterType="WithdrawalLogs">
+		insert into withdrawal_logs
+		<trim prefix="(" suffix=")">
+			<if test="uid != null">
+		      uid ,
+		    </if>
+		    <if test="status != null">
+		      status ,
+		    </if>
+			<if test="withdrawOrder != null">
+		      withdraw_order ,
+		    </if>
+		    <if test="remark != null">
+		     remark,
+		    </if>
+		    <if test="createBy != null">
+		     create_by,
+		    </if>
+		    <if test="createTime != null">
+		      create_time
+		    </if>
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+			<if test="uid != null">
+		      #{uid },
+		    </if>
+		    <if test="status != null">
+		      #{status },
+		    </if>
+			<if test="withdrawOrder != null">
+		      #{withdrawOrder },
+		    </if>
+		    <if test="remark != null">
+		     #{remark},
+		    </if>
+		    <if test="createBy != null">
+		     #{createBy},
+		    </if>
+		    <if test="createTime != null">
+		      #{createTime}
+		    </if>
+		</trim>
+	</insert>
+	
+</mapper>

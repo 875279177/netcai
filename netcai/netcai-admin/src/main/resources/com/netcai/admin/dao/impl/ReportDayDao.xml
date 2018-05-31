@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.ReportDayDao" >
+
+  <resultMap id="reportDayMap" type="com.netcai.admin.entity.ReportDay" >
+    <id column="day_id" property="dayId"  />
+    <result column="today" property="today"  />
+    <result column="order_num" property="orderNum"  />
+    <result column="order_amount" property="orderAmount"  />
+    <result column="seller_num" property="sellerNum" />
+    <result column="per_amount" property="perAmount"  />
+    <result column="av_amount" property="avAmount"  />
+    <result column="new_buyer_num" property="newBuyerNum"  />
+    <result column="new_buyer" property="newBuyer"  />
+    <result column="region_id" property="regionId"  />
+  </resultMap>
+  
+  <resultMap id="reportDayVoMap" type="com.netcai.admin.vo.ReportDayVo" >
+    <id column="day_id" property="dayId"  />
+    <result column="today" property="today"  />
+    <result column="order_num" property="orderNum"  />
+    <result column="order_amount" property="orderAmount"  />
+    <result column="seller_num" property="sellerNum" />
+    <result column="per_amount" property="perAmount"  />
+    <result column="av_amount" property="avAmount"  />
+    <result column="new_buyer_num" property="newBuyerNum"  />
+    <result column="new_buyer" property="newBuyer"  />
+    <result column="area_name" property="areaName"  />
+    <result column="area_id" property="areaId"  />
+    
+    <result column="create_time_start" property="createTimeStart"  />
+    <result column="create_time_stop" property="createTimeStop"  />
+  </resultMap>
+  
+  <!-- 查询所有 -->
+  <select id="selectList" resultMap="reportDayVoMap" >
+    select 
+    	s.*,
+    	a.area_name,
+    	a.id area_id
+    from 
+		report_day s INNER JOIN area a on s.region_id=a.id
+	WHERE
+		1 = 1
+		<if test="r.areaId != null and r.areaId != ''">
+			AND a.id = #{r.areaId}
+		</if>
+		<if test="r.today != null and r.today != ''">
+			AND DATE_FORMAT(s.today,'%Y-%m-%d')=DATE_FORMAT(r.today,'%Y-%m-%d')
+		</if>
+		<if test="r.createTimeStart != null  and r.createTimeStart != ''">
+			AND	DATE_FORMAT(s.today,'%Y-%m-%d') <![CDATA[ >= DATE_FORMAT(#{r.createTimeStart},'%Y-%m-%d')]]> 
+		</if>
+		<if test="r.createTimeStop != null  and r.createTimeStop != ''">
+			AND	DATE_FORMAT(s.today,'%Y-%m-%d') <![CDATA[ <= DATE_FORMAT(#{r.createTimeStop},'%Y-%m-%d')]]>
+		</if>
+	ORDER BY s.today DESC
+  </select>
+  
+ <!--  查询当天的; -->
+  <select id="getByDate" parameterType="int" resultMap="reportDayVoMap">
+	  	select 
+    		SUM(seller_num) seller_num,
+			SUM(new_buyer_num) new_buyer_num
+	    from 
+			report_day r
+		WHERE
+			DATEDIFF(r.today,NOW())= #{date} 
+  </select>
+  
+  <!-- 批量新增 -->
+  <insert id="insertBatch" parameterType="java.util.List" >
+    insert into report_day 
+    	(order_num, 
+	    order_amount, 
+	    seller_num, 
+	    per_amount, 
+	    av_amount, 
+	    new_buyer_num, 
+	    new_buyer, 
+	    region_id,
+    	today)
+    values 
+    <foreach collection="reportDays" item="list" separator=",">
+	    (#{list.orderNum}, 
+	    #{list.orderAmount}, 
+	    #{list.sellerNum}, 
+	    <choose>
+	    	<when test="list.sellerNum == 0 || list.sellerNum == null">0,</when>
+	    	<otherwise>
+	 	  	 #{list.orderAmount}/#{list.sellerNum}, 
+	    	</otherwise>
+	    </choose>
+	    <choose>
+	    	<when test="list.orderNum == 0 || list.orderNum == null">0,</when>
+	    	<otherwise>
+	   		 #{list.orderAmount}/#{list.orderNum}, 
+	    	</otherwise>
+	    </choose>
+	    #{list.newBuyerNum}, 
+	    #{list.newBuyer}, 
+	    #{list.regionId},
+	    #{list.today}) 
+    </foreach>
+  </insert>
+  
+  <resultMap id="orderCategoryListMap" type="com.netcai.admin.vo.OrderCategoryListVo" >
+    <result column="send_date" property="sendDate"  />
+    <result column="buyer_id" property="buyerId"  />
+    <result column="buyer_name" property="buyerName"  />
+    <collection property="clist" ofType="com.netcai.admin.vo.OrderCategoryItemVo">
+		<result column="goods_amount" property="goodsAmount" />
+        <result column="one_category_id" property="oneCategoryId"  />
+        <result column="two_category_id" property="twoCategoryId"  />
+    </collection>    
+  </resultMap>
+  
+  <!-- 买家订单按分类汇总 -->
+  <select id="getOrderByCategory" resultMap="orderCategoryListMap">
+	  select date_format(o.best_time,'%Y-%m-%d') as send_date,b.buyer_id,b.buyer_name,
+       sum(oi.goods_amount) as goods_amount,c.category_id as one_category_id,c2.category_id as two_category_id
+		from order_item oi
+		inner join order_info o on o.order_id=oi.order_id
+		inner join buyer b on oi.buyer_id=b.buyer_id
+		inner join goods_format gf on oi.format_id=gf.format_id
+		inner join goods g on g.goods_id=gf.goods_id
+		inner join category c3 on c3.category_id=g.category_id
+        inner join category c2 on c2.category_id=c3.parent_id
+        inner join category c on c.category_id=c2.parent_id
+		where oi.order_status=1 and o.trade_status!=2 and o.pay_status != 1 
+        group by send_date,b.buyer_id,c2.category_id
+        order by send_date desc
+  </select>
+  
+  <!-- 买家订单按分类汇总 -->
+  <select id="getOrderByCategoryCount" resultType="int">
+	   select count(distinct(CONCAT(date_format(o.best_time,'%Y-%m-%d'),b.buyer_id)))
+		from order_item oi
+		inner join order_info o on o.order_id=oi.order_id
+		inner join buyer b on oi.buyer_id=b.buyer_id
+		where oi.order_status=1 and o.trade_status!=2 and o.pay_status != 1 
+  </select>
+  
+  <resultMap id="categoryItemMap" type="com.netcai.admin.vo.CategoryItemVo" >
+    <result column="send_date" property="sendDate"  />
+    <result column="buyer_id" property="buyerId"  />
+    <result column="buyer_name" property="buyerName"  />
+    <result column="buyer_num" property="buyerNum"  />
+    <result column="goods_amount" property="goodsAmount" />
+    <result column="one_category_id" property="oneCategoryId"  />
+    <result column="two_category_id" property="twoCategoryId"  />  
+  </resultMap>
+  <!-- 按买家/天购买明细 -->
+  <select id="getOrderItemByCategory" resultMap="categoryItemMap">
+	  select date_format(o.best_time,'%Y-%m-%d') as send_date,b.buyer_id,b.buyer_name,
+       sum(oi.goods_amount) as goods_amount,c.category_id as one_category_id,c2.category_id as two_category_id
+		from order_item oi
+		inner join order_info o on o.order_id=oi.order_id
+		inner join buyer b on oi.buyer_id=b.buyer_id
+		inner join goods_format gf on oi.format_id=gf.format_id
+		inner join goods g on g.goods_id=gf.goods_id
+		inner join category c3 on c3.category_id=g.category_id
+        inner join category c2 on c2.category_id=c3.parent_id
+        inner join category c on c.category_id=c2.parent_id
+		where oi.order_status=1 and o.trade_status!=2 and o.pay_status != 1 
+		<if test=" search.saleId !=null and search.saleId !=''">
+			and b.sale_id = #{search.saleId}
+		</if>
+		<if test=" search.buyerName !=null and search.buyerName !=''">
+			and b.buyer_name like concat('%',#{search.buyerName},'%')  
+		</if>
+		<if test=" search.areaId !=null and search.areaId !=''">
+			and b.region_id = #{search.areaId}
+		</if>
+		<if test=" search.categoryName !=null and search.buyerName !=''">
+			and (c.category_name like concat('%',#{search.categoryName},'%') 
+			or c2.category_name like concat('%',#{search.categoryName},'%') 
+			or c3.category_name like concat('%',#{search.categoryName},'%')
+			)
+		</if>
+		<if test=" search.beginDate !=null and search.beginDate !=''">
+			and date_format(o.best_time,'%Y-%m-%d')>= #{search.beginDate} 
+		</if>
+		<if test=" search.endDate !=null and search.endDate !=''">
+			and date_format(o.best_time,'%Y-%m-%d')<![CDATA[<=]]> #{search.endDate} 
+		</if>
+        group by send_date,b.buyer_id,c2.category_id
+        order by send_date desc
+  </select>
+  <!-- 按天购买明细 -->
+  <select id="getOrderBuyerByCategory" resultMap="categoryItemMap">
+		 select date_format(o.best_time,'%Y-%m-%d') as send_date,
+	     sum(oi.goods_amount) as goods_amount,c.category_id as one_category_id,c2.category_id as two_category_id
+	     from order_item oi
+		 inner join order_info o on o.order_id=oi.order_id
+		 inner join buyer b on o.buyer_id=b.buyer_id
+		 inner join goods_format gf on oi.format_id=gf.format_id
+		 inner join goods g on g.goods_id=gf.goods_id
+		 inner join category c3 on c3.category_id=g.category_id
+		 inner join category c2 on c2.category_id=c3.parent_id
+		 inner join category c on c.category_id=c2.parent_id
+		 where o.trade_status!=2 and o.pay_status != 1 
+		 <if test=" search.type==1">
+		    and oi.order_status=1
+		 </if>
+		 <if test=" search.type==2">
+		    and (oi.order_status=1 or (oi.order_status=2 and oi.seller_status=3) or (oi.order_status=2 and oi.seller_status=5) )
+		 </if>
+		 <if test=" search.areaId !=null and search.areaId !=''">
+			and b.region_id = #{search.areaId}
+		 </if>
+		 <if test=" search.saleId !=null and search.saleId !=''">
+			and b.sale_id = #{search.saleId}
+		 </if>
+		 <if test=" search.beginDate !=null and search.beginDate !=''">
+			and date_format(o.best_time,'%Y-%m-%d')>= #{search.beginDate} 
+		 </if>
+		 <if test=" search.endDate !=null and search.endDate !=''">
+			and date_format(o.best_time,'%Y-%m-%d')<![CDATA[<=]]> #{search.endDate} 
+		 </if>
+         group by send_date,c2.category_id
+		 order by send_date desc
+  </select>
+   <!-- 按天购买明细 -->
+  <select id="getOrderBuyerByDate" resultMap="categoryItemMap">
+	    select date_format(oo.best_time,'%Y-%m-%d') as send_date, 
+		count(distinct(ii.buyer_id)) as buyer_num,sum(ii.goods_amount) as goods_amount 
+		from order_item ii 
+		inner join order_info oo on ii.order_id=oo.order_id
+		inner join buyer b on oo.buyer_id=b.buyer_id
+		where oo.trade_status!=2 and oo.pay_status != 1 
+		<if test=" search.type==1">
+		    and ii.order_status=1
+		</if>
+		<if test=" search.type==2">
+		    and (ii.order_status=1 or (ii.order_status=2 and ii.seller_status=3) or (ii.order_status=2 and ii.seller_status=5) )
+		</if>
+		<if test=" search.saleId !=null and search.saleId !=''">
+			and b.sale_id = #{search.saleId}
+		</if>
+		<if test=" search.areaId !=null and search.areaId !=''">
+			and b.region_id = #{search.areaId}
+		</if>
+		<if test=" search.beginDate !=null and search.beginDate !=''">
+			and date_format(oo.best_time,'%Y-%m-%d')>= #{search.beginDate} 
+		</if>
+		<if test=" search.endDate !=null and search.endDate !=''">
+			and date_format(oo.best_time,'%Y-%m-%d')<![CDATA[<=]]> #{search.endDate} 
+		</if>
+         group by send_date
+		 order by send_date desc
+  </select>
+</mapper>

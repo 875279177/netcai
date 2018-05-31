@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商品图片xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.GoodsPictureDao">
+
+	<resultMap type="com.netcai.admin.entity.GoodsPicture" id="goodsPictureResult">
+		<result column="pic_id" property="picId" />
+		<result column="goods_id" property="goodsId" />
+		<result column="pic_url" property="picUrl" />
+		<result column="pic_seq" property="picSeq" />
+		<result column="is_main" property="isMain" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<!-- 批量新增商品图片-->
+	<insert id="batchInsertGoodsPicture" parameterType="com.netcai.admin.entity.Goods">
+		insert into goods_picture (goods_id,pic_url,pic_seq,is_main,create_time) values   
+		<foreach collection="pictureList" item="item" separator=",">  
+		(#{goodsId},#{item.picUrl},#{item.picSeq},#{item.isMain},now())  
+		</foreach>  
+	</insert>
+
+	<!-- 更新商品图片顺序 -->
+	<update id="updatePictureSeq" parameterType="com.netcai.admin.entity.GoodsPicture">
+		update goods_picture set pic_seq = #{picSeq} where pic_id = #{picId}
+	</update>
+	
+	<!-- 删除商品图片 -->
+	<delete id="deleteGoodsPicture">
+		delete from goods_picture where goods_id = #{goodsId}   
+	</delete>
+	
+	<!-- 查询商品图片信息 -->
+	<select id="getGoodsPicture" parameterType="com.netcai.admin.entity.GoodsPicture" resultMap="goodsPictureResult">
+		select * from goods_picture where goods_id=#{goodsId}
+	</select>
+	
+	<!-- 删除单张商品图片 -->
+	<delete id="deletePictureById">
+		delete from goods_picture where pic_id = #{picId}   
+	</delete>
+</mapper>

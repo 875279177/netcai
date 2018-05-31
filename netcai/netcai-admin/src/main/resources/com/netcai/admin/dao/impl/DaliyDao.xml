@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.DaliyDao">
+	<!-- 查询销售人员日报信息 -->
+	<resultMap type="com.netcai.admin.entity.SalesDaliy" id="salesDaliyMap">
+		<result property="sdId" column="sd_id" />
+		<result property="sdDate" column="sd_date" />
+		<result property="saleId" column="sale_id" />
+		<result property="saleName" column="sale_name" />
+		<result property="task1" column="task1" />
+		<result property="taskReal1" column="task_real1" />
+		<result property="task2" column="task2" />
+		<result property="taskReal2" column="task_real2" />
+		<result property="sdStreet" column="sd_street" />
+		<result property="sdSummary" column="sd_summary" />
+		<result property="sdTime" column="sd_time" />
+		<result property="lookStatus" column="look_status" />
+		<result property="lookTime" column="look_time" />
+		<result property="lookName" column="look_name" />
+		<result property="lookReply" column="look_reply" />
+	</resultMap>
+   
+   <!-- 统计日报表数量 -->
+   <select id="getSalesDaliyCount" resultType="int">
+		select count(1)
+		from sales_daily sd
+		inner join sales s on s.id = sd.sale_id
+        where 1=1
+        <if test="saleId!=null">
+           and sd.sale_id = #{saleId}
+        </if>
+        <if test="lookStatus!=null">
+           and sd.look_status = #{lookStatus}
+        </if>
+        <if test="beginDate!=null">
+           and sd.sd_date >= #{beginDate}
+        </if>
+        <if test="endDate!=null">
+           and sd.sd_date <![CDATA[<=]]> #{endDate}
+        </if>
+   </select>
+   <!-- 查询销售人员日报信息 -->
+   <select id="getSalesDaliyList" resultMap="salesDaliyMap">
+		select sd.*,s.true_name as sale_name,l.true_name as look_name,
+		(select sum(oi.goods_amount) from order_info o
+		inner join order_item oi on o.order_id=oi.order_id
+		inner join buyer b on b.buyer_id=o.buyer_id
+		where o.trade_status!=2 and o.pay_status!=1 and oi.order_status=1
+		and b.sale_id=sd.sale_id 
+		and datediff(o.best_time,sd.sd_date) =0
+		) as task_real1, 
+		(select count(distinct sv.buyer_id) from sales_visit sv
+		where sv.sv_status=1 and sv.sale_id=sd.sale_id  
+		and datediff(sv.sv_time,sd.sd_date) =0
+		) as task_real2 
+		from sales_daily sd
+		inner join sales s on s.id = sd.sale_id
+		left join sales l on l.id=sd.look_sale_id
+        where 1=1
+        <if test="saleId!=null">
+           and sd.sale_id = #{saleId}
+        </if>
+        <if test="lookStatus!=null">
+           and sd.look_status = #{lookStatus}
+        </if>
+        <if test="beginDate!=null and beginDate!=''">
+           and sd.sd_date >= #{beginDate}
+        </if>
+        <if test="endDate!=null and endDate!=''">
+           and sd.sd_date <![CDATA[<=]]> #{endDate}
+        </if>
+        order by sd.sd_time desc
+        limit #{offset},#{pageSize} 
+   </select>
+   
+    <!-- 查询销售人员拜访信息 -->
+	<resultMap type="com.netcai.admin.entity.SalesVisit" id="salesVisitMap">
+		<result property="svId" column="sv_id" />
+		<result property="saleId" column="sale_id" />
+		<result property="saleName" column="sale_name" />
+		<result property="buyerId" column="buyer_id" />
+		<result property="buyerName" column="buyer_name" />
+		<result property="bossName" column="boss_name" />
+		<result property="bossTel" column="boss_tel" />
+		<result property="svLogo" column="sv_logo" />
+		<result property="svAddress" column="sv_address" />
+		<result property="svType" column="sv_type" />
+		<result property="svStatus" column="sv_status" />
+		<result property="svWay" column="sv_way" />
+		<result property="svTime" column="sv_time" />
+		<result property="svRemark" column="sv_remark" />
+	</resultMap>
+	
+	<!-- 统计销售人员拜访记录-->
+   <select id="getSalesVisitCount" resultType="int">
+		select count(1)
+		from sales_visit sv
+		inner join sales s on s.id = sv.sale_id
+		inner join buyer b on b.buyer_id=sv.buyer_id
+        where 1=1
+        <if test="saleId!=null">
+           and sv.sale_id = #{saleId}
+        </if>
+        <if test="svType!=null">
+           and sv.sv_type = #{svType}
+        </if>
+        <if test="buyerName!=null and buyerName!=''">
+           and b.buyer_name like concat('%',#{buyerName},'%')  
+        </if>
+        <if test="beginDate!=null and beginDate!=''">
+           and sv.sv_time >= #{beginDate}
+        </if>
+        <if test="endDate!=null and endDate!=''">
+           and sv.sd_time <![CDATA[<=]]> #{endDate}
+        </if>
+   </select>
+   
+	<!-- 查询销售人员拜访记录 -->
+    <select id="getSalesVisitList" resultMap="salesVisitMap">
+		select sv.sv_id,sv.sale_id,s.true_name as sale_name,sv.sv_type,sv.sv_remark,sv.sv_way,sv.sv_status,
+		sv.buyer_id,b.buyer_name,b.boss_name,b.boss_tel,sv.sv_logo,sv.sv_address,sv.sv_time
+		from sales_visit sv
+		inner join sales s on s.id = sv.sale_id
+		inner join buyer b on b.buyer_id=sv.buyer_id
+        where 1=1
+        <if test="saleId!=null">
+           and sv.sale_id = #{saleId}
+        </if>
+        <if test="svType!=null">
+           and sv.sv_type = #{svType}
+        </if>
+        <if test="buyerName!=null and buyerName!=''">
+           and b.buyer_name like concat('%',#{buyerName},'%')  
+        </if>
+        <if test="beginDate!=null and beginDate!=''">
+           and sv.sv_time >= #{beginDate}
+        </if>
+        <if test="endDate!=null and endDate!=''">
+           and sv.sd_time <![CDATA[<=]]> #{endDate}
+        </if>
+        order by sv.sv_time desc
+        limit #{offset},#{pageSize} 
+    </select>
+    
+   <!-- 更新当天销售业绩/线上支付/蔬菜销售-->
+   <update id="updateDailyTask">
+        update sales_daily sd
+		inner join 
+		(select s.id,s.true_name,sum(oi.goods_amount) as total_amount ,
+		date_format(o.best_time,'%Y-%m-%d') as send_date,
+		(select sum(ai.goods_amount) from order_info a 
+		inner join order_item ai on a.order_id=ai.order_id
+		inner join buyer bb on bb.buyer_id=a.buyer_id
+		where a.trade_status!=2 and a.pay_status=2 and ai.order_status=1 and bb.sale_id=s.id
+		and datediff(a.best_time, o.best_time) =0
+		) as online_amt,
+		(select sum(ai.goods_amount) from order_info a 
+		inner join order_item ai on a.order_id=ai.order_id
+		inner join buyer bbb on bbb.buyer_id=a.buyer_id
+		inner join goods_format gf on gf.format_id=ai.format_id
+		inner join goods g on g.goods_id=gf.goods_id
+		inner join category c on c.category_id=g.category_id
+		where a.trade_status!=2 and a.pay_status !=1 and ai.order_status=1 and bbb.sale_id=s.id 
+		and c.category_code like '01.%' and datediff(a.best_time, o.best_time) =0
+		)as shucai_amt
+		from order_info o
+		inner join order_item oi on o.order_id=oi.order_id
+		inner join buyer b on b.buyer_id=o.buyer_id
+		inner join sales s on s.id=b.sale_id
+		where o.trade_status!=2 and o.pay_status!=1 and oi.order_status=1 and  datediff(now(), o.best_time) =0 
+		group by s.id) a on sd.sale_id=a.id and sd.sd_date=a.send_date
+		set sd.task_real1=a.total_amount,sd.real_prop1=round(a.total_amount/sd.task1,4)
+   </update>
+   
+   <!-- 更新当天新注册/空降A/维护客户-->
+   <update id="updateCustomerTask">
+        update sales_daily sd
+		inner join(
+		select date_format(now(),'%Y-%m-%d') c_date,s.id,count(1) as new_num,
+		(select count(DISTINCT(oo.buyer_id)) from order_info oo
+		inner join buyer bb on bb.buyer_id=oo.buyer_id
+		inner join users uu on uu.id=bb.buyer_id
+		where uu.status=3 and bb.sale_id=s.id and datediff(now(),uu.create_time) =1
+		and datediff(oo.best_time,now()) =0
+		) as kj_a,
+		(select count(distinct(sv.buyer_id)) from sales_visit sv
+		where sv.sale_id=s.id and datediff(now(),sv.sv_time)=1
+		) as wh_num
+		from buyer b
+		inner join users u on u.id=b.buyer_id
+		inner join sales s on s.id=b.sale_id
+		where u.status=3 and datediff(now(),u.create_time)=1
+		group by s.id) a
+		on sd.sale_id=a.id and sd.sd_date=a.c_date
+		set sd.task_real2=a.new_num,sd.real_prop2=round(a.new_num/sd.task2,4),
+		sd.task_real3=a.kj_a,sd.real_prop3=round(a.kj_a/sd.task3,4),
+		sd.task_real4=a.wh_num,sd.real_prop4=round(a.wh_num/sd.task4,4)
+   </update>
+   
+   <!-- 更新日拜访量-->
+   <update id="updateDayVisitTask">
+        update sales_daily sd
+		inner join(
+		select a.sale_id,date_format(now(),'%Y-%m-%d') c_date,count(DISTINCT a.buyer_id) as all_num from(
+		select b.buyer_id,b.sale_id 
+		from buyer b
+		inner join users u on u.id=b.buyer_id
+		inner join sales s on s.id=b.sale_id
+		where u.status=3 and datediff(now(),u.create_time)=1
+		union all
+		select b.buyer_id,b.sale_id 
+		from sales_visit sv
+		inner join buyer b on b.buyer_id=sv.buyer_id
+		where datediff(now(),sv.sv_time)=1 
+		)a group by a.sale_id) b 
+		on sd.sale_id=b.sale_id and sd.sd_date=b.c_date
+		set sd.task_real2=b.all_num,sd.real_prop2=round(b.all_num/sd.task2,4)
+   </update>
+   
+   <!-- 销售周报 -->
+   <resultMap type="com.netcai.admin.entity.SalesWeekly" id="salesWeeklyMap">
+		<result property="swId" column="sw_id" />
+		<result property="saleId" column="sale_id" />
+		<result property="saleName" column="sale_name" />
+		<result property="swFmon" column="sw_fmon" />
+		<result property="swRange" column="sw_range" />
+		<result property="swSummary" column="sw_summary" />
+		<result property="swPlan" column="sw_plan" />
+		<result property="needHelp" column="need_help" />
+		<result property="swTime" column="sw_time" />
+		<result property="lookSaleId" column="look_sale_id" />
+		<result property="lookName" column="look_name" />
+		<result property="lookStatus" column="look_status" />
+		<result property="lookTime" column="look_time" />
+		<result property="lookReply" column="look_reply" />
+   </resultMap>
+   
+   <!-- 统计销售人员周报-->
+   <select id="getSalesWeeklyCount" resultType="int">
+		select count(1)
+		from sales_weekly sw 
+        where 1=1
+        <if test="saleId!=null">
+           and sw.sale_id = #{saleId}
+        </if>
+        <if test="lookStatus!=null">
+           and sw.look_status = #{lookStatus}
+        </if>
+   </select>
+  
+   <!-- 销售周报 列表-->
+   <select id="getWeeklyList" resultMap="salesWeeklyMap">
+		select sw.*,s.true_name as sale_name,ss.true_name as look_name
+		from sales_weekly sw 
+		inner join sales s on s.id=sw.sale_id
+		left join sales ss on ss.id=sw.look_sale_id
+		where 1=1
+        <if test="saleId!=null">
+           and sw.sale_id = #{saleId}
+        </if>
+        <if test="lookStatus!=null">
+           and sw.look_status = #{lookStatus}
+        </if>
+        order by sw.sw_range desc
+        limit #{offset},#{pageSize} 
+   </select>
+   
+</mapper>

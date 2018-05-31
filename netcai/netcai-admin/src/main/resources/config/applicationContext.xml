@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/task
+       	http://www.springframework.org/schema/task/spring-task-4.0.xsd 
+		http://www.springframework.org/schema/mvc 
+        http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+
+	<context:annotation-config />
+
+	<context:component-scan base-package="com.netcai.admin" />
+
+	<!-- PropertyPlaceholderConfigurer,用于spring ${placeholder}的解析 -->
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE" />
+		<property name="properties" ref="applicationProperties" />
+	</bean>
+
+	<!-- 应用属性文件读入 -->
+	<bean id="applicationProperties"
+		class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+		<property name="ignoreResourceNotFound" value="true" />
+		<!-- 设置编码格式 -->
+		<property name="fileEncoding" value="UTF-8" />
+		<property name="locations">
+			<list>
+				<value>classpath*:netcai-admin-config.properties</value>
+				<value>file:/webser/java/config/netcai-admin-config.properties</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${driver}"></property>
+		<property name="url" value="${url}"></property>
+		<property name="username" value="${user}"></property>
+		<property name="password" value="${password}"></property>
+		<!-- 最大空闲连接 -->
+		<property name="maxIdle" value="${maxIdle}"></property>
+		<!-- 最小空闲连接 -->
+		<property name="minIdle" value="${minIdle}"></property>
+		<!-- 初始化连接 -->
+		<property name="initialSize" value="${initialSize}"></property>
+		<!-- 最大活动连接 -->
+		<property name="maxActive" value="${maxActive}"></property>
+		<!-- 从连接池中取连接的最大等待时间，单位ms -->
+		<property name="maxWait" value="${maxWait}"></property>
+		<!-- testOnBorrow：取得对象时是否进行验证，检查对象是否有效，默认为false，借出连接时不要测试，否则很影响性能 -->
+		<property name="testOnBorrow" value="false"></property>
+		<!-- testOnReturn：返回对象时是否进行验证，检查对象是否有效，默认为false -->
+		<property name="testOnReturn" value="true"></property>
+		<!-- 指明连接是否被空闲连接回收器(如果有)进行检验.如果检测失败,则连接将被从池中去除. -->
+		<property name="testWhileIdle" value="true"></property>
+		<!-- 移除无引用连接（那些没有close的连接) -->
+		<property name="removeAbandoned" value="true" />
+		<!-- removeAbandonedTimeout: 超时时间(以秒数为单位) -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<!-- 每30秒运行一次空闲连接回收器 -->
+		<property name="timeBetweenEvictionRunsMillis" value="30000"></property>
+		<!-- 一个连接空闲多久从池中移除回收，-1表示不做判断，有值则表示，池中的连接空闲30分钟后被回收,默认值就是30分钟。 -->
+		<property name="minEvictableIdleTimeMillis" value="1800000"></property>
+		<!-- 在每次空闲连接回收器线程(如果有)运行时检查的连接数量 ,过期时循环测试多少次（0就相当于关闭定时器） -->
+		<property name="numTestsPerEvictionRun" value="3"></property>
+		<property name="validationQuery" value="SELECT COUNT(*) FROM DUAL"></property>
+	</bean>
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="typeAliasesPackage" value="com.netcai.admin.entity,com.netcai.admin.vo" />
+		<property name="mapperLocations" value="classpath:com/netcai/admin/dao/impl/*Dao.xml" />
+	</bean>
+
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.netcai.admin.dao" />
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="check*" propagation="REQUIRED" read-only="true" />
+			<tx:method name="search*" propagation="REQUIRED" read-only="true" />
+			<tx:method name="find*" propagation="REQUIRED" read-only="true" />
+			<tx:method name="get*" propagation="REQUIRED" read-only="true" />
+			<tx:method name="is*" propagation="REQUIRED" read-only="true" />
+			<tx:method name="list*" propagation="REQUIRED" read-only="true" />
+			<tx:method name="select*" propagation="REQUIRED" read-only="true" />
+			<tx:method name="query*" propagation="REQUIRED" read-only="true" />
+			<tx:method name="*" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+		</tx:attributes>
+	</tx:advice>
+
+	<aop:config>
+		<!-- 只对业务逻辑层实施事务 -->
+		<aop:pointcut id="txPointcut"
+			expression="execution(* com.netcai.admin.service..*.*(..))" />
+		<!-- Advisor定义，切入点和通知分别为txPointcut、txAdvice -->
+		<aop:advisor pointcut-ref="txPointcut" advice-ref="txAdvice" />
+	</aop:config>
+
+	<!-- 启动定时器 --> 
+    <task:annotation-driven/>
+    
+    <!-- 导入shiro的配置文件 -->
+    <import resource="classpath:config/applicationContext-shiro.xml"/>
+
+</beans>

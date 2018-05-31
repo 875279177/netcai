@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商家信息 -->
+<mapper namespace="com.netcai.buyer.dao.SmsDao">
+
+	<resultMap type="com.netcai.buyer.entity.Sms" id="smsMap">
+		<result column="id" property="id" />
+		<result column="phone" property="phone" />
+		<result column="message" property="message" />
+		<result column="remark" property="remark" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<!-- 添加 -->
+	<insert id="saveSms" parameterType="com.netcai.buyer.entity.Sms">
+		insert into sms(phone,message,remark,create_time) values(#{phone},#{message},#{remark},#{createTime})
+	</insert>
+</mapper>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商品规格xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.GoodsFormatDao">
+
+	<resultMap type="com.netcai.admin.entity.GoodsFormat" id="goodsFormatResult">
+		<result column="format_id" property="formatId" />
+		<result column="goods_id" property="goodsId" />
+		<result column="unit_id" property="unitId" />
+		<result column="format_name" property="formatName" />
+		<result column="format_price" property="formatPrice" />
+		<result column="format_num" property="formatNum" />
+		<result column="format_seq" property="formatSeq" />
+		<result column="format_status" property="formatStatus" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<!-- 批量新增商品规格-->
+	<insert id="batchInsertGoodsFormat" parameterType="com.netcai.admin.entity.Goods">
+		insert into goods_format (goods_id,unit_id,format_name,format_price,format_num,format_seq,format_status,create_time) values   
+		<foreach collection="formatList" item="item" separator=",">  
+		(#{goodsId},#{item.unitId},#{item.formatName},#{item.formatPrice},#{item.formatNum},#{item.formatSeq},#{item.formatStatus},now())  
+		</foreach>  
+	</insert>
+
+	<!-- 更新商品规格 -->
+	<update id="updateGoodsFormat" parameterType="com.netcai.admin.entity.GoodsFormat">
+		update goods_format set format_name = #{formatName}, 
+		format_price = #{formatPrice},
+		format_num = #{formatNum},
+		format_status = #{formatStatus},
+		format_seq = #{formatSeq},
+		unit_id = #{unitId} 
+		where format_id = #{formatId}
+	</update>
+
+	<!-- 复制商品规格-->
+	<insert id="copyGoodsFormat">
+		insert into goods_format (goods_id,unit_id,format_name,format_price,format_num,format_status,create_time) 
+		(select #{newGoodsId},unit_id, format_name,format_price,format_num,1,now() from goods_format where goods_id=#{oldGoodsId})
+	</insert>
+	
+	<!-- 删除商品规格判断-->
+	<select id="checkGoodsFormat" resultType="java.lang.Integer">
+		select 1 from goods_format g 
+		where g.format_id=#{formatId} 
+		and 
+		(exists (select 1 from goods_cart where g.format_id=format_id) or
+		exists (select 1 from order_item where g.format_id=format_id) or
+		exists (select 1 from activity_goods where g.format_id=goods_formart_id)
+		)
+	</select>
+	
+	<!-- 删除商品规格-->
+	<delete id="deleteGoodsFormat">
+		delete from goods_format where format_id = #{formatId}
+	</delete>
+	
+	<!-- 根据商品id查询商品规格 -->
+	<select id="selectGoodsFormat" parameterType="Long"  resultMap="goodsFormatResult">
+		select * from goods_format where goods_id=#{goodsId}
+	</select>
+	
+</mapper>

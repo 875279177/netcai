@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.WithdrawalBankDao">
+
+  <resultMap type="com.netcai.admin.entity.WithdrawalBank" id="withdrawalBankMap">
+     <result column="id" property="id"/>
+     <result column="uid" property="uid"/>
+     <result column="cnname" property="cnname"/>
+     <result column="bank_code" property="bankCode"/>
+     <result column="bank_name" property="bankName"/>
+     <result column="bank_number" property="bankNumber"/>
+     <result column="create_time" property="createTime"/>
+     
+     <!--   用户对象 -->
+     <association property="users" javaType="com.netcai.admin.entity.Users">
+     		<id column="uid" property="id"/>
+			<result column="true_name" property="trueName"/>
+			<result column="type" property="type"/>
+			<result column="account" property="account"/>
+     </association>
+  </resultMap>
+  
+  <!-- 查询的数据 -->
+  <sql id="WithdrawalBankSelector">
+  		select 
+  			w.*,
+	  		u.true_name,
+	  		u.account ,
+	  		u.type
+		from 
+			withdrawal_bank w LEFT JOIN users u ON w.uid = u.id
+	</sql>
+  
+  <!-- 条件查询语句 -->
+  <sql id="WithdrawalBankMapWhere">
+		<where>
+			1=1  
+			<if test="w.users != null">
+				<if test="w.cnname != null and w.cnname != ''">
+					AND w.cnname like concat('%',#{w.cnname},'%')  
+				</if>
+				<if test="w.users.account != null and w.users.account != ''">
+					AND	u.account like concat('%', #{w.users.account},'%')
+				</if>
+			</if>
+		</where>
+	</sql>
+	
+	
+	<!-- 分页 -->
+	<sql id="WithdrawalBankListLimit">
+		<if test="pageNum != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  <!-- 查询所有   以及条件查询-->
+  <select id="getWithdrawalBank" parameterType="WithdrawalBank" resultMap="withdrawalBankMap">
+     	<include refid="WithdrawalBankSelector" />
+		<include refid="WithdrawalBankMapWhere" />
+		<include refid="WithdrawalBankListLimit" />
+  </select>
+  
+	<!--   查询总数 -->
+  <select id="getPageCount" resultType="int">
+		select 
+			count(*) 
+		from 
+			withdrawal_bank w LEFT JOIN users u ON w.uid = u.id
+			<include refid="WithdrawalBankMapWhere" />
+	</select>
+	
+	<!-- 通过Id查询单个 -->
+	<select id="getWithdrawalBankByKey" parameterType="Integer" resultMap="withdrawalBankMap">
+		<include refid="WithdrawalBankSelector" />		
+		<where>
+			w.id=#{id}
+		</where>
+	</select>
+	
+	<!-- 添加 -->
+	<insert id="insertWithdrawalBank" parameterType="WithdrawalBank">
+		insert into withdrawal_bank
+		<trim prefix="(" suffix=")">
+		<if test="uid != null">
+	      uid ,
+	    </if>
+		<if test="cnname != null">
+	      cnname ,
+	    </if>
+	    <if test="bankCode != null">
+	     bank_code,
+	    </if>
+	    <if test="bankName != null">
+	     bank_name,
+	    </if>
+	     <if test="bankNumber != null">
+	      bank_number,
+	    </if>
+	    <if test="createTime != null">
+	      create_time
+	    </if>
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+		<if test="uid != null">
+	      #{uid },
+	    </if>
+		<if test="cnname != null">
+	      #{cnname },
+	    </if>
+	    <if test="bankCode != null">
+	     #{bankCode},
+	    </if>
+	    <if test="bankName != null">
+	     #{bankName},
+	    </if>
+	     <if test="bankNumber != null">
+	      #{bankNumber},
+	    </if>
+	    <if test="createTime != null">
+	      #{createTime}
+	    </if>
+		</trim>
+	</insert>
+	
+</mapper>

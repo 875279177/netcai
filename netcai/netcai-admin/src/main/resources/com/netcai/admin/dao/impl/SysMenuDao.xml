@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.SysMenuDao">
+
+	<resultMap type="com.netcai.admin.entity.SysMenu" id="menuResult">
+		<result column="menu_id" property="menuId" />
+		<result column="menu_code" property="menuCode" />
+		<result column="menu_name" property="menuName" />
+		<result column="menu_href" property="menuHref" />
+		<result column="menu_icon" property="menuIcon" />
+		<result column="parent_id" property="parentId" />
+		<result column="menu_level" property="menuLevel" />
+		<result column="menu_seq" property="menuSeq" />
+		<result column="is_end" property="isEnd" />
+		<result column="percode" property="percode" />
+		<result column="type" property="type" />
+		<result column="menu_status" property="menuStatus" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+
+	<!-- 查询所有的菜单 -->
+	<select id="getAllMenu" parameterType="com.netcai.admin.entity.SysMenu"
+		resultMap="menuResult">
+		select * from sys_menu order by menu_seq
+	</select>
+
+	<!-- 新增菜单 -->
+	<insert id="insertMenu" parameterType="com.netcai.admin.entity.SysMenu"
+		useGeneratedKeys="true" keyProperty="menuId">
+		insert into sys_menu
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test=" menuCode !=null">
+				menu_code,
+			</if>
+			<if test=" menuName != null">
+				menu_name,
+			</if>
+			<if test=" menuHref != null">
+				menu_href,
+			</if>
+			<if test=" menuIcon != null">
+				menu_icon,
+			</if>
+			<if test=" parentId != null">
+				parent_id,
+			</if>
+			<if test="menuLevel != null">
+				menu_level,
+			</if>
+			<if test=" menuSeq != null">
+				menu_seq,
+			</if>
+			<if test=" isEnd != null">
+				is_end,
+			</if>
+			<if test=" type != null">
+				type,
+			</if>
+			<if test=" percode != null and percode !='' ">
+				percode,
+			</if>
+			<if test=" menuStatus != null">
+				menu_status,
+			</if>
+			create_time,
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test=" menuCode != null">
+				#{menuCode},
+			</if>
+			<if test=" menuName != null">
+				#{menuName},
+			</if>
+			<if test=" menuHref != null">
+				#{menuHref},
+			</if>
+			<if test=" menuIcon != null">
+				#{menuIcon},
+			</if>
+			<if test=" parentId != null">
+				#{parentId},
+			</if>
+			<if test="menuLevel != null">
+				#{menuLevel},
+			</if>
+			<if test=" menuSeq != null">
+				#{menuSeq},
+			</if>
+			<if test=" isEnd != null">
+				#{isEnd},
+			</if>
+			<if test=" type != null">
+				#{type},
+			</if>
+			<if test=" percode != null and percode !='' ">
+				#{percode},
+			</if>
+			<if test=" menuStatus != null">
+				#{menuStatus},
+			</if>
+			now(),
+		</trim>
+	</insert>
+
+	<!-- 更新菜单 -->
+	<update id="updateMenu" parameterType="com.netcai.admin.entity.SysMenu">
+		update sys_menu
+		<set>
+			<trim suffixOverrides=",">
+				<if test=" menuCode != null">
+					menu_code = #{menuCode},
+				</if>
+				<if test=" menuName != null">
+					menu_name = #{menuName},
+				</if>
+				<if test=" menuHref != null">
+					menu_href = #{menuHref},
+				</if>
+				<if test=" menuIcon != null">
+					menu_icon = #{menuIcon},
+				</if>
+				<if test=" parentId != null">
+					parent_id = #{parentId},
+				</if>
+				<if test="menuLevel != null">
+					menu_level = #{menuLevel},
+				</if>
+				<if test=" menuSeq != null">
+					menu_seq = #{menuSeq},
+				</if>
+				<if test=" isEnd != null">
+					is_end = #{isEnd},
+				</if>
+				<if test=" type != null">
+					type = #{type},
+				</if>
+				<if test=" percode != null and percode !='' ">
+					percode = #{percode},
+				</if>
+				<if test=" menuStatus != null">
+					menu_status = #{menuStatus},
+				</if>
+			</trim>
+		</set>
+		where menu_id = #{menuId}
+	</update>
+
+	<!-- 根据id查找菜单 -->
+	<select id="getMenuById" parameterType="int" resultMap="menuResult">
+		select *
+		from sys_menu where menu_id = #{menuId}
+	</select>
+	
+	<!-- 根据菜单id查询其子菜单  -->
+	<select id="getChildrenMenuById" parameterType="Integer" resultMap="menuResult">
+		SELECT * from sys_menu where parent_id = #{menuId}
+	</select>
+
+	<!-- 根据角色取得菜单 -->
+	<select id="getAllMenuByRoleId" resultMap="menuResult">
+		select sm.* from
+		sys_role_menu srm
+		inner join sys_menu sm on srm.menu_id=sm.menu_id
+		where srm.role_id=#{roleId}
+	</select>
+
+	<!-- 添加角色菜单 -->
+	<insert id="insertRoleMenu">
+		insert into sys_role_menu (role_id,menu_id) values
+		<foreach collection="menuIdList" item="item" separator=",">
+			(#{roleId},#{item})
+		</foreach>
+	</insert>
+
+	<!-- 删除角色菜单 -->
+	<delete id="deleteRoleMenu">
+		delete from sys_role_menu where role_id = #{roleId}
+	</delete>
+	
+	<!-- 根据菜单id删除角色菜单 -->
+	<delete id="deleteRoleMenuByMenuId" parameterType="Integer">
+		delete from sys_role_menu where menu_id = #{menuId}
+	</delete>
+	
+	<!-- 删除菜单 -->
+	<delete id="delete" parameterType="Integer">
+		delete from sys_menu where menu_id = #{menuId}
+	</delete>
+
+	<!-- 根据用户取得菜单 -->
+	<select id="getAllMenuByUserId" resultMap="menuResult">
+		select sm.* from
+		sys_menu sm
+		inner join sys_role_menu srm on srm.menu_id=sm.menu_id
+		inner join sys_user_role sur on sur.role_id=srm.role_id
+		inner join sys_user su on su.id=sur.user_id
+		where su.id=#{userId} and sm.type in (2,#{type}) and sm.menu_status=1 group
+		by sm.menu_id
+	</select>
+</mapper>

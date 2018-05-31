@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.netcai.admin.dao.DeliveryTaskDao">
+
+	<resultMap type="com.netcai.admin.entity.DeliveryTask" id="deliveryTaskMap">
+		<result property="taskId" column="task_id" />
+		<result property="deliveryId" column="delivery_id" />
+		<result property="orderId" column="order_id" />
+		<result property="orderItemId" column="order_item_id" />
+		<result property="sysUserId" column="sys_user_id" />
+		<result property="createTime" column="create_time" />
+	</resultMap>
+	
+	<!--  查询当天所有订单  -->
+  <resultMap type="com.netcai.admin.vo.OrderTaskVo" id="orderTaskVoMap">
+     <result column="order_id" property="orderId" />
+     <result column="order_number" property="orderNumber"/>
+     <result column="best_time" property="bestTime"/>
+     <result column="order_amount" property="orderAmount"/>
+     <result column="buyer_name" property="buyerName" />
+     <result property="buyerAddress" column="buyer_address" />
+  </resultMap>
+	
+	<!-- 查询当天所有分配任务-->
+	<select id="getByThatDay" resultMap="deliveryTaskMap">
+		select * from delivery_task WHERE year(create_time)=year(now()) and month(create_time)=month(now()) and day(create_time)=day(now())
+	</select>
+	
+	<!-- 查询当天所有分配任务-->
+	<select id="getByThatDayByDeliveryId" resultType="long" resultMap="orderTaskVoMap">
+		SELECT
+		o.order_number, 
+     	o.order_id,
+     	o.best_time,
+     	o.order_amount,
+     	b.buyer_name,
+     	b.buyer_address
+     	FROM
+     	delivery_task d,
+		order_info o,
+		buyer b
+		WHERE
+		d.order_id=o.order_id
+		AND
+		o.buyer_id = b.buyer_id
+		and
+		year(o.best_time)=year(now()) and month(o.best_time)=month(now()) and day(o.best_time)=day(now())
+		AND
+		d.delivery_id = #{deliveryId}
+	</select>
+	
+	<!-- 查询某个配送员历史分配任务-->
+	<select id="getByDeliveryId" resultType="long" resultMap="orderTaskVoMap">
+		SELECT 
+		o.order_number,
+     	o.order_id,
+     	o.best_time,
+     	o.order_amount,
+     	b.buyer_name,
+     	b.buyer_address
+     	FROM
+     	delivery_task d,
+		order_info o,
+		buyer b
+		WHERE
+		d.order_id=o.order_id
+		AND
+		o.buyer_id = b.buyer_id
+		AND
+		d.delivery_id = #{deliveryId}
+	</select>
+	
+	<!-- 更新配送人员信息-->
+	<update id="update" parameterType="com.netcai.admin.entity.DeliveryTask" >
+	    update delivery_task 
+	    <set>
+	      <trim>
+	        <if test=" deliveryId != null">
+			    delivery_id = #{deliveryId},
+			</if>
+		    <if test=" orderId != null and orderId != ''">
+				order_id = #{orderId},
+			</if>
+			<if test=" orderItemId != null and orderItemId != ''">
+				order_item_id = #{orderItemId},
+			</if>
+			<if test=" sysUserId != null and sysUserId != ''">
+				sys_user_id = #{sysUserId},
+			</if>
+			<if test=" createTime != null">
+				create_time = #{createTime},
+			</if>
+	      </trim>
+	    </set>
+	    where task_id=#{taskId}
+	</update>
+	
+	<!-- 删除商品-->
+	<delete id="delByOrderIdByDeliveryId" >
+		delete from delivery_task where order_id = #{orderId} and delivery_id = #{deliveryId}
+	</delete>
+	
+	<!-- 新增 -->
+	<insert id="insert" parameterType="com.netcai.admin.entity.DeliveryTask">
+	  insert into delivery_task
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+	    <if test=" deliveryId != null">
+			delivery_id,
+		</if>
+	    <if test=" orderId != null">
+			order_id,
+		</if>
+		<if test=" orderItemId != null">
+			order_item_id,
+		</if>
+		<if test=" sysUserId != null">
+			sys_user_id,
+		</if>
+		<if test=" createTime != null">
+			create_time,
+		</if>
+	  </trim>
+	  <trim prefix="values (" suffix=")" suffixOverrides=",">
+	    <if test=" deliveryId != null">
+			#{deliveryId},
+		</if>
+		<if test=" orderId != null">
+			#{orderId},
+		</if>
+		<if test=" orderItemId != null">
+			#{orderItemId},
+		</if>
+		<if test=" sysUserId != null">
+			#{sysUserId},
+		</if>
+		<if test=" createTime != null">
+			#{createTime},
+		</if>
+	  </trim>
+	</insert>
+	
+	<!-- 批量新增 -->
+	<insert id="insertBatch" parameterType="java.util.List">
+	  insert into delivery_task(
+			delivery_id,
+			order_id,
+			sys_user_id,
+			create_time)
+	  			values
+	  <foreach collection="deliveryTasks" item="list" separator=",">
+	 	   (#{list.deliveryId},
+			#{list.orderId},
+			#{list.sysUserId},
+			#{list.createTime})		   
+	   </foreach>
+	</insert>
+</mapper>

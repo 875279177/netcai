@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.buyer.dao.OfflinePowerDao" >
+  <resultMap id="offlinePowerMap" type="com.netcai.buyer.entity.OfflinePower" >
+    <id column="id" property="id"  />
+    <result column="region_id" property="regionId"  />
+    <result column="buyer_id" property="buyerId"  />
+  </resultMap>
+  
+  <select id="getCountByRegionIdOrBuyerId" resultType="int">
+  		select count(1) from offline_power where  (buyer_id = #{buyerId} or region_id = #{regionId})
+  </select>
+</mapper>

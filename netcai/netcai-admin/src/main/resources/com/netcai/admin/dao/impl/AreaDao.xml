@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.AreaDao">
+  <resultMap type="com.netcai.admin.entity.Area" id="areaMap">
+      <result column="id" property="id"/>
+      <result column="area_name" property="areaName"/>
+      <result column="sequence" property="sequence"/>
+      <result column="parent_id" property="parentId"/>
+      <result column="level" property="level"/>
+      <result column="status" property="status"/>
+      <result column="create_time" property="createTime"/>
+  </resultMap>
+	
+  <!-- 查询全部 -->
+  <select id="getAllAreas" resultMap="areaMap">
+      select * from area 
+  </select>
+  
+  <!-- 查询全国所有省 -->
+  <select id="getAllProvince" resultMap="areaMap">
+      select * from area where parent_id=0 order by sequence asc
+  </select>
+  
+  <!-- 根据id查询省下对应的所有市 -->
+  <select id="getAllCity" resultMap="areaMap">
+      select * from area where parent_id =#{id} order by sequence asc
+  </select>
+  
+  <!-- 根据id查询市下对应的所有区 -->
+  <select id="getAllRegion" resultMap="areaMap">
+      select * from area where parent_id =#{id} order by sequence asc
+  </select>
+  
+  <!-- 根据id查询地址信息-->
+  <select id="getAreaById" parameterType="Long" resultMap="areaMap">
+      select * from area where id =#{id} 
+  </select>
+  
+  <!-- 根据id查询市下对应的所有区 -->
+  <select id="getRegions" resultMap="areaMap">
+      select * from area where level=3
+  </select>
+  
+</mapper>

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.PercentageConfigDao">
+   <resultMap type="com.netcai.admin.vo.PercentageConfigVo" id="percentageConfigMap">
+       <result column="id" property="id"/>
+       <result column="region_id" property="regionId"/>
+       <result column="seller_id" property="sellerId"/>
+       <result column="category_id" property="categoryId"/>
+       <result column="area_name" property="regionName"/>
+       <result column="seller_name" property="sellerName"/>
+       <result column="category_name" property="categoryName"/>
+       <result column="percentage" property="percentage"/>
+       <result column="status" property="status"/>
+       <result column="create_time" property="createTime"/>
+       <result column="update_time" property="updateTime"/>
+   </resultMap>
+  
+   <!-- 查询条件   -->
+   <sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and ">
+	    <if test=" percentageConfig.sellerName != null and percentageConfig.sellerName != '' ">
+	      and seller.seller_name like '%${percentageConfig.sellerName}%'
+	    </if>
+	    <if test=" percentageConfig.categoryName != null and percentageConfig.categoryName != ''">
+	      and category.category_name like '%${percentageConfig.categoryName}%'
+	    </if>
+	    <if test=" percentageConfig.regionId != null">
+	      and config.region_id = #{percentageConfig.regionId}
+	    </if>
+	  </trim>
+   </sql>
+	
+  <!-- 查询全部   -->
+  <select id="getAll" resultMap="percentageConfigMap">
+      SELECT config.*,seller.seller_name,category.category_name,area.area_name FROM order_percentage_config config 
+		LEFT JOIN area ON config.region_id=area.id
+		LEFT JOIN seller ON config.seller_id=seller.seller_id
+		LEFT JOIN category ON config.category_id=category.category_id
+      <include refid="filterCondition"></include>
+      order by config.create_time desc limit #{offset},#{pageSize}
+  </select>
+  
+  <!-- 查询总记录   -->
+  <select id="getPageCount" resultType="int">
+      SELECT count(1) FROM order_percentage_config config 
+		LEFT JOIN area ON config.region_id=area.id
+		LEFT JOIN seller ON config.seller_id=seller.seller_id
+		LEFT JOIN category ON config.category_id=category.category_id
+      <include refid="filterCondition"></include>
+  </select>
+  
+  <!-- 根据map查询数据 -->
+  <select id="getByMap" resultMap="percentageConfigMap">
+    select * from order_percentage_config  
+	<trim prefix="where " prefixOverrides="and ">
+	    <if test=" id != null ">
+	      and id = #{id}
+	    </if>
+	    <if test=" regionId != null ">
+	      and region_id = #{regionId}
+	    </if>
+	    <if test=" sellerId != null ">
+	      and seller_id = #{sellerId}
+	    </if>
+	    <if test=" categoryId != null ">
+	      and category_id = #{categoryId}
+	    </if>
+	</trim>
+  </select>
+  
+  <!-- 查询抽点配置表中的所有区   -->
+   <select id="getRegions" resultMap="percentageConfigMap">
+     SELECT DISTINCT(region_id),area.area_name from order_percentage_config config INNER JOIN area ON  config.region_id=area.id
+   </select>
+   
+   <!-- 批量新增 -->
+    <insert id="batchInsert" parameterType="List">
+      insert into order_percentage_config (region_id ,seller_id ,category_id ,percentage ,status ,create_time)
+      values
+      <foreach collection="list" item="item" index="index" separator="," >  
+	    (#{item.regionId},#{item.sellerId},#{item.categoryId},#{item.percentage},#{item.status},#{item.createTime})  
+	  </foreach>
+    </insert>
+   
+  <!-- 新增 -->
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id"
+	keyColumn="id" parameterType="com.netcai.admin.entity.PercentageConfig">
+	insert into order_percentage_config
+	<trim prefix="(" suffix=")" suffixOverrides=",">
+		<if test=" regionId != null ">
+			region_id ,
+		</if>
+		<if test=" sellerId != null ">
+			seller_id ,
+		</if>
+		<if test=" categoryId != null ">
+			category_id ,
+		</if>
+		<if test=" percentage != null">
+			percentage ,
+		</if>
+		<if test=" status != null ">
+			status ,
+		</if>
+		<if test=" createTime != null">
+			create_time ,
+		</if>
+		<if test=" updateTime != null">
+			update_time ,
+		</if>
+	</trim>
+	<trim prefix=" values(" suffix=")" suffixOverrides=",">
+		<if test=" regionId != null ">
+			#{regionId},
+		</if>
+		<if test=" sellerId != null ">
+			#{sellerId} ,
+		</if>
+		<if test=" categoryId != null ">
+			#{categoryId} ,
+		</if>
+		<if test=" percentage != null">
+			#{percentage} ,
+		</if>
+		<if test=" status != null ">
+			#{status},
+		</if>
+		<if test=" createTime != null">
+			#{createTime},
+		</if>
+		<if test=" updateTime != null">
+			#{updateTime},
+		</if>
+	</trim>
+  </insert>
+
+  <!-- 更新抽点率-->
+  <update id="update" parameterType="com.netcai.admin.entity.PercentageConfig">
+	update order_percentage_config
+	<set>
+		<trim>
+			<if test=" percentage != null">
+				percentage = #{percentage} ,
+			</if>
+			<if test=" updateTime != null">
+				update_time = #{updateTime},
+			</if>
+		</trim>
+	</set>
+	where id = #{id}
+  </update>
+  
+  <!-- 更新状态 -->
+  <update id="updateStatus" >
+	update order_percentage_config set status=#{status} where id = #{id}
+  </update>
+  
+  <!-- 删除数据   -->
+  <delete id="deleteById" parameterType="Long" >
+    delete from order_percentage_config where id =#{id}
+  </delete>
+  
+  <!-- 批量删除数据   -->
+  <delete id="batchDelete" parameterType="List" >
+    delete from order_percentage_config where
+    <foreach collection="list" item="item" index="index" separator="or" >  
+        <trim prefix="(" suffix=")" prefixOverrides="and" >
+			<if test=" item.sellerId != null">
+				and seller_id=#{item.sellerId}
+			</if>
+			<if test=" item.categoryId != null">
+				and category_id =#{item.categoryId} 
+			</if>
+		</trim>
+	</foreach>
+  </delete>
+	
+</mapper>

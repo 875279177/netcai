@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.2.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.2.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+		http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa-1.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd">
+	
+	<!-- 启用shrio授权注解拦截方式 -->
+	<bean id="myShiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<!-- 装配 securityManager -->
+		<property name="securityManager" ref="securityManager" />
+		<!-- 配置登陆提交的请求路径 -->
+		<property name="loginUrl" value="/admin/checkLogin" />
+		<!-- 登陆成功后的主页 -->
+		<property name="successUrl" value="/admin/index" />
+		<property name="unauthorizedUrl" value="/admin/unauthorized" />
+		<!-- 具体配置需要拦截哪些 URL, 以及访问对应的 URL 时使用 Shiro 的什么 Filter 进行拦截. -->
+		<property name="filterChainDefinitions">
+			<value>
+			    /bootstrap/** = anon
+			    /dist/** = anon
+			    /echart/** = anon
+			    /fonts/** = anon
+			    /images/** = anon
+			    /js/** = anon
+			    /jquery-easyui-1.5.2/** = anon
+			    /kindeditor/** = anon
+			    /layer/** = anon
+			    /layui/** = anon
+			    /libs/** = anon
+			    /My97DatePicker/** = anon
+			    /plugins/** = anon
+			    /favicon.ico = anon
+				/admin/login = anon
+				/admin/logout = anon
+				/** =authc
+			</value>
+		</property>
+	</bean>
+	
+	<!-- 配置 Shiro 的 SecurityManager -->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+	    <property name="realm" ref="userRealm" />
+	    <!-- 注入缓存管理器 --> 
+		<property name="cacheManager" ref="cacheManager" />
+	</bean>
+	
+	<!-- 配置进行授权和认证的 Realm -->
+	<bean id="userRealm" class="com.netcai.admin.shiro.UserRealm">
+	    <!-- 将凭证匹配器设置到realm中，realm按照凭证匹配器的要求进行散列 -->
+        <property name="credentialsMatcher" ref="credentialsMatcher"/>
+	</bean>
+	
+	<!-- 配置缓存管理器 -->
+	<bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+        <!-- 指定 ehcache 的配置文件 -->
+		<property name="cacheManagerConfigFile" value="classpath:config/shiro-ecache.xml" />
+	</bean>
+	
+	<!-- 配置凭证匹配器 -->
+    <bean id="credentialsMatcher"  class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">  
+        <!--加密方式，md5加密 -->
+        <property name="hashAlgorithmName" value="md5" />  
+        <!-- 加密迭代次数 -->
+        <property name="hashIterations" value="1" />  
+    </bean> 
+	
+</beans>  

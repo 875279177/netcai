@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatid.org//DTD Mapper 3.0//EN" "http://mybatid.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.DeliveryIncomeDao" >
+
+  <resultMap id="deliveryIncomeMap" type="com.netcai.admin.entity.DeliveryIncome" >
+    <id column="di_id" property="diId"  />
+    <result column="delivery_id" property="deliveryId" />
+    <result column="delivery_name" property="deliveryName"  />
+    <result column="delivery_phone" property="deliveryPhone"  />
+    <result column="di_date" property="diDate"  />
+    <result column="di_amt" property="diAmt"/>
+    <result column="di_count" property="diCount"/>
+    <result column="di_income" property="diIncome"/>
+    <result column="di_area" property="diArea"/>
+    <result column="create_time" property="createTime"/>
+  </resultMap>
+  
+  <resultMap type="com.netcai.admin.vo.BuyerVo" id="buyerMap">
+		<result property="saleId" column="sale_id" />
+		<result property="salesName" column="salesName" />
+		<result property="buyerId" column="buyer_id" />
+		<result property="buyerName" column="buyer_name" />
+		<result property="buyerAddress" column="buyer_address" />
+		<result property="regionId" column="region_id" />
+		<result property="regionName" column="region" />
+		<result property="bossName" column="boss_name" />
+		<result property="bossTel" column="boss_tel" />
+		<result property="orderCount" column="order_count" />
+		<result property="deliveryName" column="delivery_name" />
+		<result property="deliveryAreaName" column="delivery_area_name" />
+		<result column="delivery_id" property="deliveryId" />
+	</resultMap>
+  
+  <sql id="DeliveryIncomeSelector" >
+	  SELECT
+		di.di_id,
+		di.delivery_id,
+		di.delivery_name,
+		di.delivery_phone,
+		di.di_date, 
+		di.di_amt,
+		di.di_count,
+		di.di_income,
+		di.di_area,
+		di.create_time
+	FROM delivery_income di
+  </sql>
+  
+  <!-- 分页 -->
+	<sql id="DeliveryIncomeLimit">
+		<if test="pageNum != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  	<!-- 条件查询语句 -->
+  <sql id="DeliveryIncomeWhere">
+		<where>
+			1=1
+			<if test="d.deliveryName != null and d.deliveryName != ''">
+				AND	di.delivery_name like concat('%',LTrim(RTrim(#{d.deliveryName})),'%')  
+			</if>
+			<if test="d.diArea != null and d.diArea != ''">
+				AND	di.di_area = #{d.diArea}
+			</if>
+			<if test="d.createTimeStart != null  and d.createTimeStart != '' and d.createTimeStop != null  and d.createTimeStop != ''">
+				AND	DATE_FORMAT(di.di_date,"%Y-%m-%d 00:00:00") between DATE_FORMAT(#{d.createTimeStart},"%Y-%m-%d 00:00:00") AND DATE_FORMAT(#{d.createTimeStop},"%Y-%m-%d 23:59:59")
+			</if>
+			<if test="d.countStart != null  and d.countStop != null ">
+				AND	di.di_count between #{d.countStart} AND #{d.countStop}
+			</if>
+			<if test="d.amtStart != null  and d.amtStop != null ">
+				AND	di.di_amt between #{d.amtStart} AND #{d.amtStop}
+			</if>
+			<if test="d.incomeStart != null and d.incomeStop != null">
+				AND	di.di_income between #{d.incomeStart} AND #{d.incomeStop}
+			</if>
+		</where>
+	</sql>
+  
+  <select id="getAll" resultMap="deliveryIncomeMap" parameterType="DeliveryIncome" >
+    <include refid="DeliveryIncomeSelector" />
+    <include refid="DeliveryIncomeWhere" />
+    ORDER BY di.di_date DESC
+    <include refid="DeliveryIncomeLimit" />
+  </select>
+  
+  <select id="getCount" parameterType="DeliveryIncome" resultType="int">
+    SELECT
+    	count(di_id)
+    FROM delivery_income di
+    <include refid="DeliveryIncomeWhere" />
+  </select>
+  
+  <select id="getBuyer" parameterType="DeliveryIncome" resultMap="buyerMap">
+    SELECT
+		b.buyer_name,
+		b.buyer_id,
+		b.buyer_address,
+		b.boss_name,
+		di.delivery_id,
+		di.delivery_name,
+		da.da_address delivery_area_name,
+		SUM(oi.goods_amount) order_count
+	FROM delivery_income di
+		LEFT JOIN order_item oi ON di.delivery_id = oi.delivery_id
+		LEFT JOIN buyer b ON b.buyer_id = oi.buyer_id
+		LEFT JOIN order_info o ON oi.order_id = o.order_id
+		LEFT JOIN delivery_area da ON da.da_id = b.delivery_area_id
+	WHERE
+		DATE_FORMAT(o.best_time,"%Y-%m-%d") =DATE_FORMAT(#{d.time},"%Y-%m-%d")
+		AND DATE_FORMAT(di.di_date,"%Y-%m-%d") =DATE_FORMAT(#{d.time},"%Y-%m-%d")
+		AND di.delivery_id =#{d.deliveryId}
+	GROUP BY oi.buyer_id
+  </select>
+
+  <!-- 批量新增配送人员收入 （定时器执行）-->
+  <insert id="batchInsertByDate" parameterType="Date" >
+    insert into delivery_income (delivery_id,delivery_name,delivery_phone,di_date,di_amt,di_count,di_income,di_area,create_time)
+	select oi.delivery_id,d.delivery_name,d.delivery_phone,date_format(o.best_time,'%Y-%m-%d') as every_day,
+	       sum(oi.goods_amount) as every_day_amt,count(distinct(o.buyer_id)) as every_day_count,
+	       round((100+3*count(distinct(o.buyer_id))+sum(oi.goods_amount)/4000*80),2) as every_day_income,
+	       (select group_concat(da.da_address) as delivery_area 
+	           from delivery_da dd inner join delivery_area da on dd.dda_da_id=da.da_id where  oi.delivery_id=dd.dda_delivery_id)as delivery_area,NOW()
+	from order_item oi 
+	inner join order_info o on oi.order_id=o.order_id
+	inner join delivery d on d.id = oi.delivery_id
+	where o.trade_status!=2 and o.pay_status!=1 and oi.order_status=1 and date_format(o.best_time,'%Y-%m-%d')=date_format(#{time},'%Y-%m-%d')
+	group by oi.delivery_id,every_day
+  </insert>
+</mapper>

@@ -1,0 +1,968 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.OrderItemDao">
+
+  <resultMap type="com.netcai.admin.entity.OrderItem" id="orderItemMap">
+     <result column="item_id" property="id"/>
+     <result column="order_id" property="orderId"/>
+     <result column="order_number" property="orderNumber"/>
+     <result column="order_status" property="orderStatus"/>
+     <result column="format_id" property="formatId"/>
+     <result column="buyer_id" property="buyerId"/>
+     <result column="seller_id" property="sellerId"/>
+     <result column="delivery_type" property="deliveryType"/>
+     <result column="delivery_status" property="deliveryStatus"/>
+     <result column="seller_status" property="sellerStatus"/>
+     <result column="buyer_status" property="buyerStatus"/>
+     <result column="remark" property="remark"/>
+     <result column="goods_amount" property="goodsAmount"/>
+     <result column="goods_amount_old" property="goodsAmountOld"/>
+     <result column="delivery_money" property="deliveryMoney"/>
+     <result column="create_time" property="createTime"/>
+     <result column="delivery_receive_time" property="deliveryReceiveTime"/>
+     <result column="delivery_finish_time" property="deliveryFinishTime"/>
+     <result column="seller_finish_time" property="sellerFinishTime"/>
+     <result column="buyer_finish_time" property="buyerFinishTime"/>
+     <result column="goods_number" property="goodsNumber"/>
+     <result column="goods_number_old" property="goodsNumberOld"/>
+     <result column="method_name" property="methodName" />
+     <result column="unit_name" property="unitName" />
+     <result column="goods_price" property="goodsPrice"/>
+     <result column="goods_name" property="goodsName" />
+     <result column="format_num" property="formatNum" />
+     <result column="delivery_id" property="deliveryId" />
+     <result property="deliveryName" column="delivery_name" />
+     
+     <result property="areaName" column="area_name" />
+      <!-- 卖家 -->
+     <association property="seller" javaType="com.netcai.admin.entity.Seller">
+			<result column="seller_account" property="sellerAccount" />
+			<!-- 店铺名称 -->
+			<result column="seller_name" property="sellerName" />
+     </association> 
+     
+     <!--买家 -->
+     <association property="buyer" javaType="com.netcai.admin.entity.Buyer">
+			<result column="boss_tel" property="bossTel" />
+			<result column="boss_name" property="bossName" />
+			<!-- 买家店铺名称   店铺名称 -->
+			<result column="buyer_name" property="buyerName" />
+     </association>
+     
+  </resultMap>
+  
+  <!-- 根据卖家id查询他的所有订单 -->
+  <resultMap type="com.netcai.admin.vo.OrderItemVo" id="orderItemVoMap">
+     <result property="buyerName" column="buyer_name" />
+	 <result property="buyerAddress" column="buyer_address" />
+	 <result property="bossName" column="boss_name" />
+	 <result property="bossTel" column="boss_tel" />
+	 <result property="buyerLevel" column="buyer_level" />
+	 <result property="buyerType" column="buyer_type" />
+ 	 <result column="order_number" property="orderNumber"/>
+     <result column="order_status" property="orderStatus"/>
+     <result column="pay_status" property="payStatus"/>
+     <result column="delivery_type" property="deliveryType"/>
+     <result column="delivery_money" property="deliveryMoney"/>
+	 <result column="create_time" property="createTime"/>
+	 <collection property="orderItems" ofType="com.netcai.admin.entity.OrderItem">
+		     <result column="remark" property="remark"/>
+		     <result column="goods_amount" property="goodsAmount"/>
+		     <result column="format_name" property="formatName" />
+		     <result column="method_name" property="methodName" />
+		     <result column="goods_name" property="goodsName" />
+		     <result column="unit_name" property="unitName" />
+		     <result column="goods_number" property="goodsNumber"/>
+		     <result column="goods_number_old" property="goodsNumberOld"/>
+		     <result column="format_price" property="goodsPrice"/>
+  	 	</collection>
+  </resultMap>
+  
+  
+  <!-- 查询所有  最终版 -->
+  <resultMap type="com.netcai.admin.vo.OrderItemQuery" id="orderItemQueryMap">
+     <result property="buyerName" column="buyer_name" />
+	 <result property="buyerAddress" column="buyer_address" />
+	 <result property="bossTel" column="boss_tel" />
+	 <result column="buyer_id" property="buyerId"/>
+	 <result column="trade_status" property="tradeStatus"/>
+     <result column="pay_status" property="payStatus"/>
+     <result column="seller_id" property="sellerId"/>
+	 <result column="seller_account" property="sellerAccount" />
+	 <result column="seller_name" property="sellerName" />
+	 
+	 <result column="order_id" property="orderId"/>
+ 	 <result column="order_number" property="orderNumber"/>
+	 <result column="create_time" property="createTime"/>
+	 <result column="best_time" property="bestTime"/>
+	 <result column="total_money" property="totalMoney"/>
+	 <result column="old_total_money" property="oldTotalMoney"/>
+	 
+	 <result column="area_name" property="areaName"/>
+	 <result column="region_id" property="regionId"/>
+	 
+	 <collection property="orderItems" ofType="com.netcai.admin.entity.OrderItem">
+		     <result column="remark" property="remark"/>
+		     <result column="format_name" property="formatName" />
+		     <result column="method_name" property="methodName" />
+		     <result column="unit_name" property="unitName" />
+		     <result column="goods_name" property="goodsName" />
+		     <result column="goods_number" property="goodsNumber"/>
+		     <result column="format_price" property="goodsPrice"/>
+		     <result column="goods_amount" property="goodsAmount"/>
+		     <result column="goods_number_old" property="goodsNumberOld"/>
+  	 	</collection>
+  </resultMap>
+  
+  <!-- 统计Top10的数据集 -->
+  <resultMap type="Map" id="countMap">
+     <result column="count" property="count" javaType="int"/>
+     <result column="amount" property="amount" javaType="BigDecimal"/>
+     <result column="num" property="num" javaType="double"/>
+     <result column="sellerName" property="sellerName" javaType="String"/>
+     <result column="goodsName" property="goodsName" javaType="String"/>
+     <result column="formatName" property="formatName" javaType="String"/>
+     <result column="grade" property="grade" javaType="double"/>
+  </resultMap>
+  
+  <!--分区域 统计订单报表 -->
+  <resultMap id="reportDayMap" type="com.netcai.admin.entity.ReportDay" >
+    <id column="day_id" property="dayId"  />
+    <result column="today" property="today"  />
+    <result column="order_num" property="orderNum"  />
+    <result column="order_amount" property="orderAmount"  />
+    <result column="seller_num" property="sellerNum" />
+    <result column="per_amount" property="perAmount"  />
+    <result column="av_amount" property="avAmount"  />
+    <result column="new_buyer_num" property="newBuyerNum"  />
+    <result column="new_buyer" property="newBuyer"  />
+    <result column="region_id" property="regionId"  />
+  </resultMap>
+  
+  <!--卖家当天订单总额; -->
+  <resultMap id="sellerOrderMap" type="com.netcai.admin.vo.SellerOrderVo" >
+    <result column="seller_id" property="sellerId" />
+	<result column="seller_account" property="sellerAccount" />
+	<result column="seller_name" property="sellerName" />
+	<result column="seller_rank" property="sellerRank" />
+	<result column="seller_grade" property="sellerGrade" />
+	<result column="seller_address" property="sellerAddress" />
+	<result column="balance_money" property="balanceMoney" />
+	<result column="area_name" property="areaName" />
+	<result column="area_id" property="areaId" />
+	<result column="amount" property="amount" />
+  </resultMap>
+  
+  <!-- 根据卖家id查询卖家今日收益详情结果集 -->
+  <resultMap id="sellerTransactionDetailMap" type="com.netcai.admin.vo.SellerTransactionDetail" >
+    <result column="goods_brand" property="goodsBrand" />
+	<result column="goods_name" property="goodsName" />
+	<result column="goods_label" property="goodsLabel" />
+	<result column="unit_name" property="unitName" />
+	<result column="goods_number" property="goodsNumber" />
+	<result column="goods_amount" property="goodsAmount" />
+	<result column="goods_price" property="goodsPrice" />
+	<result column="total_amount" property="totalAmount" />
+	<result column="order_percentage" property="orderPercentage" />
+	<result column="percentage_amount" property="percentageAmount" />
+	<result column="reality_money" property="realityMoney" />
+  </resultMap>
+  
+  <!-- 根据卖家id查询卖家今日收益详情结果集 -->
+  <resultMap id="sellerTransactionAmountMap" type="Map" >
+    <result column="seller_id" property="sellerId" javaType="Long" />
+	<result column="goods_amount" property="totalGoodsAmount" javaType="BigDecimal" />
+	<result column="percentage_amount" property="totalPercentageAmount" javaType="BigDecimal" />
+	<result column="seller_money" property="totalSellerMoney" javaType="BigDecimal" />
+  </resultMap>
+  
+  <!-- 根据卖家id和订单id查询订单明细结果集 -->
+  <resultMap id="presentOrderDetailMap" type="com.netcai.admin.vo.PresentOrderDetailVo" >
+    <result column="buyer_name" property="buyerName" />
+	<result column="boss_tel" property="buyerPhone" />
+	<result column="buyer_address" property="address" />
+	<result column="goods_brand" property="goodsBrand" />
+	<result column="goods_name" property="goodsName" />
+	<result column="goods_label" property="goodsLabel" />
+	<result column="unit_name" property="unitName" />
+	<result column="goods_number" property="goodsNumber" />
+	<result column="goods_price" property="goodsPrice" />
+	<result column="goods_amount" property="orderAmount" />
+  </resultMap>
+  
+  <!-- 查询的数据 -->
+  <sql id="OrderItemSelector">
+  		select 
+	  		u.unit_name,
+		    pm.method_name,
+	  		o.item_id,
+	  		o.order_id,
+	  		o.order_number,
+	  		o.goods_number_old,
+	  		o.order_status,
+	  		o.format_id,
+	  		o.buyer_id,
+	  		o.seller_id,
+	  		o.delivery_type,
+	  		o.delivery_status,
+	  		o.seller_status,
+	  		o.buyer_status,
+	  		o.remark,
+	  		o.goods_amount,
+	  		convert(o.goods_number_old*o.goods_price,decimal(10,2)) goods_amount_old,
+	  		o.delivery_money,
+	  		o.create_time,
+	  		o.delivery_receive_time,
+	  		o.delivery_finish_time,
+	  		o.seller_finish_time,
+	  		o.buyer_finish_time,
+	  		o.goods_number,
+	  		o.goods_price,
+	  		gf.format_price,
+	  		gf.format_num,
+	  		gf.format_name,
+	  		gs.goods_name,
+	  		s.seller_id,
+	  		s.seller_account ,
+	  		s.seller_name,
+	  		d.delivery_name,
+	  		a.area_name,
+	  		b.buyer_id,
+	  		b.boss_tel,
+	  		b.buyer_name,
+	  		b.boss_name
+		FROM order_item o 
+			left join process_method pm on pm.method_id=o.method_id
+			inner join goods_format gf on gf.format_id=o.format_id
+			left join order_info oi ON o.order_id = oi.order_id
+			inner join goods gs on gs.goods_id=gf.goods_id
+			inner join seller s on s.seller_id=o.seller_id
+			LEFT JOIN unit u ON u.unit_id=gf.unit_id
+			LEFT JOIN buyer b ON o.buyer_id=b.buyer_id
+			LEFT JOIN delivery d ON d.id = o.delivery_id
+			inner JOIN area a ON a.id = b.region_id
+	</sql>
+  
+  <!-- 条件查询语句 -->
+  <sql id="OrderItemMapWhere">
+		<where>
+			1=1
+				<if test="o.orderStatus != null ">
+					AND	o.order_status = #{o.orderStatus}
+				</if>
+				<if test="o.orderNumber != null and o.orderNumber != ''">
+					AND	o.order_number = #{o.orderNumber}
+				</if>
+				<if test="o.buyer != null">
+					<if test="o.buyer.buyerName != null  and o.buyer.buyerName != '' ">
+						AND	(b.buyer_name like concat('%',#{o.buyer.buyerName},'%') or b.boss_tel like concat('%',#{o.buyer.buyerName},'%'))
+					</if>
+				</if>
+				<if test="o.seller != null">
+					<if test="o.seller.sellerName != null and o.seller.sellerName != ''">
+						AND	(s.seller_account like concat('%',#{o.seller.sellerName},'%') or s.seller_name like concat('%',#{o.seller.sellerName},'%'))
+					</if>
+				</if>
+				<if test="o.createTimeStart != null  and o.createTimeStart != ''">
+				    AND	o.create_time <![CDATA[ >= #{o.createTimeStart}]]> 
+				</if>
+				<if test="o.createTimeStop != null  and o.createTimeStop != ''">
+					AND	o.create_time <![CDATA[ <= #{o.createTimeStop}]]>
+				</if>
+				<if test="o.orderId != null ">
+					AND	o.order_id = #{o.orderId}
+				</if>
+				<if test="o.bestTime != null ">
+					AND DATE_FORMAT(oi.best_time,"%Y-%m-%d") = DATE_FORMAT(#{o.bestTime},"%Y-%m-%d")
+				</if>
+				<if test="o.sellerId != null ">
+					AND	o.seller_id = #{o.sellerId}
+				</if>
+				<if test="o.buyerId != null ">
+					AND	o.buyer_id = #{o.buyerId}
+				</if>
+				<if test="o.id != null">
+					AND	o.item_id = #{o.id}
+				</if>
+				<if test="o.deliveryId != null and o.deliveryId != ''">
+					AND	o.delivery_id = #{o.deliveryId}
+				</if>
+				<if test="o.goodsName != null and o.goodsName != ''">
+					AND	gs.goods_name like concat('%',LTrim(RTrim(#{o.goodsName})),'%')
+				</if>
+				<if test="o.goodsNumber != null">
+					AND	o.goods_number != o.goods_number_old
+				</if>
+				<if test="o.sellerStatus != null ">
+					AND	o.seller_status = #{o.sellerStatus}
+				</if>
+				<if test="o.regionId != null ">
+					AND	b.region_id = #{o.regionId}
+				</if>
+				<if test="o.payStatus != null and o.payStatus != ''">
+					AND	oi.pay_status in (${o.payStatus})
+				</if>
+		</where>
+	</sql>
+	
+	<!-- 分页 -->
+	<sql id="OrderItemListLimit">
+		<if test="pageNum != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+	
+	<!-- 查询所有  最终版  -->
+	<select id="getList" parameterType="com.netcai.admin.vo.OrderItemQuery" resultMap="orderItemQueryMap">
+	select 
+		SUM(o.goods_amount) total_money,
+		a.area_name,
+		SUM(convert(o.goods_number_old*o.goods_price, decimal(10,2))) old_total_money,
+		oi.trade_status,
+		oi.pay_status,
+		oi.best_time,
+		
+  		o.item_id,
+  		o.order_id,
+  		o.order_number,
+  		o.goods_number_old,
+  		o.remark,
+  		o.goods_amount,
+  		o.create_time,
+  		o.goods_number,
+		o.seller_id,
+		o.buyer_id,
+  		gf.format_price,
+  		gs.goods_name,
+  		s.seller_account ,
+  		s.seller_name,
+  		b.buyer_address,
+  		b.boss_tel,
+  		b.buyer_name,
+		u.unit_name
+		from 
+		order_item o left JOIN order_info oi ON oi.order_id=o.order_id 
+		left join process_method pm on pm.method_id=o.method_id
+		inner join goods_format gf on gf.format_id=o.format_id
+		inner join goods gs on gs.goods_id=gf.goods_id
+		inner join seller s on s.seller_id=o.seller_id
+		LEFT JOIN unit u ON u.unit_id=gf.unit_id
+		LEFT JOIN buyer b ON o.buyer_id=b.buyer_id
+		LEFT JOIN area a ON a.id = b.region_id
+		WHERE
+		1=1
+		<!-- AND oi.trade_status !=2 AND oi.pay_status in (2,3,4)  -->
+		<if test="o.buyerNameTel != null  and o.buyerNameTel != '' ">
+				AND	(b.buyer_name like concat('%',#{o.buyerNameTel},'%') or b.boss_tel like concat('%',#{o.buyerNameTel},'%'))
+		</if>
+		<if test="o.sellerNameTel != null and o.sellerNameTel != ''">
+				AND	(s.seller_account like concat('%',#{o.sellerNameTel},'%') or s.seller_name like concat('%',#{o.sellerNameTel},'%'))
+		</if>
+		<if test="o.createTimeStart != null  and o.createTimeStart != ''">
+			AND	o.create_time <![CDATA[ >= #{o.createTimeStart}]]> 
+		</if>
+		<if test="o.createTimeStop != null  and o.createTimeStop != ''">
+			AND	o.create_time <![CDATA[ <= #{o.createTimeStop}]]>
+		</if>
+		<if test="o.beatTimeStart != null  and o.beatTimeStart != ''">
+				AND	oi.best_time <![CDATA[ >= #{o.beatTimeStart}]]> 
+		</if>
+		<if test="o.beatTimeStop != null  and o.beatTimeStop != ''">
+				AND	oi.best_time <![CDATA[ <=#{o.beatTimeStop} ]]> 
+		</if>
+		<if test="o.pStatus != null and o.pStatus != ''">
+				AND	oi.pay_status in (${o.pStatus})
+		</if>
+		<if test="o.tStatus != null and o.tStatus != ''">
+				AND	oi.trade_status in (${o.tStatus})
+		</if>
+		<if test="o.orderNumber != null and o.orderNumber != ''">
+				AND	o.order_number = #{o.orderNumber}
+		</if>
+		<if test="o.sellerId != null and o.sellerId != ''">
+				AND	oi.pay_status = #{o.sellerId}
+		</if>
+		<if test="o.buyerId != null and o.buyerId != ''">
+				AND	oi.buyer_id = #{o.buyerId}
+		</if>
+		<if test="o.regionId != null and o.regionId != ''">
+				AND	a.id = #{o.regionId}
+		</if>
+		<if test="o.deliveryId != null and o.deliveryId != ''">
+				AND	o.delivery_id = #{o.deliveryId}
+		</if>
+		GROUP BY o.seller_id,o.order_id
+		ORDER BY o.create_time DESC
+		<include refid="OrderItemListLimit" />
+	</select>
+	
+	<!-- 查询所有  最终版 不帶分頁 -->
+	<select id="getListAll" parameterType="com.netcai.admin.vo.OrderItemQuery" resultMap="orderItemQueryMap">
+	select 
+		SUM(o.goods_amount) total_money,
+		a.area_name,
+		SUM(convert(o.goods_number_old*o.goods_price, decimal(10,2))) old_total_money,
+		oi.trade_status,
+		oi.pay_status,
+		oi.best_time,
+		
+  		o.item_id,
+  		o.order_id,
+  		o.order_number,
+  		o.goods_number_old,
+  		o.remark,
+  		o.goods_amount,
+  		o.create_time,
+  		o.goods_number,
+		o.seller_id,
+		o.buyer_id,
+  		gf.format_price,
+  		gs.goods_name,
+  		s.seller_account ,
+  		s.seller_name,
+  		b.buyer_address,
+  		b.boss_tel,
+  		b.buyer_name,
+		u.unit_name
+		from 
+		order_item o inner JOIN order_info oi ON oi.order_id=o.order_id 
+		left join process_method pm on pm.method_id=o.method_id
+		inner join goods_format gf on gf.format_id=o.format_id
+		inner join goods gs on gs.goods_id=gf.goods_id
+		inner join seller s on s.seller_id=o.seller_id
+		LEFT JOIN unit u ON u.unit_id=gf.unit_id
+		LEFT JOIN buyer b ON o.buyer_id=b.buyer_id
+		LEFT JOIN area a ON a.id = b.region_id
+		WHERE
+		1=1
+		AND oi.trade_status !=2 AND oi.pay_status in (2,3,4) 
+		<if test="o.buyerNameTel != null  and o.buyerNameTel != '' ">
+				AND	(b.buyer_name like concat('%',#{o.buyerNameTel},'%') or b.boss_tel like concat('%',#{o.buyerNameTel},'%'))
+		</if>
+		<if test="o.sellerNameTel != null and o.sellerNameTel != ''">
+				AND	(s.seller_account like concat('%',#{o.sellerNameTel},'%') or s.seller_name like concat('%',#{o.sellerNameTel},'%'))
+		</if>
+		<if test="o.createTimeStart != null  and o.createTimeStart != ''">
+			AND	o.create_time <![CDATA[ >= #{o.createTimeStart}]]> 
+		</if>
+		<if test="o.createTimeStop != null  and o.createTimeStop != ''">
+			AND	o.create_time <![CDATA[ <= #{o.createTimeStop}]]>
+		</if>
+		<if test="o.beatTimeStart != null  and o.beatTimeStart != ''">
+				AND	oi.best_time <![CDATA[ >= #{o.beatTimeStart}]]> 
+		</if>
+		<if test="o.beatTimeStop != null  and o.beatTimeStop != ''">
+				AND	oi.best_time <![CDATA[ <=#{o.beatTimeStop} ]]> 
+		</if>
+		<if test="o.pStatus != null and o.pStatus != ''">
+				AND	oi.pay_status in (${o.pStatus})
+		</if>
+		<if test="o.tStatus != null and o.tStatus != ''">
+				AND	oi.trade_status in (${o.tStatus})
+		</if>
+		<if test="o.orderNumber != null and o.orderNumber != ''">
+				AND	o.order_number = #{o.orderNumber}
+		</if>
+		<if test="o.sellerId != null and o.sellerId != ''">
+				AND	oi.pay_status = #{o.sellerId}
+		</if>
+		<if test="o.buyerId != null and o.buyerId != ''">
+				AND	oi.buyer_id = #{o.buyerId}
+		</if>
+		<if test="o.regionId != null and o.regionId != ''">
+				AND	a.id = #{o.regionId}
+		</if>
+		GROUP BY o.seller_id,o.order_id
+		ORDER BY o.create_time DESC
+	</select>
+	
+	<!-- 查询总数 -->
+    <select id="getCount" parameterType="OrderItemQuery" resultType="int">
+		SELECT COUNT(1) FROM 
+		(select 
+		COUNT(*)
+		from 
+		order_item o left JOIN order_info oi ON oi.order_id=o.order_id 
+		left join process_method pm on pm.method_id=o.method_id
+		inner join goods_format gf on gf.format_id=o.format_id
+		inner join goods gs on gs.goods_id=gf.goods_id
+		inner join seller s on s.seller_id=o.seller_id
+		LEFT JOIN unit u ON u.unit_id=gf.unit_id
+		LEFT JOIN buyer b ON o.buyer_id=b.buyer_id
+		LEFT JOIN area a ON a.id = b.region_id
+		WHERE
+		1=1
+		AND oi.trade_status !=2 AND oi.pay_status in (2,3,4) 
+		<if test="o.buyerNameTel != null  and o.buyerNameTel != '' ">
+				AND	(b.buyer_name like concat('%',#{o.buyerNameTel},'%') or b.boss_tel like concat('%',#{o.buyerNameTel},'%'))
+		</if>
+		<if test="o.sellerNameTel != null and o.sellerNameTel != ''">
+				AND	(s.seller_account like concat('%',#{o.sellerNameTel},'%') or s.seller_name like concat('%',#{o.sellerNameTel},'%'))
+		</if>
+		<if test="o.createTimeStart != null  and o.createTimeStart != ''">
+			AND	o.create_time <![CDATA[ >= #{o.createTimeStart}]]> 
+		</if>
+		<if test="o.createTimeStop != null  and o.createTimeStop != ''">
+			AND	o.create_time <![CDATA[ <= #{o.createTimeStop}]]>
+		</if>
+		<if test="o.beatTimeStart != null  and o.beatTimeStart != ''">
+				AND	oi.best_time <![CDATA[ >= #{o.beatTimeStart}]]> 
+		</if>
+		<if test="o.beatTimeStop != null  and o.beatTimeStop != ''">
+				AND	oi.best_time <![CDATA[ <=#{o.beatTimeStop} ]]> 
+		</if>
+		<if test="o.pStatus != null and o.pStatus != ''">
+				AND	oi.pay_status in (${o.pStatus})
+		</if>
+		<if test="o.tStatus != null and o.tStatus != ''">
+				AND	oi.trade_status in (${o.tStatus})
+		</if>
+		<if test="o.orderNumber != null and o.orderNumber != ''">
+				AND	o.order_number = #{o.orderNumber}
+		</if>
+		<if test="o.sellerId != null and o.sellerId != ''">
+				AND	oi.pay_status = #{o.sellerId}
+		</if>
+		<if test="o.buyerId != null and o.buyerId != ''">
+				AND	oi.buyer_id = #{o.buyerId}
+		</if>
+		<if test="o.regionId != null and o.regionId != ''">
+				AND	a.id = #{o.regionId}
+		</if>
+		<if test="o.deliveryId != null and o.deliveryId != ''">
+				AND	o.delivery_id = #{o.deliveryId}
+		</if>
+		GROUP BY o.seller_id,o.order_id) c
+	</select>
+	
+	
+	<!-- 根据卖家id查询他的所有订单 -->
+	<select id="getOrderItemBySellerId" parameterType="OrderItem" resultMap="orderItemVoMap">
+	     select 
+			b.buyer_address,
+			b.buyer_name,
+			b.boss_name,
+			b.boss_tel,
+			b.buyer_level,
+			b.buyer_type,
+			o.order_number,
+			o.goods_number_old,
+			o.order_status,
+			o.delivery_type,
+			o.remark,
+			o.goods_amount,
+			o.create_time,
+			o.delivery_money,
+			o.goods_number,
+			oi.pay_status,
+			gf.format_name,
+			gf.format_price,
+			pm.method_name,
+			gs.goods_name,
+			u.unit_name
+		 from 
+		    order_item o 
+		    left join process_method pm on pm.method_id=o.method_id
+			inner join goods_format gf on gf.format_id=o.format_id
+			inner join goods gs on gs.goods_id=gf.goods_id
+			inner join seller s on s.seller_id=o.seller_id
+			LEFT JOIN unit u ON u.unit_id=gf.unit_id
+			LEFT JOIN order_info oi ON oi.order_id=o.order_id
+			LEFT JOIN buyer b ON o.buyer_id= b.buyer_id
+		where 
+			oi.pay_status != 1
+		AND
+			s.seller_id=#{sellerId}
+		ORDER BY o.create_time DESC
+	  </select>
+  
+    <!-- 查询所有   以及条件查询 不分页-->
+    <select id="getOrderItem" parameterType="OrderItem" resultMap="orderItemMap">
+     	<include refid="OrderItemSelector" />
+		<include refid="OrderItemMapWhere" />
+    </select>
+    
+    <!-- 分区域统计报表-->
+    <select id="getCountByAreaByTime" parameterType="Integer" resultMap="reportDayMap">
+		SELECT 
+			a.id region_id,
+			CASE WHEN B.order_num IS NULL THEN 0 ELSE B.order_num END AS order_num  
+		FROM area a 
+		LEFT JOIN 
+			(SELECT 
+				region_id, 
+				CASE WHEN count(num) IS NULL THEN 0 ELSE count(num) END AS order_num
+			from (SELECT 
+						a.id region_id,
+						count(oi.seller_id ) num
+				FROM order_item oi 
+					 LEFT JOIN buyer b ON b.buyer_id = oi.buyer_id
+					 LEFT JOIN area a ON b.region_id = a.id
+					 LEFT JOIN order_info o ON oi.order_id = o.order_id
+				WHERE a.`level`=3
+					 <trim>
+					   <if test="map.startTime !=null">
+					     AND o.create_time <![CDATA[ >= #{map.startTime}]]>
+					   </if>
+					   <if test="map.endTime!=null">
+					     AND o.create_time <![CDATA[ <= #{map.endTime}]]>
+					   </if>
+				    </trim>
+					 AND o.pay_status in (2,3,4)
+					 GROUP BY oi.seller_id,oi.order_id) C GROUP BY region_id)B ON a.id = B.region_id
+		WHERE
+		a.`level`=3
+    </select>
+    
+    <!-- 查询所有   以及条件查询	分页-->
+    <select id="getAll" parameterType="OrderItem" resultMap="orderItemMap">
+     	<include refid="OrderItemSelector" />
+		<include refid="OrderItemMapWhere" />
+		ORDER BY o.create_time DESC
+		<include refid="OrderItemListLimit" />
+    </select>
+    
+    <!-- 查询一周内收入前十的卖家  -->
+    <select id="getTonTenIncomes" resultMap="countMap">
+		SELECT count(1) count,SUM(A.goods_amount)amount,seller.seller_name sellerName,seller.seller_grade grade FROM order_item A 
+		LEFT JOIN seller ON A.seller_id=seller.seller_id
+		WHERE A.delivery_finish_time BETWEEN date_add(date_format(now(), '%Y-%m-%d 00:00:00'), interval -6 day) AND date_format(now(), '%Y-%m-%d 23:59:59')
+		GROUP BY A.seller_id ORDER BY amount DESC LIMIT 0,10;
+	</select>
+	
+	<!-- 查询一周内销售量前十的商品  -->
+    <select id="getTopTenGoods" resultMap="countMap">
+		SELECT goods.goods_name goodsName,B.format_name formatName,sum(goods_number) num,sum(goods_amount) amount from order_item A 
+		LEFT JOIN goods_format B ON A.format_id=B.format_id
+		LEFT JOIN goods ON B.goods_id=goods.goods_id
+		WHERE A.delivery_finish_time BETWEEN date_add(date_format(now(), '%Y-%m-%d 00:00:00'), interval -6 day) AND date_format(now(), '%Y-%m-%d 23:59:59')
+		GROUP BY A.format_id ORDER BY num DESC limit 0,10;
+	</select>
+    
+    <!-- 查询总数 -->
+    <select id="getPageCount" resultType="int">
+		select 
+			count(1) 
+		FROM order_item o 
+			left join process_method pm on pm.method_id=o.method_id
+			left join order_info oi ON o.order_id = oi.order_id
+			inner join goods_format gf on gf.format_id=o.format_id
+			inner join goods gs on gs.goods_id=gf.goods_id
+			inner join seller s on s.seller_id=o.seller_id
+			LEFT JOIN unit u ON u.unit_id=gf.unit_id
+			LEFT JOIN buyer b ON o.buyer_id=b.buyer_id
+			inner JOIN area a ON a.id = b.region_id
+		<include refid="OrderItemMapWhere" />
+	</select>
+	
+	<!-- 通过Id查询单个 -->
+	<select id="getOrderItemById" parameterType="Long" resultMap="orderItemMap">
+		<include refid="OrderItemSelector" />		
+			where
+			o.item_id=#{id}
+	</select>
+	
+	<!-- 查询缺货和退货的子订单-->
+    <select id="getRedressOrderItems" resultMap="orderItemMap">
+     	<include refid="OrderItemSelector" />
+		<include refid="OrderItemMapWhere" />
+		<trim prefix="and" >
+		    <if test="statusCode == 0 ">
+		        (seller_status in (2,3,4,5) or buyer_status in (3,4,5))
+		    </if>
+		    <if test="statusCode == 1 ">
+		        seller_status in (4,5) 
+		    </if>
+		    <if test="statusCode == 2 ">
+		        seller_status in (2,3) 
+		    </if>
+	        <if test="statusCode == 3 ">
+	            buyer_status = 5
+	        </if>
+	        <if test="statusCode == 4 ">
+	            buyer_status in (3,4)
+	        </if>
+		</trim>
+		order by o.create_time desc limit #{pageNum},#{pageSize}
+    </select>
+    
+    <!-- 查询缺货和退货的子订单的总数   -->
+    <select id="getRedressOrderItemCount" resultType="int">
+     	select count(*) FROM order_item o 
+			left join process_method pm on pm.method_id=o.method_id
+			inner join goods_format gf on gf.format_id=o.format_id
+			left join order_info oi ON o.order_id = oi.order_id
+			inner join goods gs on gs.goods_id=gf.goods_id
+			inner join seller s on s.seller_id=o.seller_id
+			LEFT JOIN unit u ON u.unit_id=gf.unit_id
+			LEFT JOIN buyer b ON o.buyer_id=b.buyer_id
+			LEFT JOIN delivery d ON d.id = o.delivery_id
+			inner JOIN area a ON a.id = b.region_id
+		<include refid="OrderItemMapWhere" />
+		<trim prefix="and" >
+		    <if test="statusCode == 0 ">
+		        (seller_status in (2,3,4,5) or buyer_status in (3,4,5))
+		    </if>
+		    <if test="statusCode == 1 ">
+		        seller_status in (4,5) 
+		    </if>
+		    <if test="statusCode == 2 ">
+		        seller_status in (2,3) 
+		    </if>
+	        <if test="statusCode == 3 ">
+	            buyer_status = 5
+	        </if>
+	        <if test="statusCode == 4 ">
+	            buyer_status in (3,4)
+	        </if>
+		</trim>
+    </select>
+    
+	<!-- 根据订单项取消订单 -->
+    <update id="cancelOrderItemById">
+        UPDATE order_item set order_status=2 where item_id=#{itemId};
+	    UPDATE order_info oif SET oif.trade_status = "2" WHERE oif.order_id = (SELECT oi.order_id 
+		FROM
+		order_item oi 
+		WHERE oi.item_id = #{itemId}) AND 	not exists (	SELECT * FROM order_item o WHERE o.order_id = (SELECT oi.order_id 
+		FROM
+		order_item oi 
+		WHERE oi.item_id = #{itemId}) AND o.order_status = 1)
+    </update>
+	
+	<!-- 添加 -->
+	<insert id="insertOrderItem" parameterType="OrderItem">
+		insert into order_item
+		<trim prefix="(" suffix=")">
+			<if test="orderId != null">
+		      order_id ,
+		    </if>
+			<if test="orderNumber != null">
+		      order_number ,
+		    </if>
+		    <if test="orderStatus != null">
+		     order_status,
+		    </if>
+		    <if test="formatId != null">
+		     format_id,
+		    </if>
+		     <if test="buyerId != null">
+		      buyer_id,
+		    </if>
+		    <if test="sellerId != null">
+		      seller_id ,
+		    </if>
+			<if test="deliveryType != null">
+		      delivery_type ,
+		    </if>
+		    <if test="deliveryStatus != null">
+		     delivery_status,
+		    </if>
+		    <if test="sellerStatus != null">
+		     seller_status,
+		    </if>
+		     <if test="buyerStatus != null">
+		      buyer_status,
+		    </if>
+		    <if test="remark != null">
+		      remark ,
+		    </if>
+			<if test="goodsAmount != null">
+		      goods_amount ,
+		    </if>
+		    <if test="deliveryMoney != null">
+		     delivery_money,
+		    </if>
+		    <if test="deliveryReceiveTime != null">
+		     delivery_receive_time,
+		    </if>
+		     <if test="deliveryFinishTime != null">
+		      delivery_finish_time,
+		    </if>
+		    <if test="sellerFinishTime != null">
+		     seller_finish_time,
+		    </if>
+		     <if test="buyerFinishTime != null">
+		      buyer_finish_time,
+		    </if>
+		    <if test="createTime != null">
+		      create_time
+		    </if>
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+			<if test="orderId != null">
+		      #{orderId },
+		    </if>
+		    <if test="orderNumber != null">
+		     #{orderNumber},
+		    </if>
+		    <if test="orderStatus != null">
+		     #{orderStatus},
+		    </if>
+		     <if test="formatId != null">
+		      #{formatId},
+		    </if>
+		    <if test="buyerId != null">
+		      #{buyerId },
+		    </if>
+			<if test="sellerId != null">
+		      #{sellerId },
+		    </if>
+		    <if test="deliveryType != null">
+		     #{deliveryType},
+		    </if>
+		    <if test="deliveryStatus != null">
+		     #{deliveryStatus},
+		    </if>
+		     <if test="sellerStatus != null">
+		      #{sellerStatus},
+		    </if>
+		    <if test="buyerStatus != null">
+		      #{buyerStatus },
+		    </if>
+			<if test="remark != null">
+		      #{remark },
+		    </if>
+		    <if test="goodsAmount != null">
+		     #{goodsAmount},
+		    </if>
+		    <if test="deliveryMoney != null">
+		     #{deliveryMoney},
+		    </if>
+		     <if test="deliveryReceiveTime != null">
+		      #{deliveryReceiveTime},
+		    </if>
+		    <if test="deliveryFinishTime != null">
+		     #{deliveryFinishTime},
+		    </if>
+		     <if test="sellerFinishTime != null">
+		      #{sellerFinishTime},
+		    </if>
+		    <if test="buyerFinishTime != null">
+		      #{buyerFinishTime},
+		    </if>
+		    <if test="createTime != null">
+		      #{createTime}
+		    </if>
+		</trim>
+	</insert>
+	
+	<!-- 通过ID查询余额 -->
+	<select id="getByOrderId" resultMap="orderItemMap">
+		select 
+			oi.buyer_id,
+			oi.seller_id,
+			oi.item_id,
+			oi.goods_amount,
+			oi.goods_price,
+			oi.order_status,
+			oi.goods_number,
+			g.goods_name 
+		from order_item oi 
+			LEFT JOIN goods_format gf ON gf.format_id = oi.format_id
+			LEFT JOIN goods g ON  gf.goods_id = g.goods_id
+		where
+			order_id = #{orderId}
+		AND oi.order_status!=2
+	</select>
+	
+	<!-- 卖家当天订单总额;-->
+	<select id="getAmountBySellerByDate" parameterType="SellerOrderVo" resultMap="sellerOrderMap">
+		SELECT 
+			SUM(oi.goods_amount) amount,
+			s.seller_id,
+			s.balance_money,
+			s.seller_account,
+			s.seller_grade,
+			s.seller_rank,
+			s.seller_address,
+			s.seller_name,
+			a.area_name
+		FROM order_item oi
+			LEFT JOIN order_info o ON o.order_id = oi.order_id 
+			LEFT JOIN seller s ON s.seller_id = oi.seller_id
+			LEFT JOIN area a ON FIND_IN_SET(a.id,s.regions)
+		WHERE
+			o.trade_status !=2 AND o.pay_status in (2,3,4) 
+		<trim>
+			<if test="map != null">
+			   <if test="map.startTime !=null">
+			     AND oi.create_time <![CDATA[ >= #{map.startTime}]]>
+			   </if>
+			   <if test="map.endTime!=null">
+			     AND oi.create_time <![CDATA[ <= #{map.endTime}]]>
+			   </if>
+			</if>
+	    </trim>
+	    <if test="s.areaId != null and s.areaId != ''">
+		     AND a.id = #{s.areaId}
+	   </if>
+	   <if test="s.createTime != null and s.createTime != ''">
+		     AND oi.create_time BETWEEN DATE_FORMAT( ADDDATE(#{s.createTime},-2),"%Y-%m-%d 12:00:00") AND DATE_FORMAT(ADDDATE(#{s.createTime},-1),"%Y-%m-%d 6:00:00")
+	   </if>
+		GROUP BY s.seller_id
+		ORDER BY amount DESC
+	</select>
+	
+	<!-- 根据卖家id和时间查询卖家收益详情  -->
+	<select id="selectSellerTransactionDetails" resultMap="sellerTransactionDetailMap" >
+	    SELECT goods.goods_brand,goods.goods_name,goods.goods_label,unit.unit_name,sum(item.goods_number)goods_number,sum(item.goods_amount)goods_amount,item.goods_price,
+			   sum(percentage.order_total_amount)total_amount,percentage.order_percentage,sum(percentage.order_percentage_amount)percentage_amount,sum(percentage.order_reality_money)reality_money
+		       FROM order_info info 
+		INNER JOIN order_item item on info.order_id=item.order_id
+		INNER JOIN goods_format format on item.format_id=format.format_id
+		INNER JOIN unit on format.unit_id=unit.unit_id
+		INNER JOIN goods ON goods.goods_id=format.goods_id
+		LEFT JOIN order_percentage percentage on item.item_id=percentage.order_item_id
+		WHERE info.trade_status!=2 AND info.pay_status!=1 and item.order_status=1 and date_format(info.best_time,'%Y-%m-%d')=date_format(#{time},'%Y-%m-%d') and item.seller_id=#{sellerId} 
+		GROUP BY item.format_id 
+	</select>
+	
+	<!-- 根据卖家id和时间查询卖家营业金额 -->
+	<select id="selectSellerTransactionAmount" resultType="BigDecimal">
+	    SELECT sum(item.goods_amount)goods_amount FROM order_info info 
+		INNER JOIN order_item item on info.order_id=item.order_id
+		WHERE info.trade_status!=2 AND info.pay_status!=1 and item.order_status=1 and date_format(info.best_time,'%Y-%m-%d')=date_format(#{time},'%Y-%m-%d') and item.seller_id=#{sellerId} 
+	</select>
+	
+	<!-- 根据卖家id和订单id查询订单明细  -->
+	<select id="selectPresentOrderDetails" resultMap="presentOrderDetailMap">
+	    SELECT buyer.buyer_name,buyer.boss_tel,buyer.buyer_address,goods.goods_brand,goods.goods_name,goods.goods_label,unit.unit_name,item.goods_price,item.goods_number,item.goods_amount FROM order_info info 
+		INNER JOIN order_item item on info.order_id=item.order_id
+		INNER JOIN buyer on info.buyer_id=buyer.buyer_id
+		INNER JOIN goods_format format on item.format_id=format.format_id
+		INNER JOIN unit on format.unit_id=unit.unit_id
+		INNER JOIN goods ON goods.goods_id=format.goods_id
+		WHERE info.trade_status !=2 and info.pay_status !=1 and item.seller_id=#{sellerId} and item.order_id=#{orderId}
+	</select>
+	
+	<!-- 根据主订单id查询缺货和退货订单  -->
+	<select id="getImproperOrderItems" parameterType="Long" resultMap="orderItemMap">
+	    select * from order_item where (seller_status in(2,3,4,5) or buyer_status in(3,4,5)) and order_id=#{orderId}
+	</select>
+	
+	<!-- 改变商品数量 -->
+	<update id="updateGoodsNumber">
+		update order_item set goods_number = #{goodsNumber},goods_amount =#{goodsAmount} where item_id = #{itemId};
+	</update>
+	
+	<!-- 批量修改订单状态 -->
+	<update id="batchUpdateStatus" parameterType="java.util.List">
+		update order_item set order_status = #{orderStatus} where order_id in
+		<foreach collection="ids" item="id" open="(" separator="," close=")">
+	  	 	#{id}
+	 	</foreach>
+	</update>
+	
+	<!-- 根据订单项取消订单 -->
+    <update id="cancelAllOrderItem">
+        update order_item set order_status=2 where order_id=#{orderId}
+    </update>
+    
+    <!--更新订单状态为退货完成 -->
+    <update id="returnFinish" parameterType="Long" >
+        update order_item set order_status=2,buyer_status=5 where item_id=#{itemId}
+    </update>
+    
+</mapper>

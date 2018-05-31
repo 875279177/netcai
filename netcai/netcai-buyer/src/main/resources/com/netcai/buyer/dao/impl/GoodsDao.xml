@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商品xml anthor chenlei -->
+<mapper namespace="com.netcai.buyer.dao.GoodsDao">
+
+	<resultMap type="com.netcai.buyer.vo.GoodsVo" id="goodsResult">
+		<result column="goods_id" property="goodsId" />
+		<result column="category_id" property="categoryId" />
+		<result column="category_code" property="categoryCode" />
+		<result column="category_name" property="categoryName" />
+		<result column="goods_name" property="goodsName" />
+		<result column="goods_as" property="goodsAs" />
+		<result column="goods_label" property="goodsLabel" />
+		<result column="goods_brand" property="goodsBrand" />
+		<result column="goods_desc" property="goodsDesc" />
+		<result column="goods_seq" property="goodsSeq" />
+		<result column="goods_status" property="goodsStatus" />
+		<result column="goods_remark" property="goodsRemark" />
+		<result column="create_time" property="createTime" />
+		<!-- 商品图片集合 -->
+		<collection property="pictureList" ofType="com.netcai.buyer.vo.GoodsPictureVo">
+			<result column="pic_id" property="picId" />
+			<result column="pic_url" property="picUrl" />
+			<result column="pic_seq" property="picSeq" />
+			<result column="is_main" property="isMain" />
+        </collection>
+        <!-- 商品规格集合 -->
+        <collection property="formatList" ofType="com.netcai.buyer.vo.GoodsFormatVo">
+			<result column="format_id" property="formatId" />
+			<result column="unit_id" property="unitId" />
+			<result column="unit_Name" property="unitName" />
+			<result column="format_name" property="formatName" />
+			<result column="format_price" property="formatPrice" />
+			<result column="format_num" property="formatNum" />
+			<result column="format_status" property="formatStatus" />
+			<result column="format_seq" property="formatSeq" />
+        </collection>
+        <!-- 商品加工方式集合 -->
+        <collection property="methodList" ofType="com.netcai.buyer.vo.GoodsMethodVo">
+            <result column="gm_id" property="gmId" />
+			<result column="method_id" property="methodId" />
+			<result column="method_Name" property="methodName" />
+        </collection>
+	</resultMap>
+	
+	<resultMap type="com.netcai.buyer.vo.CategoryGoodsVo" id="goodsResultByCategory">
+	    <result column="sc_id" property="scId" />
+		<result column="category_id" property="categoryId" />
+		<result column="category_code" property="categoryCode" />
+		<result column="category_name" property="categoryName" />
+		<collection property="goodsList" ofType="com.netcai.buyer.vo.GoodsVo">
+			<result column="goods_id" property="goodsId" />
+			<result column="goods_name" property="goodsName" />
+			<result column="goods_as" property="goodsAs" />
+			<result column="goods_label" property="goodsLabel" />
+			<result column="goods_brand" property="goodsBrand" />
+			<result column="goods_desc" property="goodsDesc" />
+			<result column="goods_seq" property="goodsSeq" />
+			<result column="goods_status" property="goodsStatus" />
+			<result column="goods_remark" property="goodsRemark" />
+			<result column="create_time" property="createTime" />
+			<!-- 商品图片集合 -->
+			<collection property="pictureList" ofType="com.netcai.buyer.vo.GoodsPictureVo">
+				<result column="pic_id" property="picId" />
+				<result column="pic_url" property="picUrl" />
+				<result column="pic_seq" property="picSeq" />
+				<result column="is_main" property="isMain" />
+	        </collection>
+	        <!-- 商品规格集合 -->
+	        <collection property="formatList" ofType="com.netcai.buyer.vo.GoodsFormatVo">
+				<result column="format_id" property="formatId" />
+				<result column="unit_id" property="unitId" />
+				<result column="unit_Name" property="unitName" />
+				<result column="format_name" property="formatName" />
+				<result column="format_price" property="formatPrice" />
+				<result column="format_num" property="formatNum" />
+				<result column="format_status" property="formatStatus" />
+				<result column="format_seq" property="formatSeq" />
+	        </collection>
+	        <!-- 商品加工方式集合 -->
+	        <collection property="methodList" ofType="com.netcai.buyer.vo.GoodsMethodVo">
+	            <result column="gm_id" property="gmId" />
+				<result column="method_id" property="methodId" />
+				<result column="method_Name" property="methodName" />
+	        </collection>
+        </collection>
+	</resultMap>
+	
+	<!-- 查询商品返回字段 -->
+	<sql id="getGoodsSelect">
+  		select 
+			g.goods_id,g.category_id,c.category_code,c.category_name,g.goods_name,g.goods_as,g.goods_label,
+			g.goods_brand,g.goods_desc,g.goods_seq,g.goods_status,g.goods_remark,g.create_time,
+			gp.pic_id,gp.pic_url,gp.pic_seq,gp.is_main,
+			gf.format_id,gf.unit_id,u.unit_name,gf.format_name,gf.format_price,gf.format_num,gf.format_status,gf.format_seq,
+			gm.gm_id,gm.method_id,pm.method_name
+	</sql>
+	
+	<!-- 查询商品关联表 -->
+	<sql id="getGoodsFrom">
+  		from goods g 
+		left join category c on c.category_id = g.category_id
+		left join goods_picture gp on g.goods_id=gp.goods_id 
+		left join goods_format gf on g.goods_id=gf.goods_id 
+		left join unit u on gf.unit_id=u.unit_id
+		left join goods_method gm on g.goods_id=gm.goods_id 
+		left join process_method pm on pm.method_id=gm.method_id
+	</sql>
+	
+	<!-- 分页查询商品信息 -->
+	<select id="getAllGoods" resultMap="goodsResult">
+	   <include refid="getGoodsSelect" />
+	   <include refid="getGoodsFrom" />
+		where g.goods_status=1 and gf.format_status=1 and g.user_id=#{userId}
+		<if test=" categoryId != null">
+			and c.category_id = #{categoryId} 
+		</if>
+		order by g.goods_seq, gp.is_main desc, gf.format_seq
+	</select>
+	
+	<select id="getAllGoodsByCategory" resultMap="goodsResultByCategory">
+	   select sc.sc_id,p.category_id,p.category_code,p.category_name ,
+	        g.goods_id,g.goods_name,g.goods_as,g.goods_label,
+			g.goods_brand,g.goods_desc,g.goods_seq,g.goods_status,g.goods_remark,g.create_time,
+			gp.pic_id,gp.pic_url,gp.pic_seq,gp.is_main,
+			gf.format_id,gf.unit_id,u.unit_name,gf.format_name,gf.format_price,gf.format_num,gf.format_status,gf.format_seq,
+			gm.gm_id,gm.method_id,pm.method_name
+	   from seller_category sc
+	        inner join (select c.category_id,c.category_code,c.category_name from category c where c.parent_id=#{categoryId}) p on p.category_id=sc.category_id
+	        left join goods g on g.category_id=sc.category_id and g.user_id=#{userId}
+	        left join category c on c.category_id=g.category_id
+			left join goods_picture gp on g.goods_id=gp.goods_id 
+			left join goods_format gf on g.goods_id=gf.goods_id 
+			left join unit u on gf.unit_id=u.unit_id
+			left join goods_method gm on g.goods_id=gm.goods_id 
+			left join process_method pm on pm.method_id=gm.method_id
+	  where sc.user_id=#{userId} and g.goods_status=1 and gf.format_status=1
+	  order by sc.sc_seq asc,g.goods_seq, gp.is_main desc, gf.format_price
+	</select>
+	
+	<!-- 根据id查找商品信息-->
+	<select id="getGoodsById" parameterType="int" resultMap="goodsResult">
+	  	<include refid="getGoodsSelect" />
+	    <include refid="getGoodsFrom" />
+		where g.goods_id = #{goodsId}
+		order by gp.pic_seq, gf.format_seq
+	</select>
+	
+	<!-- 搜索店铺商品 -->
+	<select id="searchGoodsBySellerId" resultMap="goodsResult">
+	   <include refid="getGoodsSelect" />
+	   <include refid="getGoodsFrom" />
+		where g.goods_status=1 and gf.format_status=1 and g.user_id=#{userId}
+		and (select 1 from seller_category sc where g.category_id=sc.category_id and sc.user_id=g.user_id)
+		<if test=" keyword != null">
+			and (g.goods_name like concat('%',#{keyword},'%')
+			or g.goods_as like concat('%',#{keyword},'%')
+			or g.goods_label like concat('%',#{keyword},'%')
+			or g.goods_brand like concat('%',#{keyword},'%')
+			or g.goods_desc like concat('%',#{keyword},'%') ) 
+		</if>
+		order by g.goods_seq, gp.is_main desc, gf.format_price
+	</select>
+	
+	<!-- 全局检索返回结果 APP使用-->
+	<resultMap type="com.netcai.buyer.vo.SearchVo" id="searchResult">
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_name" property="sellerName" />
+		<result column="seller_alias" property="sellerAlias" />
+		<result column="seller_logo" property="sellerLogo" />
+		<result column="seller_rank" property="sellerRank" />
+		<result column="seller_grade" property="sellerGrade" />
+		<!-- 搜索结果集合 -->
+		<collection property="searchItemList" ofType="com.netcai.buyer.vo.SearchItemVo">
+			<result column="goods_id" property="goodsId" />
+			<result column="goods_name" property="goodsName" />
+			<result column="goods_as" property="goodsAs" />
+			<result column="goods_label" property="goodsLabel" />
+			<result column="goods_brand" property="goodsBrand" />
+			<result column="goods_desc" property="goodsDesc" />
+			<result column="format_id" property="formatId" />
+			<result column="unit_id" property="unitId" />
+			<result column="unit_Name" property="unitName" />
+			<result column="format_name" property="formatName" />
+			<result column="format_price" property="formatPrice" />
+			<result column="format_num" property="formatNum" />
+			<!-- 商品图片集合 -->
+			<collection property="pictureList" ofType="com.netcai.buyer.vo.GoodsPictureVo">
+				<result column="pic_id" property="picId" />
+				<result column="pic_url" property="picUrl" />
+				<result column="pic_seq" property="picSeq" />
+				<result column="is_main" property="isMain" />
+			</collection>
+			 <!-- 商品加工方式集合 -->
+	        <collection property="methodList" ofType="com.netcai.buyer.vo.GoodsMethodVo">
+	            <result column="gm_id" property="gmId" />
+				<result column="method_id" property="methodId" />
+				<result column="method_Name" property="methodName" />
+	        </collection>
+        </collection>
+	</resultMap>
+	
+	<!-- 全局检索返回结果 APP使用 新-->
+	<resultMap type="com.netcai.buyer.vo.NewSearchVo" id="newSearchResult">
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_name" property="sellerName" />
+		<result column="seller_alias" property="sellerAlias" />
+		<result column="seller_logo" property="sellerLogo" />
+		<result column="seller_rank" property="sellerRank" />
+		<result column="seller_grade" property="sellerGrade" />
+		<!-- 搜索结果集合 -->
+		<collection property="searchItemList" ofType="com.netcai.buyer.vo.GoodsVo">
+			<result column="goods_id" property="goodsId" />
+			<result column="goods_name" property="goodsName" />
+			<result column="goods_as" property="goodsAs" />
+			<result column="goods_label" property="goodsLabel" />
+			<result column="goods_brand" property="goodsBrand" />
+			<result column="goods_desc" property="goodsDesc" />
+			<result column="goods_remark" property="goodsRemark" />
+			<!-- 商品规格集合 -->
+            <collection property="formatList" ofType="com.netcai.buyer.vo.GoodsFormatVo">
+				<result column="format_id" property="formatId" />
+				<result column="unit_Name" property="unitName" />
+				<result column="format_name" property="formatName" />
+				<result column="format_price" property="formatPrice" />
+				<result column="format_num" property="formatNum" />
+            </collection>
+			<!-- 商品图片集合 -->
+			<collection property="pictureList" ofType="com.netcai.buyer.vo.GoodsPictureVo">
+				<result column="pic_id" property="picId" />
+				<result column="pic_url" property="picUrl" />
+			</collection>
+			 <!-- 商品加工方式集合 -->
+	        <collection property="methodList" ofType="com.netcai.buyer.vo.GoodsMethodVo">
+				<result column="method_id" property="methodId" />
+				<result column="method_Name" property="methodName" />
+	        </collection>
+        </collection>
+	</resultMap>
+	
+	<!-- 全局搜索输出 -->
+	<sql id="searchSelect">
+  		select 
+	        s.seller_id,s.seller_name,s.seller_alias,s.seller_logo,s.seller_rank,s.seller_grade,
+			g.goods_id,g.goods_name,g.goods_as,g.goods_label,g.goods_brand,g.goods_desc,g.goods_remark,
+			gp.pic_id,gp.pic_url,gp.pic_seq,gp.is_main,
+			gf.format_id,gf.unit_id,u.unit_name,gf.format_name,gf.format_price,gf.format_num,
+			gm.gm_id,gm.method_id,pm.method_name
+	</sql>
+	
+	<!-- 全局搜索输出 新-->
+	<sql id="newSearchSelect">
+		select 
+	        s.seller_id,s.seller_name,s.seller_alias,s.seller_logo,s.seller_rank,s.seller_grade,
+			g.goods_id,g.goods_name,g.goods_as,g.goods_label,g.goods_brand,g.goods_desc,g.goods_remark,
+			gp.pic_id,gp.pic_url,
+			gf.format_id,u.unit_name,gf.format_name,gf.format_price,gf.format_num,
+			gm.method_id,pm.method_name
+	</sql>
+	
+	<!-- 全局搜索关联表 -->
+	<sql id="searchFrom">
+         from goods_format gf 
+			inner join goods g on g.goods_id=gf.goods_id
+			inner join seller s on g.user_id=s.seller_id 
+			inner join users us on us.id = s.seller_id
+			left join goods_picture gp on g.goods_id=gp.goods_id 
+			left join unit u on gf.unit_id=u.unit_id
+			left join goods_method gm on g.goods_id=gm.goods_id 
+			left join process_method pm on pm.method_id=gm.method_id
+	</sql>
+	<!-- 全局搜索关联表  新-->
+	<sql id="newSearchFrom">
+         from  goods g
+			inner join goods_format gf on g.goods_id=gf.goods_id
+			inner join seller s on g.user_id=s.seller_id 
+			inner join users us on us.id = s.seller_id
+			left join goods_picture gp on g.goods_id=gp.goods_id 
+			left join unit u on gf.unit_id=u.unit_id
+			left join goods_method gm on g.goods_id=gm.goods_id 
+			left join process_method pm on pm.method_id=gm.method_id
+	</sql>
+	<!-- 全局搜索where条件 -->
+	<sql id="searchWhere">
+        where g.goods_status=1 and gf.format_status=1 and us.status = 3 and us.type = 2
+        and not exists(select 1 from buyer_config where buyer_id=#{userId} and s.seller_id =seller_id)
+        and (select 1 from seller_category sc where g.category_id=sc.category_id and sc.user_id=g.user_id)
+		<if test="regionId != null ">
+		    and find_in_set(#{regionId},s.regions)
+		</if>
+	</sql>
+	<!-- 全局搜索order by条件 -->
+	<sql id="searchOrderBy">
+        order by s.seller_rank desc, g.goods_seq, gp.is_main desc, gf.format_price
+	</sql>
+	
+	<!-- 全局搜索商品 -->
+	<select id="searchGoods" resultMap="searchResult">
+		<include refid="searchSelect" />
+		<include refid="searchFrom" />
+		<include refid="searchWhere" />
+		<if test=" keyword != null">
+			and (g.goods_name like concat('%',#{keyword},'%')
+			or g.goods_as like concat('%',#{keyword},'%')
+			or g.goods_label like concat('%',#{keyword},'%')
+			or g.goods_brand like concat('%',#{keyword},'%')
+			or g.goods_desc like concat('%',#{keyword},'%') 
+			or gf.format_name like concat('%',#{keyword},'%') 
+			or pm.method_name like concat('%',#{keyword},'%') 
+			or s.seller_name like concat('%',#{keyword},'%') 
+			or exists(select 1 from category where category_id = g.category_id and category_name like concat('%',#{keyword},'%') )
+			) 
+		</if>
+		<include refid="searchOrderBy" />
+	</select>
+	
+	<!-- 按分类搜索商品 -->
+	<select id="searchGoodsByCategory" resultMap="searchResult">
+	    <include refid="searchSelect" />
+		<include refid="searchFrom" />
+		<include refid="searchWhere" />
+		<if test=" categoryCode != null">
+			and exists(select 1 from seller_category sc , category c  
+			where sc.category_id=c.category_id and g.category_id=c.category_id and sc.user_id = s.seller_id and
+			c.category_code like concat(#{categoryCode},'%'))
+		</if>
+		<include refid="searchOrderBy" />
+	</select>
+	
+	<!-- 全局搜索商品  新-->
+	<select id="newSearchGoods" resultMap="newSearchResult">
+		<include refid="newSearchSelect" />
+		<include refid="newSearchFrom" />
+		<include refid="searchWhere" />
+		<if test=" keyword != null">
+			and (g.goods_name like concat('%',#{keyword},'%')
+			or g.goods_as like concat('%',#{keyword},'%')
+			or g.goods_label like concat('%',#{keyword},'%')
+			or g.goods_brand like concat('%',#{keyword},'%')
+			or g.goods_desc like concat('%',#{keyword},'%') 
+			or gf.format_name like concat('%',#{keyword},'%') 
+			or pm.method_name like concat('%',#{keyword},'%') 
+			or s.seller_name like concat('%',#{keyword},'%') 
+			or exists(select 1 from category where category_id = g.category_id and category_name like concat('%',#{keyword},'%') )
+			) 
+		</if>
+		<include refid="searchOrderBy" />
+	</select>
+	
+	<!-- 按分类搜索商品 新 -->
+	<select id="newSearchGoodsByCategory" resultMap="newSearchResult">
+	    <include refid="newSearchSelect" />
+		<include refid="newSearchFrom" />
+		<include refid="searchWhere" />
+		<if test=" categoryCode != null">
+			and exists(select 1 from seller_category sc , category c  
+			where sc.category_id=c.category_id and g.category_id=c.category_id and sc.user_id = s.seller_id and
+			c.category_code like concat(#{categoryCode},'%'))
+		</if>
+		<include refid="searchOrderBy" />
+	</select>
+</mapper>

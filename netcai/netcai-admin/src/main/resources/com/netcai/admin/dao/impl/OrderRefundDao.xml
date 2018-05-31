@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.netcai.admin.dao.OrderRefundDao">
+
+	<resultMap type="com.netcai.admin.vo.OrderRefundVo" id="orderRefundMap">
+		<result property="id" column="id" />
+		<result property="orderNumber" column="order_number" />
+		<result property="buyerId" column="buyer_id" />
+		<result property="sellerId" column="seller_id" />
+		<result property="buyerName" column="buyer_name" />
+		<result property="sellerName" column="seller_name" />
+		<result property="sellerMoney" column="seller_money" />
+		<result property="buyerMoney" column="buyer_money" />
+		<result property="refundCauseIds" column="refund_cause_id" />
+		<result property="reason" column="refund_cause_reason" />
+		<result property="remark" column="remark" />
+		<result property="createTime" column="create_time" />
+		<result property="isShow" column="is_show" />
+	</resultMap>
+	
+	<sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and ">
+	    <if test="orderRefund.sellerName != null and orderRefund.sellerName != '' ">
+	      and seller.seller_name like '%${orderRefund.sellerName}%'
+	    </if>
+	    <if test="orderRefund.buyerName != null and orderRefund.buyerName != '' ">
+	      and buyer.buyer_name like '%${orderRefund.buyerName}%'
+	    </if>
+	    <if test="orderRefund.saleId != null ">
+	      and buyer.sale_id = #{orderRefund.saleId}
+	    </if>
+	    <if test="orderRefund.createTime != null ">
+	      and refund.create_time = DATE_FORMAT(#{orderRefund.createTime},'%Y-%m-%d')
+	    </if>
+	    <if test="orderRefund.reason != null and orderRefund.reason != '' ">
+	      and refund.refund_cause_reason like '%${orderRefund.reason}%'
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 分页查询多退少补信息   -->
+	<select id="getAll" resultMap="orderRefundMap">
+		select refund.*,seller.seller_name,buyer.buyer_name from order_refund refund 
+		left join seller on refund.seller_id=seller.seller_id
+		left join buyer on refund.buyer_id=buyer.buyer_id
+		<include refid="filterCondition"></include>
+		order by refund.id desc limit #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		select count(1) from order_refund refund 
+		left join seller on refund.seller_id=seller.seller_id
+		left join buyer on refund.buyer_id=buyer.buyer_id
+        <include refid="filterCondition"></include>
+	</select>
+	
+	<!-- 根据map查询数据 -->
+	<select id="selectByMap" parameterType="Map" resultMap="orderRefundMap">
+		select refund.*,buyer.buyer_name from order_refund refund 
+		left join buyer on refund.buyer_id=buyer.buyer_id
+		<trim prefix=" where" prefixOverrides="and">
+	      <if test=" orderNumber != null and orderNumber != '' ">
+	         and refund.order_number=#{orderNumber}
+	      </if>
+	      <if test=" sellerId != null ">
+	         and refund.seller_id=#{sellerId}
+	      </if>
+	    </trim>
+		order by refund.id desc 
+	</select>
+	
+	<!-- 查询卖家某一天的多退少补数据 -->
+	<select id="selectBysellerId" resultMap="orderRefundMap">
+	  select refund.*,seller.seller_name,buyer.buyer_name from order_refund refund 
+	  left join seller on refund.seller_id=seller.seller_id
+	  left join buyer on refund.buyer_id=buyer.buyer_id 
+	  <trim prefix=" where" prefixOverrides="and">
+	      <if test=" sellerId != null ">
+	         and refund.seller_id=#{sellerId}
+	      </if>
+	      <if test=" createTime != null ">
+	         and DATE_FORMAT(refund.create_time,'%Y-%m-%d')=DATE_FORMAT(#{createTime},'%Y-%m-%d')
+	      </if>
+	  </trim>
+	</select>
+	
+	<!-- 查询卖家某一天的多退少补总金额 -->
+	<select id="selectTotalSellerMoney" resultType="BigDecimal">
+	  SELECT sum(seller_money) FROM order_refund where seller_id=#{sellerId} AND date_format(create_time,'%Y-%m-%d')=date_format(#{time},'%Y-%m-%d') 
+	</select>
+	
+	<!-- 新增 -->
+	<insert id="insert" parameterType="com.netcai.admin.vo.OrderRefundVo">
+	  insert into order_refund
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+	    <if test=" orderNumber != null and orderNumber != '' ">
+	        order_number,
+	    </if>
+	    <if test=" buyerId != null ">
+	        buyer_id,
+	    </if>
+	    <if test=" sellerId != null ">
+			seller_id,
+		</if>
+	    <if test=" sellerMoney != null ">
+	        seller_money,
+	    </if>
+	    <if test=" buyerMoney != null ">
+	        buyer_money,
+	    </if>
+	    <if test=" refundCauseIds != null ">
+	        refund_cause_id,
+	    </if>
+	    <if test=" reason != null ">
+	        refund_cause_reason,
+	    </if>
+	    <if test=" remark != null ">
+	        remark,
+	    </if>
+	    <if test=" createTime != null">
+			create_time,
+		</if>
+		<if test=" isShow != null">
+			is_show,
+		</if>
+	  </trim>
+	  <trim prefix="values (" suffix=")" suffixOverrides=",">
+	    <if test=" orderNumber != null and orderNumber != '' ">
+	        #{orderNumber},
+	    </if>
+	    <if test=" buyerId != null ">
+	        #{buyerId},
+	    </if>
+	    <if test=" sellerId != null ">
+			#{sellerId},
+		</if>
+	    <if test=" sellerMoney != null ">
+	        #{sellerMoney},
+	    </if>
+	    <if test=" buyerMoney != null ">
+	        #{buyerMoney},
+	    </if>
+	    <if test=" refundCauseIds != null ">
+	        #{refundCauseIds},
+	    </if>
+	    <if test=" reason != null ">
+	        #{reason},
+	    </if>
+	    <if test=" remark != null ">
+			#{remark},
+		</if>
+	    <if test=" createTime != null">
+			#{createTime},
+		</if>
+		<if test=" isShow != null">
+			#{isShow},
+		</if>
+	  </trim>
+	</insert>
+</mapper>

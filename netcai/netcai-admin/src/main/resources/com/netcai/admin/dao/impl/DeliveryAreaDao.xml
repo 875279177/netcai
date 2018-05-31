@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.DeliveryAreaDao">
+   <resultMap type="com.netcai.admin.vo.DeliveryAreaVo" id="deliveryAreaMap">
+       <result column="da_id" property="id"/>
+       <result column="da_area_id" property="areaId"/>
+       <result column="da_address" property="address"/>
+       <result column="da_status" property="status"/>
+       <result column="da_user_id" property="userId"/>
+       <result column="deliveryId" property="deliveryId"/>
+       <result column="da_create_time" property="createTime"/>
+   </resultMap>
+  	
+   <sql id="filterCondition">
+	 <trim prefix="where " prefixOverrides="and ">
+	   <if test=" deliveryArea.address != null and deliveryArea.address != '' ">
+	     and da_address like '%${deliveryArea.address}%'
+	   </if>
+	   <if test=" deliveryArea.status != null ">
+	     and da_status = #{deliveryArea.status}
+	   </if>
+	 </trim>
+   </sql>
+	
+   <!-- 查询全部配送区域-->
+   <select id="getAll" resultMap="deliveryAreaMap">
+     SELECT * FROM delivery_area 
+     <include refid="filterCondition"></include>
+     ORDER BY da_create_time DESC LIMIT #{offset},#{pageSize}
+   </select>
+   
+   <!-- 统计总记录数-->
+   <select id="getPageCount" resultType="int">
+     SELECT count(1) FROM delivery_area 
+     <include refid="filterCondition"></include>
+   </select>
+   
+   <!-- 根据id查询此配送区域 -->
+   <select id="selectDeliveryAreas" resultMap="deliveryAreaMap">
+     SELECT * from delivery_area 
+   </select>
+   
+   <!-- 根据id查询此配送区域 -->
+   <select id="selectById" parameterType="Long" resultMap="deliveryAreaMap">
+     SELECT * from delivery_area WHERE da_id = #{id}
+   </select>
+   
+   <!-- 根据areaId查询配送区域 -->
+   <select id="selectByAreaId" parameterType="Long" resultMap="deliveryAreaMap">
+     SELECT * from delivery_area WHERE da_area_id = #{areaId}
+   </select>
+   
+   <!-- 新增数据 -->
+	<insert id="insert" parameterType="com.netcai.admin.vo.DeliveryAreaVo">
+	  insert into delivery_area
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+        <if test=" areaId != null ">
+	        da_area_id ,
+	    </if>
+	    <if test=" address != null and address != '' ">
+	        da_address ,
+	    </if>
+	    <if test=" status != null ">
+	        da_status ,
+	    </if>
+	    <if test=" userId != null">
+			da_user_id ,
+		</if>
+		<if test=" createTime != null">
+			da_create_time ,
+		</if>
+	  </trim>
+	  <trim prefix=" values(" suffix=")" suffixOverrides=",">
+	    <if test=" areaId != null ">
+	        #{areaId} ,
+	    </if>
+	    <if test=" address != null and address != '' ">
+	        #{address} ,
+	    </if>
+	    <if test=" status != null ">
+	        #{status} ,
+	    </if>
+	    <if test=" userId != null">
+			#{userId} ,
+		</if>
+		<if test=" createTime != null">
+			#{createTime} ,
+		</if>
+	  </trim>
+	</insert>
+	
+	<!-- 更新数据 -->
+	<update id="update" parameterType="com.netcai.admin.vo.DeliveryAreaVo">
+	  update  delivery_area
+	  <set>
+	    <trim>
+          <if test=" areaId != null ">
+	        da_area_id = #{areaId},
+	      </if>
+	      <if test=" address != null and address != '' ">
+	        da_address = #{address},
+	      </if>
+	    </trim>
+	  </set>
+	  where da_id=#{id}
+	</update>
+	
+	<!-- 更新状态 -->
+	<update id="updateStatus">
+	  update delivery_area set da_status=#{status} where da_id=#{id}
+	</update>
+   
+</mapper>

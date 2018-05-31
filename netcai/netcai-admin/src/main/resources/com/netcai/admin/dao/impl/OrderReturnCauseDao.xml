@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.OrderReturnCauseDao">
+
+  <resultMap type="com.netcai.admin.entity.OrderReturnCause" id="orderReturnCauseMap">
+    <id column="cause_id" property="id" jdbcType="BIGINT" />
+    <result column="cause_name" property="causeName" jdbcType="VARCHAR" />
+    <result column="parent_id" property="parentId" jdbcType="BIGINT" />
+    <result column="sequence" property="sequence" jdbcType="INTEGER" />
+    <result column="status" property="status" jdbcType="TINYINT" />
+    <result column="create_time" property="createTime" jdbcType="DATE" />
+  </resultMap>
+  
+  <!-- 查询的数据 -->
+  <sql id="OrderReturnCauseSelector">
+		select o.*
+		from 
+		order_return_cause o
+	</sql>
+  
+  <!-- 条件查询语句 -->
+  <sql id="OrderReturnCauseMapWhere">
+		<where>
+		and  status = 1
+			<if test="o.causeName != null and o.causeName != ''">
+				AND	o.cause_name = #{o.causeName}
+			</if>
+			<if test="o.status != null and o.status != ''">
+				AND	o.status = #{o.status}
+			</if>
+		</where>
+	</sql>
+	
+  <!-- 查询所有   以及条件查询-->
+  <select id="getOrderReturnCause" parameterType="OrderReturnCause" resultMap="orderReturnCauseMap">
+     	<include refid="OrderReturnCauseSelector" />
+		<include refid="OrderReturnCauseMapWhere" />
+  </select>
+  
+  <!-- 查询所有-->
+  <select id="getAll"  resultMap="orderReturnCauseMap" >
+     	select o.*
+		from 
+		order_return_cause o where  status = 1
+  </select>
+  
+	<!--   查询总数 -->
+  <select id="getPageCount" parameterType="OrderReturnCause" resultType="int">
+			select count(*) from 
+			order_return_cause o
+		<include refid="OrderReturnCauseMapWhere" />
+  </select>
+  
+  <!--   根据parentId查询 -->
+  <select id="getOrderReturnCauseByParentId" parameterType="Long" resultMap="orderReturnCauseMap">
+			SELECT 
+			*
+			FROM
+			order_return_cause
+			WHERE
+			parent_id = #{parentId}
+			and  status = 1
+  </select>
+	
+	<!-- 通过Id查询单个 -->
+	<select id="getOrderReturnCauseById" parameterType="Long" resultMap="orderReturnCauseMap">
+		<include refid="OrderReturnCauseSelector" />		
+		<where>
+			o.id=#{id}
+			and  status = 1
+		</where>
+	</select>
+	
+		<!-- 修改Status -->
+	<update id="updateStatus" parameterType="OrderReturnCause">
+		UPDATE order_return_cause  SET 
+			status = -1
+		WHERE cause_id = #{id}
+	</update>
+	
+	
+	<!-- 修改 -->
+	<update id="updateById" parameterType="OrderReturnCause">
+		UPDATE order_return_cause o SET 
+			o.cause_name = #{o.causeName}
+		WHERE o.cause_id = #{o.id}
+	</update>
+	
+	<!-- 添加 -->
+	<insert id="insertOrderReturnCause" parameterType="OrderReturnCause">
+		insert into order_return_cause
+		<trim prefix="(" suffix=")">
+		<if test="causeName != null">
+	      cause_name ,
+	    </if>
+	    <if test="parentId != null">
+	     parent_id,
+	    </if>
+	    <if test="sequence != null">
+	     sequence,
+	    </if>
+	     <if test="status != null">
+	      status,
+	    </if>
+	    <if test="createTime != null">
+	      create_time
+	    </if>
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+	     <if test="causeName != null">
+	      #{causeName},
+	    </if>
+	    <if test="parentId != null">
+	      #{parentId},
+	    </if>
+	    <if test="sequence != null">
+	      #{sequence},
+	    </if>
+	    <if test="status != null">
+	      #{status},
+	    </if>
+	    <if test="createTime != null">
+	      #{createTime}
+	    </if>
+		</trim>
+	</insert>
+	
+</mapper>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.CategoryDao">
+
+	<resultMap type="com.netcai.admin.entity.Category" id="categoryResult">
+		<result column="category_id" property="categoryId" />
+		<result column="category_code" property="categoryCode" />
+		<result column="category_name" property="categoryName" />
+		<result column="parent_id" property="parentId" />
+		<result column="category_level" property="categoryLevel" />
+		<result column="category_seq" property="categorySeq" />
+		<result column="is_end" property="isEnd" />
+		<result column="category_status" property="categoryStatus" />
+		<result column="create_time" property="createTime" />
+		<result column="full_name" property="fullName" />
+		<result column="up_number" property="upNumber" />
+		<result column="sale_percentage" property="salePercentage" />
+		<result column="platform_percentage" property="platformPercentage" />
+		<result column="down_number" property="downNumber" />
+		<result column="category_logo" property="categoryLogo" />
+	</resultMap>
+	<!--  -->
+	<resultMap type="Map" id="topLevelCategoryResult">
+	  <result column="category_id" property="categoryId" javaType="Long"/>
+	  <result column="category_name" property="categoryName" javaType="String"/>
+	</resultMap>
+	
+	<!-- 查询所有的商品分类 -->
+	<select id="getAllCategory" parameterType="com.netcai.admin.entity.Category" resultMap="categoryResult">
+		select *,concat('[',category_code,']',category_name) as full_name  from category 
+	</select>
+
+	<!-- 新增商品分类 -->
+	<insert id="insertCategory" parameterType="com.netcai.admin.entity.Category" useGeneratedKeys="true" keyProperty="categoryId">
+		insert into category
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test=" categoryLogo != null">
+				category_logo,
+			</if>
+			<if test=" categoryCode !=null">
+				category_code,
+			</if>
+			<if test=" categoryName != null">
+				category_name,
+			</if>
+			<if test=" parentId != null">
+				parent_id,
+			</if>
+			<if test="categoryLevel != null">
+				category_level,
+			</if>
+			<if test=" categorySeq != null">
+				category_seq,
+			</if>
+			<if test=" isEnd != null">
+				is_end,
+			</if>
+			<if test=" categoryStatus != null">
+				category_status,
+			</if>
+			<if test=" upNumber != null">
+				up_number,
+			</if>
+			<if test=" downNumber != null">
+				down_number,
+			</if>
+			<if test=" salePercentage != null">
+				sale_percentage,
+			</if>
+			<if test=" platformPercentage != null">
+				platform_percentage,
+			</if>
+			create_time,
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test=" categoryLogo != null">
+				#{categoryLogo},
+			</if>
+			<if test=" categoryCode != null">
+				#{categoryCode},
+			</if>
+			<if test=" categoryName != null">
+				#{categoryName},
+			</if>
+			<if test=" parentId != null">
+				#{parentId},
+			</if>
+			<if test="categoryLevel != null">
+				#{categoryLevel},
+			</if>
+			<if test=" categorySeq != null">
+				#{categorySeq},
+			</if>
+			<if test=" isEnd != null">
+				#{isEnd},
+			</if>
+			<if test=" categoryStatus != null">
+				#{categoryStatus},
+			</if>
+			<if test=" upNumber != null">
+				#{upNumber},
+			</if>
+			<if test=" downNumber != null">
+				#{downNumber},
+			</if>
+			<if test=" salePercentage != null">
+				#{salePercentage},
+			</if>
+			<if test=" platformPercentage != null">
+				#{platformPercentage},
+			</if>
+			now(),
+		</trim>
+	</insert>
+	
+	<!-- 新增商品分类加工方式 -->
+	<insert id="insertCategoryMethod" parameterType="com.netcai.admin.entity.Category">
+		insert into category_method (category_id,method_id,create_time) values  
+		<foreach collection="methodIds" item="item" separator=",">  
+		(#{categoryId},#{item},now())  
+		</foreach>  
+	</insert>
+	
+	<!-- 删除商品分类加工方式 -->
+	<delete id="deleteCategoryMethod" parameterType="com.netcai.admin.entity.Category">
+		delete from category_method where category_id = #{categoryId}   
+	</delete>
+
+	<!-- 更新商品分类 -->
+	<update id="updateCategory" parameterType="com.netcai.admin.entity.Category">
+		update category
+		<set>
+			<trim suffixOverrides=",">
+				<if test=" categoryLogo != null">
+					category_logo = #{categoryLogo},
+				</if>
+				<if test=" categoryCode != null">
+					category_code = #{categoryCode},
+				</if>
+				<if test=" categoryName != null">
+					category_name = #{categoryName},
+				</if>
+				<if test=" parentId != null">
+					parent_id = #{parentId},
+				</if>
+				<if test="categoryLevel != null">
+					category_level = #{categoryLevel},
+				</if>
+				<if test=" categorySeq != null">
+					category_seq = #{categorySeq},
+				</if>
+				<if test=" isEnd != null">
+					is_end = #{isEnd},
+				</if>
+				<if test=" categoryStatus != null">
+					category_status = #{categoryStatus},
+				</if>
+				<if test=" upNumber != null">
+				    up_number = #{upNumber},
+				</if>
+				<if test=" downNumber != null">
+					down_number = #{downNumber},
+				</if>
+				<if test=" salePercentage != null">
+					sale_percentage = #{salePercentage},
+				</if>
+				<if test=" platformPercentage != null">
+					platform_percentage = #{platformPercentage},
+				</if>
+			</trim>
+		</set>
+		where category_id = #{categoryId}
+	</update>
+	
+	<!-- 根据id查找商品分类-->
+	<select id="getCategoryById" parameterType="int" resultMap="categoryResult">
+		select * from category where category_id = #{categoryId}
+	</select>
+	
+	<!-- 查询顶级商品分类   -->
+	<select id="getCategorysTopLevel" resultMap="topLevelCategoryResult">
+		SELECT category_id,category_name FROM category WHERE parent_id=0;
+	</select>
+</mapper>

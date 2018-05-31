@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.BuyerCommonDao" >
+  <resultMap id="buyerCommonMap" type="com.netcai.admin.entity.BuyerCommon" >
+	    <id column="bc_id" property="bcId"/>
+	    <result column="buyer_id" property="buyerId"/>
+	    <result column="goods_id" property="goodsId"/>
+	    <result column="create_time" property="createTime"/>
+	    
+	    <collection property="goodIds" ofType="com.netcai.admin.entity.BuyerCommon$GoodId" >
+	    	<result column="good_id" property="goodsId" />
+	    	<result column="goods_id_old" property="goodsIdOld" />
+	    	<result column="goods_name" property="goodsName" />
+	    	<result column="goods_name_old" property="goodsNameOld" />
+	    </collection>
+  </resultMap>
+  
+  <resultMap id="goodIdMap" type="com.netcai.admin.entity.BuyerCommon$GoodId" >
+	   	<result column="good_id" property="goodsId" />
+	   	<result column="goods_id_old" property="goodsIdOld" />
+	   	<result column="goods_name" property="goodsName" />
+	   	<result column="goods_name_old" property="goodsNameOld" />
+  </resultMap>
+  
+  <resultMap id="buyerCommonVoMap" type="com.netcai.admin.vo.BuyerCommonVo" >
+	    <id column="bc_id" property="bcId"/>
+	    <result column="buyer_id" property="buyerId"/>
+	    <result column="goods_id" property="goodsId"/>
+	    <result column="create_time" property="createTime"/>
+	    <association property="goods" javaType="com.netcai.admin.entity.Goods">
+			<result column="goods_name" property="goodsName"/>
+			<result column="goods_as" property="goodsAs"/>
+			<result column="goods_label" property="goodsLabel"/>
+			<result column="goods_brand" property="goodsBrand"/>
+			<result column="goods_desc" property="goodsDesc"/>
+			<result column="goods_seq" property="goodsSeq"/>
+			<result column="goods_status" property="goodsStatus"/>
+			<result column="goods_remark" property="goodsRemark"/>
+			
+			<association property="seller" javaType="com.netcai.admin.entity.Seller">
+				<result column="seller_name" property="sellerName" />
+				<result column="seller_account" property="sellerAccount" />
+        	</association>
+	    </association>
+	    <association property="buyer" javaType="com.netcai.admin.entity.Buyer">
+			<result property="buyerName" column="buyer_name" />
+			<result property="buyerAddress" column="buyer_address" />
+			<result property="regionName" column="region" />
+			<result property="bossName" column="boss_name" />
+			<result property="bossTel" column="boss_tel" />
+	    </association>
+  </resultMap>
+  
+ <!--  根据buyerId删除 -->
+  <delete id="deleteAllByBuyerId">
+  		delete from buyer_common where buyer_id = #{buyerId}
+  </delete>
+  
+  <!--  删除 -->
+  <delete id="delete">
+  		delete from buyer_common where bc_id in
+  		(<foreach collection="bcIds" item="id" separator=",">
+            #{id}
+        </foreach>)
+  </delete>
+  
+  <!-- 分组-->
+	<sql id="limit">
+		<if test="pageNum != null and pageSize != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  <!-- 根据买家ID查询所有-->
+	<select id="getBuyerCommon" parameterType="BuyerCommonVo" resultMap="buyerCommonVoMap">
+		SELECT
+			g.goods_name,
+			g.goods_as,
+			g.goods_label,
+			g.goods_brand,
+			g.goods_desc,
+			g.goods_status,
+			g.goods_remark,
+			s.seller_name,
+			s.seller_account,
+			bc.buyer_id,
+			bc.bc_id,
+			bc.goods_id,
+			b.buyer_name,
+			b.buyer_address,
+			b.boss_name,
+			b.boss_tel
+		FROM buyer_common bc
+		INNER JOIN goods g ON bc.goods_id = g.goods_id AND goods_status = 1
+		INNER JOIN buyer b ON b.buyer_id = bc.buyer_id
+		INNER JOIN users u ON u.id = g.user_id
+		LEFT JOIN seller s ON s.seller_id = g.user_id
+		WHERE
+	 		u.status = 3
+			<if test="b.buyerId != null and b.buyerId != ''">
+		 		and bc.buyer_id = #{b.buyerId}
+			</if>
+			<if test="b.buyer != null">
+				<if test="b.buyer.buyerName != null and b.buyer.buyerName != ''">
+			 		and b.buyer_name like '%${b.buyer.buyerName}%'
+				</if>
+			</if>
+			<if test="b.goods != null">
+				<if test="b.goods.goodsName != null and b.goods.goodsName != ''">
+			 		and g.goods_name like '%${b.goods.goodsName}%'
+				</if>
+			</if>
+			<if test="b.goods != null">
+				<if test="b.goods.seller != null ">
+			 		<if test="b.goods.seller.sellerName != null and b.goods.seller.sellerName != ''">
+			 			and s.seller_name like '%${b.goods.seller.sellerName}%'
+					</if>
+				</if>
+			</if>
+			ORDER BY b.buyer_id
+			<include refid="limit" />
+	</select>
+	
+	<!-- 根据buyerId查询信息-->
+	<select id="getAllByBuyerId" parameterType="long" resultMap="buyerCommonVoMap">
+		SELECT
+			g.goods_id,
+			g.goods_name,
+			g.goods_as,
+			g.goods_label,
+			g.goods_brand,
+			g.goods_desc,
+			g.goods_status,
+			g.goods_remark,
+			bc.buyer_id,
+			bc.bc_id,
+			b.buyer_name,
+			b.buyer_address,
+			b.boss_name,
+			b.boss_tel
+		FROM buyer_common bc
+		INNER JOIN goods g ON bc.goods_id = g.goods_id AND goods_status = 1
+		INNER JOIN buyer b ON b.buyer_id = bc.buyer_id
+		INNER JOIN users u ON u.id = g.user_id
+		WHERE
+	 		u.status = 3
+		 		and bc.buyer_id = #{buyerId}
+	</select>
+	
+	<!-- 根据买家ID查询所有-->
+	<select id="getCount" parameterType="BuyerCommonVo" resultType="int">
+		SELECT
+			count(1)
+		FROM buyer_common bc
+		INNER JOIN goods g ON bc.goods_id = g.goods_id AND goods_status = 1
+		INNER JOIN buyer b ON b.buyer_id = bc.buyer_id
+		INNER JOIN users u ON u.id = g.user_id
+		LEFT JOIN seller s ON s.seller_id = g.user_id
+		WHERE
+	 		u.status = 3
+			<if test="b.buyerId != null and b.buyerId != ''">
+		 		 and bc.buyer_id = #{b.buyerId}
+			</if>
+			<if test="b.buyer != null">
+				<if test="b.buyer.buyerName != null and b.buyer.buyerName != ''">
+			 		and b.buyer_name like '%${b.buyer.buyerName}%'
+				</if>
+			</if>
+			<if test="b.goods != null">
+				<if test="b.goods.goodsName != null and b.goods.goodsName != ''">
+			 		and g.goods_name like '%${b.goods.goodsName}%'
+				</if>
+			</if>
+			<if test="b.goods != null">
+				<if test="b.goods.seller != null ">
+			 		<if test="b.goods.seller.sellerName != null and b.goods.seller.sellerName != ''">
+			 			and s.seller_name like '%${b.goods.seller.sellerName}%'
+					</if>
+				</if>
+			</if>
+	</select>
+  
+  <!-- 批量新增 -->
+  <insert id="batchSave" parameterType="java.util.List" >
+    insert into buyer_common(
+        buyer_id,
+        goods_id,
+        create_time)
+        values
+    <foreach collection="list" item="item" separator=",">
+        (#{item.buyerId},
+        #{item.goodsId},
+        #{item.createTime})
+   </foreach>
+  </insert>
+  
+  <!-- 批量替换常用清单 -->
+  <update id="updateGoodsId" parameterType="com.netcai.admin.entity.BuyerCommon">
+	  <foreach collection="goodIds" item="item">
+	  		update buyer_common set goods_id = #{item.goodsId} where goods_id = #{item.goodsIdOld};
+	  </foreach>
+  </update>
+  
+  	<!-- 替换商品Id-->
+	<select id="getGoodsIdAndGoodsIdOld" parameterType="long" resultMap="goodIdMap">
+	SELECT * FROM
+			(SELECT
+			g.goods_name goods_name_old,
+			g.goods_id goods_id_old
+			FROM
+			seller s 
+			INNER JOIN goods g ON g.user_id = s.seller_id
+			INNER JOIN buyer_common bc ON bc.goods_id = g.goods_id
+			WHERE
+			s.seller_id = #{sellerIdOld}
+			GROUP BY g.goods_name)A
+			INNER JOIN
+			(SELECT
+			g.goods_name ,
+			g.goods_id good_id
+			FROM
+			seller s 
+			LEFT JOIN goods g ON g.user_id = s.seller_id
+			WHERE
+			s.seller_id = #{sellerId}
+			GROUP BY g.goods_name)B ON A.goods_name_old = B.goods_name
+	</select>
+</mapper>

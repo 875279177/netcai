@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商家信息 -->
+<mapper namespace="com.netcai.buyer.dao.SellerDao">
+
+	<resultMap type="com.netcai.buyer.vo.SellerVo" id="sellerMap">
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_account" property="sellerAccount" />
+		<result column="seller_name" property="sellerName" />
+		<result column="seller_alias" property="sellerAlias" />
+		<result column="seller_logo" property="sellerLogo" />
+		<result column="seller_rank" property="sellerRank" />
+		<result column="seller_grade" property="sellerGrade" />
+		<result column="seller_address" property="sellerAddress" />
+		<result column="seller_keyword" property="sellerKeyword" />
+		<result column="remark" property="remark" />
+		<result column="market_name" property="marketName" />
+	</resultMap>
+
+	<!-- 根据sellerId查询单条数据 -->
+	<select id="getBySellerId" parameterType="Long" resultMap="sellerMap">
+	    select * from seller where seller_id=#{sellerId}
+	</select>
+	
+	
+	<!-- 查询的数据 -->
+	<select id="getTop10Seller" resultMap="sellerMap">
+		SELECT
+		s.*
+		FROM
+		seller s
+		inner join users u on u.id = s.seller_id
+		WHERE
+		u. STATUS = 3
+		AND u.type =2
+		<if test="regionId != null ">
+		   and find_in_set(#{regionId},s.regions)
+		</if>
+		ORDER BY
+		s.seller_rank DESC
+	</select>
+
+	<!-- 搜索商家 -->
+	<select id="searchSeller" resultMap="sellerMap">
+		SELECT
+		s.*,m.market_name
+		FROM
+		seller s
+		inner join users u on u.id = s.seller_id
+		WHERE
+		u. STATUS = 3
+		AND u.type = 2
+		<if test="regionId != null ">
+		   and find_in_set(#{regionId},s.regions)
+		</if>
+		<if test="keyword != null ">
+			and (
+			s.seller_keyword like concat('%',#{keyword},'%') or s.seller_name like
+			concat('%',#{keyword},'%') 
+			or exists(select 1 from goods g where g.user_id = s.seller_id and
+			g.goods_name like concat('%',#{keyword},'%') and g.goods_status=1)
+			or exists(select 1 from seller_category sc inner join category c on
+			sc.category_id=c.category_id where sc.user_id = s.seller_id and
+			c.category_name like concat('%',#{keyword},'%'))
+			)
+		</if>
+		ORDER BY
+		s.seller_rank DESC
+	</select>
+
+	<!-- 查询常用的卖家 -->
+	<select id="getCommonSeller" resultMap="sellerMap">
+		SELECT
+		sr.*
+		FROM
+		seller sr
+		WHERE
+		sr.seller_id IN (
+		SELECT DISTINCT
+		s.seller_id
+		FROM
+		order_item item,
+		seller s,
+		users u
+		WHERE
+		1 = 1
+		AND u.id = s.seller_id
+		AND u. STATUS = 3
+		AND item.seller_id =
+		s.seller_id
+		AND item.delivery_status = 2
+		AND item.buyer_id=#{userId}
+		)
+		ORDER BY
+		sr.seller_rank DESC
+	</select>
+	
+    <!-- 根据商品分类搜索商家 -->
+	<select id="searchSellerByCategory" resultMap="sellerMap">
+		SELECT
+		s.*
+		FROM
+		seller s
+		inner join users u on u.id = s.seller_id
+		WHERE
+		u. STATUS = 3
+		AND u.type = 2
+		<if test="categoryCode != null ">
+		    and exists(select 1 from seller_category sc inner join category c on
+			sc.category_id=c.category_id where sc.user_id = s.seller_id and
+			c.category_code like concat(#{categoryCode},'%'))
+		</if>
+		ORDER BY
+		s.seller_rank DESC
+	</select>
+</mapper>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.netcai.admin.dao.GroupsItemDao">
+
+	<resultMap type="com.netcai.admin.entity.GroupsItem" id="groupsItemMap">
+		<result property="id" column="item_id" />
+		<result property="groupId" column="group_id" />
+		<result property="goodsId" column="goods_id" />
+		<result property="goodsName" column="goods_name" />
+		<result property="formatId" column="format_id" />
+		<result property="formatName" column="format_name" />
+		<result property="formatNum" column="format_num" />
+		<result property="formatPrice" column="format_price" />
+		<result property="unitName" column="unit_name" />
+		<result property="price" column="group_price" />
+		<result property="count" column="group_num" />
+		<result property="status" column="item_status" />
+		<result property="createUserId" column="create_user_id" />
+		<result property="createTime" column="create_time" />
+	</resultMap>
+	
+	<!-- 根据团购活动id查询明细 -->
+	<select id="getByGroupsId" parameterType="Long" resultMap="groupsItemMap">
+		select g.goods_name,gf.format_name,gf.format_price,gf.format_num,u.unit_name,gi.* from groups_item gi
+		left join goods g on gi.goods_id=g.goods_id
+		left join goods_format gf on gi.format_id=gf.format_id
+		left join unit u on gf.unit_id=u.unit_id
+		where group_id = #{groupsId}
+	</select>
+	
+	<!-- 批量新增  -->
+	<insert id="batchInsert" parameterType="list">
+	    insert into groups_item (group_id, goods_id, format_id, group_price, group_num,item_status,create_user_id,create_time)
+	    values
+	    <foreach collection="list" separator="," item="item">
+	        (#{item.groupId},#{item.goodsId},#{item.formatId},#{item.price},#{item.count},#{item.status},#{item.createUserId},#{item.createTime})
+	    </foreach>
+	</insert>
+	
+	<!-- 更新团购明细-->
+	<update id="update" parameterType="com.netcai.admin.entity.GroupsItem" >
+	    update groups_item 
+	    <set>
+	        <trim>
+				<if test=" price != null ">
+					group_price = #{price},
+				</if>
+				<if test=" count != null ">
+					group_num = #{count},
+				</if>
+		      </trim>
+	      </set>
+	      where item_id=#{id}
+	</update>
+	
+	<!-- 更新状态   -->
+	<update id="updateStatus" >
+	    update groups_item set item_status=#{status} where item_id=#{id}
+	</update>
+	
+	<!-- 更新状态   -->
+	<update id="updateStatusByGroupsId" >
+	    update groups_item set item_status=#{status} where group_id=#{groupsId}
+	</update>
+	
+	<!-- 批量删除  -->
+	<delete id="batchDelete" >
+	    delete from groups_item where group_id=#{groupsId} and format_id in
+        <foreach item="item" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+	</delete>
+	
+</mapper>

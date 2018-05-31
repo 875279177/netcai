@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.WithdrawalDao">
+
+	<resultMap type="com.netcai.admin.entity.Withdrawal" id="withdrawalMap">
+		<result column="id" property="id" />
+		<result column="uid" property="uid" />
+		<result column="applyer" property="applyer" />
+		<result column="withdraw_order" property="withdrawOrder" />
+		<result column="withdraw_bank_id" property="withdrawBankId" />
+		<result column="withdraw_charge" property="withdrawCharge" />
+		<result column="withdraw_reality_total" property="withdrawRealityTotal" />
+		<result column="withdraw_apply_total" property="withdrawApplyTotal" />
+		<result column="withdraw_apply_time" property="withdrawApplyTime" />
+		<result column="status" property="status" />
+		<result column="reason" property="reason" />
+		<result column="create_by" property="createBy" />
+		<result column="create_time" property="createTime" />
+		<result column="update_by" property="updateBy" />
+		<result column="last_update_time" property="lastUpdateTime" />
+		<result column="shop_name" property="shopName" />
+
+		<!-- 用户设置的卡对象 -->
+		<association property="withdrawalBank"
+			javaType="com.netcai.admin.entity.WithdrawalBank">
+			<id column="withdraw_bank_id" property="id" />
+			<result column="bank_name" property="bankName" />
+			<result column="bank_number" property="bankNumber" />
+		</association>
+
+		<!-- 用户对象 -->
+		<association property="users" javaType="com.netcai.admin.entity.Users">
+			<id column="uid" property="id" />
+			<result column="true_name" property="trueName" />
+			<result column="type" property="type" />
+			<result column="account" property="account" />
+		</association>
+
+	</resultMap>
+
+	<!-- 查询的数据 -->
+	<sql id="WithdrawalSelector">
+		select
+		u.true_name ,
+		u.account ,
+		u.type ,
+		CASE WHEN seller_id IS NOT NULL THEN seller_name ELSE buyer_name END
+		shop_name,
+		wb.bank_name,
+		w.*,
+		wb.bank_number
+		from withdrawal w
+		INNER JOIN users u ON w.uid = u.id
+		LEFT JOIN seller s ON s.seller_id = u.id
+		LEFT JOIN buyer b ON b.buyer_id = u.id
+		LEFT JOIN withdrawal_bank wb ON w.withdraw_bank_id = wb.id
+	</sql>
+
+	<!-- 条件查询语句 -->
+	<sql id="WithdrawalMapWhere">
+		<where>
+			1=1
+			<if test="w.users != null">
+				<if test="w.users.trueName != null and w.users.trueName != ''">
+					AND u.true_name like concat('%',#{w.users.trueName},'%')
+				</if>
+				<if test="w.users.account != null and w.users.account != ''">
+					AND u.account = #{w.users.account}
+				</if>
+			</if>
+			<if test="w.queryDate != null and w.queryDate != ''">
+				AND date_format(w.withdraw_apply_time ,'%Y-%m-%d') =
+				#{w.queryDate}
+			</if>
+			<if test="w.withdrawOrder != null and w.withdrawOrder != ''">
+				AND w.withdraw_order = #{w.withdrawOrder}
+			</if>
+			<if test="w.status != null and w.status != '' and w.status != 0">
+				AND w.status = #{w.status}
+			</if>
+		</where>
+	</sql>
+
+	<!-- 排序 -->
+	<sql id="WithdrawalOrderBy">
+		ORDER BY w.create_time DESC
+	</sql>
+
+	<!-- 分页 -->
+	<sql id="WithdrawalListLimit">
+		<if test="pageNum != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+
+	<!-- 查询所有 以及条件查询 -->
+	<select id="getWithdrawal" parameterType="Withdrawal" resultMap="withdrawalMap">
+		<include refid="WithdrawalSelector" />
+		<include refid="WithdrawalMapWhere" />
+		<include refid="WithdrawalOrderBy" />
+		<include refid="WithdrawalListLimit" />
+	</select>
+
+	<!-- 查询总数 -->
+	<select id="getPageCount" parameterType="Withdrawal" resultType="int">
+		select
+		count(*)
+		from withdrawal w
+		INNER JOIN users u ON w.uid = u.id
+		LEFT JOIN seller s ON s.seller_id = u.id
+		LEFT JOIN buyer b ON b.buyer_id = u.id
+		LEFT JOIN withdrawal_bank wb ON w.withdraw_bank_id = wb.id
+		<include refid="WithdrawalMapWhere" />
+	</select>
+
+	<!-- 通过Id查询单个 -->
+	<select id="getWithdrawalByKey" parameterType="Integer"
+		resultMap="withdrawalMap">
+		<include refid="WithdrawalSelector" />
+		<where>
+			w.id=#{id}
+		</where>
+	</select>
+	<!-- 通过订单id查询多个 -->
+	<select id="getWithdrawalByWithdrawOrder" parameterType="String"
+		resultMap="withdrawalMap">
+		<include refid="WithdrawalSelector" />
+		<where>
+			w.withdraw_order=#{withdrawOrder} limit #{pageNum},#{pageSize}
+		</where>
+	</select>
+
+	<!-- 修改Status -->
+	<update id="updateStatus" parameterType="Withdrawal">
+		UPDATE withdrawal w SET
+		w.status = #{w.status}
+		WHERE w.id = #{w.id}
+	</update>
+	
+	<!-- 更新实际提现金额和手续费 -->
+	<update id="updateRealityTotalAndCharge" parameterType="Withdrawal">
+		update withdrawal  set withdraw_charge = #{withdrawCharge},withdraw_reality_total=#{withdrawRealityTotal},status = #{status} where id = #{id}
+	</update>
+
+	<!-- 添加 -->
+	<insert id="insertWithdrawal" parameterType="Withdrawal">
+		insert into withdrawal
+		<trim prefix="(" suffix=")">
+			<if test="uid != null">
+				uid ,
+			</if>
+			<if test="withdrawOrder != null">
+				withdraw_order ,
+			</if>
+			<if test="withdrawBankId != null">
+				withdraw_bank_id,
+			</if>
+			<if test="withdrawApplyTotal != null">
+				withdraw_apply_total,
+			</if>
+			<if test="withdrawApplyTime != null">
+				withdraw_apply_time,
+			</if>
+			<if test="status != null">
+				status,
+			</if>
+			<!-- <if test="reason != null"> reason, </if> -->
+			<if test="createBy != null">
+				create_by,
+			</if>
+			<if test="updateBy != null">
+				update_by,
+			</if>
+			<if test="lastUpdateTime != null">
+				last_update_time,
+			</if>
+			<if test="createTime != null">
+				create_time
+			</if>
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+			<if test="uid != null">
+				#{uid },
+			</if>
+			<if test="withdrawOrder != null">
+				#{withdrawOrder },
+			</if>
+			<if test="withdrawBankId != null">
+				#{withdrawBankId},
+			</if>
+			<if test="withdrawApplyTotal != null">
+				#{withdrawApplyTotal},
+			</if>
+			<if test="withdrawApplyTime != null">
+				#{withdrawApplyTime},
+			</if>
+			<if test="status != null">
+				#{status},
+			</if>
+			<if test="createBy != null">
+				#{createBy},
+			</if>
+			<if test="updateBy != null">
+				#{updateBy},
+			</if>
+			<if test="lastUpdateTime != null">
+				#{lastUpdateTime},
+			</if>
+			<if test="createTime != null">
+				#{createTime}
+			</if>
+		</trim>
+	</insert>
+
+</mapper>

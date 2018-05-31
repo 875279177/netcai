@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<decorators defaultdir="/WEB-INF/jsp">
+    <excludes>
+        <pattern>/js/**</pattern>
+        <pattern>/jquery-easyui-1.5.2/**</pattern>
+        <pattern>/bootstrap/**</pattern>
+        <pattern>/kineditor/**</pattern>
+        <pattern>/layer/**</pattern>
+        <pattern>/layui/**</pattern>
+        <pattern>/echart/**</pattern>
+        <pattern>/My97DatePicker/**</pattern>
+        <pattern>/plugins/**</pattern>
+        <pattern>/libs/**</pattern>
+        <pattern>/dist/**</pattern>
+        <pattern>/fonts/**</pattern>
+        <pattern>/images/**</pattern>
+        <pattern>/login.jsp</pattern>
+    </excludes>
+    <decorator name="default" page="decorators/default.jsp" />  
+</decorators>

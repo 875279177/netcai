@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.BuyerSellerRelationDao" >
+  <resultMap id="buyerSellerRelationMap" type="com.netcai.admin.entity.BuyerSellerRelation" >
+    <id column="id" property="id" />
+    <result column="seller_id" property="sellerId" />
+    <result column="buyer_id" property="buyerId" />
+    <result column="create_time" property="createTime"  />
+    <result property="areaName" column="area_name" />
+    <!-- 卖家 -->
+     <association property="seller" javaType="com.netcai.admin.entity.Seller">
+			<result column="seller_account" property="sellerAccount" />
+			<!-- 店铺名称 -->
+			<result column="seller_name" property="sellerName" />
+     </association> 
+     
+     <!--买家 -->
+     <association property="buyer" javaType="com.netcai.admin.entity.Buyer">
+			<result column="boss_tel" property="bossTel" />
+			<result column="boss_name" property="bossName" />
+			<!-- 买家店铺名称   店铺名称 -->
+			<result column="buyer_name" property="buyerName" />
+     </association>
+  </resultMap>
+  
+  <sql id="where" >
+    WHERE
+		1=1
+		<if test="b.buyer != null">
+			<if test="b.buyer.buyerName != null  and b.buyer.buyerName != '' ">
+				AND	(b.buyer_name like concat('%',#{b.buyer.buyerName},'%') or b.boss_tel like concat('%',#{b.buyer.buyerName},'%'))
+			</if>
+			<if test="b.buyer.regionId != null">
+				AND	a.id = #{b.buyer.regionId}
+			</if>
+		</if>
+		<if test="b.seller != null">
+			<if test="b.seller.sellerName != null and b.seller.sellerName != ''">
+				AND	(s.seller_account like concat('%',#{b.seller.sellerName},'%') or s.seller_name like concat('%',#{b.seller.sellerName},'%'))
+			</if>
+		</if>
+  	</sql>
+  	
+  	<!-- 排序-->
+	<sql id="orderBy">
+			ORDER BY bsr.create_time DESC
+	</sql>
+	
+	<!-- 分组-->
+	<sql id="limit">
+		<if test="pageNum != null and pageSize != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  <select id="selectByBuyerId" resultMap="buyerSellerRelationMap" >
+    select 
+   		a.area_name,
+   		b.boss_name,
+		b.boss_tel,
+		b.buyer_id,
+		b.buyer_name,
+		s.seller_account,
+		s.seller_name,
+		s.seller_id,
+		bsr.id,
+		bsr.create_time
+    from 
+   	buyer_seller_relation bsr
+	INNER JOIN seller s ON s.seller_id = bsr.seller_id
+	INNER JOIN buyer b ON b.buyer_id = bsr.buyer_id
+	LEFT JOIN area a ON b.region_id = a.id
+    where bsr.buyer_id = #{buyerId}
+    limit 0,1
+  </select>
+  
+  <select id="findList" resultMap="buyerSellerRelationMap" parameterType="com.netcai.admin.entity.BuyerSellerRelation" >
+    select 
+		a.area_name,
+		b.boss_name,
+		b.boss_tel,
+		b.buyer_id,
+		b.buyer_name,
+		s.seller_account,
+		s.seller_name,
+		s.seller_id,
+		bsr.id,
+		bsr.create_time
+	from 
+	buyer_seller_relation bsr
+	INNER JOIN seller s ON s.seller_id = bsr.seller_id
+	INNER JOIN buyer b ON b.buyer_id = bsr.buyer_id
+	LEFT JOIN area a ON b.region_id = a.id
+    <include refid="where" />
+	<include refid="orderBy" />
+	<include refid="limit" />
+  </select>
+  
+  <select id="findCount" resultType="int" parameterType="com.netcai.admin.entity.BuyerSellerRelation" >
+    select 
+		count(1)
+	from 
+	buyer_seller_relation bsr
+	INNER JOIN seller s ON s.seller_id = bsr.seller_id
+	INNER JOIN buyer b ON b.buyer_id = bsr.buyer_id
+	LEFT JOIN area a ON b.region_id = a.id
+    <include refid="where" />
+  </select>
+  
+  <delete id="deleteById" parameterType="java.lang.Long" >
+    delete from buyer_seller_relation where id = #{id}
+  </delete>
+  
+  <insert id="insert" parameterType="com.netcai.admin.entity.BuyerSellerRelation" >
+    insert into buyer_seller_relation
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="sellerId != null" >
+        seller_id,
+      </if>
+      <if test="buyerId != null" >
+        buyer_id,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id},
+      </if>
+      <if test="sellerId != null" >
+        #{sellerId},
+      </if>
+      <if test="buyerId != null" >
+        #{buyerId},
+      </if>
+      <if test="createTime != null" >
+        #{createTime},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="updateById" parameterType="com.netcai.admin.entity.BuyerSellerRelation" >
+    update buyer_seller_relation
+    <set >
+      <if test="sellerId != null" >
+        seller_id = #{sellerId},
+      </if>
+      <if test="buyerId != null" >
+        buyer_id = #{buyerId},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime},
+      </if>
+    </set>
+    where id = #{id}
+  </update>
+</mapper>

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.FinancialStatisticsDao">
+
+	<resultMap type="com.netcai.admin.entity.FinancialStatistics" id="financialStatisticsResult">
+		<result column="time" property="time" />
+		<result column="names" property="names" />
+		<result column="area_id" property="areaId" />
+		<result column="new_user" property="newUser" />
+		<result column="active_user" property="activeUser" />
+		<result column="hz" property="hz" />
+		
+		<result column="buyer_level" property="buyerLevel" />
+		<result column="buyer_name" property="buyerName" />
+		
+		<result column="goods_name" property="goodsName" />
+		<result column="goods_num" property="goodsNum" />
+		<result column="money" property="money" />
+	</resultMap>
+	
+	<!-- 查询总财务统计 -->
+	<select id="getList" parameterType="com.netcai.admin.entity.FinancialStatistics" resultMap="financialStatisticsResult">
+		SELECT
+			B_.*,
+			(SELECT 
+				COUNT(DISTINCT b.buyer_id)
+			FROM
+				buyer b 
+				INNER JOIN order_info oi ON oi.buyer_id = b.buyer_id
+			WHERE
+			b.region_id = B_.area_id
+			AND
+			oi.trade_status !=2
+			AND 
+			oi.pay_status !=1
+			AND
+			 b.region_id = B_.area_id
+			AND
+			DATE_FORMAT(oi.best_time,"%Y-%m") = B_.time
+			) active_user,
+			(
+			SELECT COUNT(DISTINCT oi.order_number)FROM
+			buyer b 
+			INNER JOIN order_info oi ON oi.buyer_id = b.buyer_id
+			WHERE
+			b.region_id = B_.area_id
+			AND
+			oi.trade_status !=2
+			AND 
+			oi.pay_status !=1
+			AND
+			DATE_FORMAT(oi.best_time,"%Y-%m") = B_.time
+			) hz
+		FROM
+			(SELECT
+				A_.time,
+				A_.names,
+				A_.id area_id,
+				sum(case when DATE_FORMAT(u.create_time,"%Y-%m") is NOT null AND A_.time = DATE_FORMAT(u.create_time,"%Y-%m") AND u.`status` IN (-1,3) then 1 else 0 end) new_user
+			FROM
+				(SELECT
+					DATE_FORMAT(u.create_time,"%Y-%m") time,
+					a.id,
+					a.area_name names
+				FROM
+					area a 
+					LEFT JOIN buyer b  ON a.id = b.region_id
+					LEFT JOIN users u ON b.buyer_id = u.id
+					WHERE
+					a.id > 2
+					AND
+					u.type = 1
+					GROUP BY time,a.id)A_
+				LEFT JOIN buyer b  ON A_.id = b.region_id
+				LEFT JOIN users u ON b.buyer_id = u.id
+				GROUP BY time,A_.id)B_
+		WHERE
+			B_.time is NOT NULL
+			GROUP BY B_.time,B_.area_id
+	</select>
+	
+	
+	<!-- 客户分类统计-->
+	<select id="getCustomerList" parameterType="com.netcai.admin.entity.FinancialStatistics" resultMap="financialStatisticsResult">
+		SELECT
+			DATE_FORMAT(u.create_time,"%Y-%m") time,
+			a.id area_id,
+			a.area_name names,
+			b.buyer_name,
+			b.buyer_level
+		FROM
+			area a 
+			LEFT JOIN buyer b  ON a.id = b.region_id
+			LEFT JOIN users u ON b.buyer_id = u.id
+		WHERE
+			a.id > 2
+			GROUP BY time,a.id,b.buyer_id
+	</select>
+	
+	<!-- SKU财务统计-->
+	<select id="getSkuList" parameterType="com.netcai.admin.entity.FinancialStatistics" resultMap="financialStatisticsResult">
+		SELECT
+			A_.time,
+			A_.id area_id,
+			A_.names,
+			g.goods_name,
+			COUNT(1) goods_num,
+			SUM(oi.goods_amount) money
+		FROM
+			order_item oi
+			LEFT JOIN goods_format gf ON oi.format_id =  gf.format_id
+			LEFT JOIN goods g ON gf.goods_id = g.goods_id
+			LEFT JOIN order_info o ON o.order_id = oi.order_id
+			LEFT JOIN 
+					(SELECT
+						DATE_FORMAT(u.create_time,"%Y-%m") time,
+						a.id,
+						a.area_name names,
+						b.buyer_id
+					FROM
+						area a 
+						LEFT JOIN buyer b  ON a.id = b.region_id
+						LEFT JOIN users u ON b.buyer_id = u.id
+						WHERE
+						a.id > 2)A_ ON oi.buyer_id = A_.buyer_id
+		WHERE
+			DATE_FORMAT(o.best_time,"%Y-%m")=time
+			AND
+			o.trade_status !=2
+			AND
+			o.pay_status !=1
+			GROUP BY A_.time,A_.id,g.goods_name
+	</select>
+</mapper>

@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.GoodsCartDao">
+
+	<!-- 返回单个人购物车信息 -->
+  <resultMap type="com.netcai.admin.entity.GoodsCart" id="goodsCartMap">
+    <id column="cart_id" property="cartId"  />
+    <result column="buyer_id" property="buyerId" />
+    <result column="format_id" property="formatId" />
+    <result column="seller_id" property="sellerId" />
+    <result column="method_id" property="methodId"  />
+    <result column="goods_number" property="goodsNumber"  />
+    <result column="goods_amount" property="goodsAmount" />
+    <result column="create_time" property="createTime" />
+    <result column="is_selected" property="isSelected" />
+     
+      <!-- 卖家 -->
+     <association property="seller" javaType="com.netcai.admin.entity.Seller">
+     		<id column="seller_id" property="sellerId"/>
+			<result column="seller_account" property="sellerAccount" />
+			<!-- 店铺名称 -->
+			<result column="seller_name" property="sellerName" />
+     </association> 
+     
+     <!-- 加工方式-->
+     <association property="processMethod" javaType="com.netcai.admin.entity.ProcessMethod">
+     		<id column="method_id" property="methodId"/>
+			<result column="method_name" property="methodName" />
+     </association> 
+     
+     <!--买家 -->
+     <association property="buyer" javaType="com.netcai.admin.entity.Buyer">
+     		<id column="buyer_id" property="saleId"/>
+			<result column="boss_tel" property="bossTel" />
+			<result column="boss_name" property="bossName" />
+			<!-- 买家店铺名称   店铺名称 -->
+			<result column="buyer_name" property="buyerName" />
+     </association>
+     
+     <!--sku 数量 规格-->
+     <association property="goodsFormat" javaType="com.netcai.admin.vo.GoodsFormatVo">
+     		<id column="format_id" property="formatId"/>
+			<result column="goods_id" property="goodsId" />
+			<result column="unit_id" property="unitId" />
+			<result column="format_name" property="formatName" />
+			<result column="format_price" property="formatPrice" />
+			<result column="format_num" property="formatNum" />
+			<result column="format_seq" property="formatSeq" />
+			<result column="format_status" property="formatStatus" />
+			
+			<!-- 计量单位 -->
+			<association property="unit" javaType="com.netcai.admin.entity.Unit">
+				<id column="unit_id" property="unitId"/>
+				<result column="unit_name" property="unitName" />
+     		</association>
+     		
+     		<!-- 商品 -->
+				<association property="goods" javaType="com.netcai.admin.entity.Goods">
+					<result column="goods_name" property="goodsName" />
+	     		</association>
+     </association>
+  </resultMap>
+  
+  
+  	<!-- 返回所有人购物车信息 -->
+  <resultMap type="com.netcai.admin.vo.GoodsCartVo" id="goodsCartVoMap">
+ 	 <result column="buyer_id" property="buyerId" />
+  	 <!-- 买家店铺名称   店铺名称 -->
+	 <result column="buyer_name" property="buyerName" />
+	 <result column="boss_name" property="bossName" />
+  	  
+  	 <collection property="goodsCarts" ofType="com.netcai.admin.entity.GoodsCart">
+  	 	<id column="cart_id" property="cartId"  />
+	    <result column="goods_number" property="goodsNumber"  />
+	    <result column="create_time" property="createTime" />
+	    <result column="is_selected" property="isSelected" />
+	    
+		    <!-- 加工方式-->
+	     <association property="processMethod" javaType="com.netcai.admin.entity.ProcessMethod">
+				<result column="method_name" property="methodName" />
+	     </association> 
+	     
+	     <!--sku 数量 规格-->
+	     <association property="goodsFormat" javaType="com.netcai.admin.vo.GoodsFormatVo">
+				<result column="format_name" property="formatName" />
+				<result column="format_price" property="formatPrice" />
+				<result column="format_num" property="formatNum" />
+				
+				<!-- 计量单位 -->
+				<association property="unit" javaType="com.netcai.admin.entity.Unit">
+					<result column="unit_name" property="unitName" />
+	     		</association>
+	     		
+	     		<!-- 商品 -->
+				<association property="goods" javaType="com.netcai.admin.entity.Goods">
+					<result column="goods_name" property="goodsName" />
+					
+						 <!-- 卖家 -->
+					     <association property="seller" javaType="com.netcai.admin.entity.Seller">
+								<result column="seller_name" property="sellerName" />
+					     </association> 
+	     		</association>
+	     </association>
+  	 </collection>
+	 
+  </resultMap>
+  
+  <!-- 查询的数据 -->
+  <sql id="GoodsCartSelector">
+	select 
+		g.*,
+		gf.format_price,
+		gf.unit_id,
+		gf.format_name,
+		s.seller_account ,
+		s.seller_name,
+		b.boss_tel,
+		b.buyer_name,
+		b.boss_name,
+		p.method_name,
+		u.unit_name
+	from goods_cart g 
+		LEFT JOIN process_method p on g.method_id=p.method_id 
+		LEFT JOIN goods_format gf ON g.format_id=gf.format_id
+		LEFT JOIN seller s ON g.seller_id = s.seller_id
+		LEFT JOIN goods gs ON gf.goods_id=gs.goods_id
+		LEFT JOIN buyer b ON g.buyer_id=b.buyer_id
+		LEFT JOIN unit u ON gf.unit_id = u.unit_id
+	</sql>
+  
+  <!-- 条件查询语句 -->
+  <sql id="GoodsCartMapWhere">
+		<where>
+			1=1
+			<if test="g.queryTime != null and g.queryTime != ''">
+				AND	date_format(g.create_time ,'%Y-%m-%d') = #{g.queryTime}
+			</if>
+			<if test="g.goodsFormat != null">
+				<if test="g.goodsFormat.goods != null">
+					<if test="g.goodsFormat.goods.goodsName != null and g.goodsFormat.goods.goodsName != ''">
+						AND	gs.goods_name = #{g.goodsFormat.goods.goodsName}
+					</if>
+				</if>
+			</if>
+			<if test="g.buyer != null">
+				<if test="g.buyer.buyerName != null and g.buyer.buyerName != ''">
+					AND	b.buyer_name = #{g.buyer.buyerName}
+				</if>
+			</if>
+		</where>
+	</sql>
+	
+	<!-- 分页 -->
+	<sql id="GoodsCartListLimit">
+		<if test="pageNum != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+	
+	<!-- 排序 -->
+	<sql id="GoodsCartListOrderBy">
+		ORDER BY g.create_time DESC, g.buyer_id DESC
+	</sql>
+  
+  
+  <select id="getGoodsCartList" parameterType="GoodsCart" resultMap="goodsCartVoMap">
+     	(SELECT
+	     	g.buyer_id,
+			g.cart_id,
+			g.seller_id,
+			g.goods_number,
+			g.create_time,
+			g.is_selected,
+			gf.format_price,
+			gf.format_num,
+			gf.format_name,
+			gs.goods_name,
+			b.buyer_name,
+	  		b.boss_name,
+	  		s.seller_name,
+	  		u.unit_name
+		FROM goods_cart g 
+			LEFT JOIN process_method p on g.method_id=p.method_id 
+			LEFT JOIN goods_format gf ON g.format_id=gf.format_id
+			LEFT JOIN seller s ON g.seller_id = s.seller_id
+			LEFT JOIN goods gs ON gf.goods_id=gs.goods_id
+			LEFT JOIN buyer b ON g.buyer_id=b.buyer_id
+			LEFT JOIN unit u ON gf.unit_id = u.unit_id
+			<include refid="GoodsCartMapWhere" />
+			<include refid="GoodsCartListOrderBy" />)
+			<include refid="GoodsCartListLimit" />
+  </select>
+  
+  <!--   查询总数 -->
+  <select id="getPageCountList" parameterType="GoodsCart" resultType="int">
+  			SELECT COUNT(1) FROM 
+	  			(select 
+				count(g.buyer_id) 
+			FROM goods_cart g 
+				LEFT JOIN process_method p on g.method_id=p.method_id 
+				LEFT JOIN goods_format gf ON g.format_id=gf.format_id
+				LEFT JOIN seller s ON g.seller_id = s.seller_id
+				LEFT JOIN goods gs ON gf.goods_id=gs.goods_id
+				LEFT JOIN buyer b ON g.buyer_id=b.buyer_id
+				LEFT JOIN unit u ON gf.unit_id = u.unit_id
+				<include refid="GoodsCartMapWhere" />
+				GROUP BY g.buyer_id) C
+  </select>
+  
+  
+	
+		<!-- 修改GoodsNumber -->
+	<update id="updateGoodsNumber" parameterType="GoodsCart">
+		UPDATE goods_cart g SET 
+			g.goods_number = #{g.GoodsNumber}
+		WHERE g.cart_id = #{g.cartId}
+	</update>
+	
+	<!-- 添加 -->
+	<insert id="insertGoodsCart" parameterType="GoodsCart">
+		insert into goods_cart
+		<trim prefix="(" suffix=")">
+			<if test="buyerId != null">
+		      buyer_id ,
+		    </if>
+			<if test="formatId != null">
+		      format_id ,
+		    </if>
+		    <if test="sellerId != null">
+		     seller_id,
+		    </if>
+		    <if test="goodsNumber != null">
+		     goods_number,
+		    </if>
+		    <if test="methodId != null">
+		     method_id,
+		    </if>
+		    <if test="isSelected != null">
+		      is_selected,
+		    </if>
+		    <if test="createTime != null">
+		      create_time
+		    </if>
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+		     <if test="buyerId != null">
+		      #{buyerId},
+		    </if>
+		    <if test="formatId != null">
+		      #{formatId},
+		    </if>
+		    <if test="sellerId != null">
+		      #{sellerId},
+		    </if>
+		    <if test="goodsNumber != null">
+		      #{goodsNumber},
+		    </if>
+		    <if test="methodId != null">
+		      #{methodId},
+		    </if>
+		    <if test="isSelected != null">
+		       #{isSelected},
+		    </if>
+		    <if test="createTime != null">
+		      #{createTime}
+		    </if>
+		</trim>
+	</insert>
+	
+	<!--物理删除-->
+	<delete id="deleteGoodsCart">
+		DELETE FROM goods_cart
+		WHERE cart_id = #{cartId}
+	</delete>
+</mapper>

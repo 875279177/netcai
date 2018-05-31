@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.OrderPercentageDao">
+   <resultMap type="com.netcai.admin.entity.OrderPercentage" id="percentageMap">
+       <result column="id" property="id"/>
+	   <result column="order_item_id" property="orderItemId" />
+	   <result column="order_number" property="orderNumber" />
+	   <result column="seller_id" property="sellerId"/>
+       <result column="seller_name" property="sellerName"/>
+	   <result column="order_total_amount" property="originalAmount" />
+	   <result column="order_percentage" property="percentage" />
+	   <result column="order_percentage_amount" property="percentageAmount" />
+	   <result column="order_reality_money" property="realAmount" />
+	   <result column="create_time" property="createTime" />
+   </resultMap>
+   
+   <!--卖家统计抽点金额结果集  -->
+   <resultMap type="com.netcai.admin.vo.OrderPercentageVo" id="percentageVoMap">
+	   <result column="seller_id" property="sellerId"/>
+       <result column="seller_name" property="sellerName"/>
+	   <result column="order_total_amount" property="originalAmount" />
+	   <result column="order_percentage_amount" property="percentageAmount" />
+	   <result column="order_reality_money" property="realAmount" />
+	   <result column="create_time" property="createTime" />
+   </resultMap>
+   
+   <!-- 分组-->
+	<sql id="limit">
+		<if test="pageNum != null and pageSize != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+	
+  <!-- 根据时间查询卖家的抽点金额  -->
+  <select id="getOrderPercentagesByDate" parameterType="com.netcai.admin.entity.OrderPercentage" resultMap="percentageMap">
+    SELECT percentage.*,seller.seller_name FROM order_percentage percentage
+    LEFT JOIN seller ON percentage.seller_id=seller.seller_id
+    <trim prefix="where " prefixOverrides="and ">
+	    <if test=" sellerId != null ">
+	      and percentage.seller_id = #{sellerId}
+	    </if>
+	    <if test=" createTime != null ">
+	      and date_format(percentage.create_time, '%Y-%m-%d') = date_format(#{createTime}, '%Y-%m-%d')
+	    </if>
+	</trim>
+  </select>
+  
+  <!-- 根据时间查询卖家的抽点金额汇总  -->
+  <select id="getTotalPercentagesAmountByDate" resultType="BigDecimal">
+    SELECT sum(order_percentage_amount) FROM order_percentage where seller_id=#{sellerId} AND date_format(create_time,'%Y-%m-%d')=date_format(#{time},'%Y-%m-%d') 
+  </select>
+  
+  <!-- 根据区域查询平台抽点的总金额 -->
+  <select id="getPercentageAmount" resultType="BigDecimal">
+    select sum(order_percentage_amount) from order_percentage percentage
+    INNER JOIN seller ON percentage.seller_id=seller.seller_id
+	LEFT JOIN area ON FIND_IN_SET(area.id,seller.regions)
+    <trim prefix="where ">
+	    <if test=" areaId != null ">
+	      area.id = #{areaId}
+	    </if>
+	</trim>
+  </select>
+  
+  
+  <!-- 根据时间统计卖家的抽点金额 -->
+  <select id="getAmountByDate" parameterType="com.netcai.admin.vo.OrderPercentageVo" resultMap="percentageVoMap">
+    SELECT 
+    DATE_FORMAT(percentage.create_time,'%Y-%m-%d') create_time,
+    percentage.seller_id,
+    seller.seller_name,
+    sum(percentage.order_total_amount) order_total_amount,
+    sum(percentage.order_percentage_amount) order_percentage_amount,
+    sum(percentage.order_reality_money) order_reality_money 
+    FROM order_percentage percentage LEFT JOIN seller ON percentage.seller_id=seller.seller_id
+    where
+		1=1
+	    <if test=" p.sellerName != null and p.sellerName != '' ">
+	      and seller.seller_name like '%${p.sellerName}%'
+	    </if>
+	    <if test="p.createTimeStart != null  and p.createTimeStart != '' and p.createTimeStop != null  and p.createTimeStop != ''">
+			AND	date_format(percentage.create_time, '%Y-%m-%d') between date_format(#{p.createTimeStart}, '%Y-%m-%d') AND date_format(#{p.createTimeStop}, '%Y-%m-%d') 
+		</if>
+    GROUP BY percentage.seller_id,DATE_FORMAT(percentage.create_time,'%Y-%m-%d') ORDER BY percentage.create_time DESC 
+    <include refid="limit" />
+  </select>
+  
+  <!-- 数量 -->
+  <select id="getAmountByDateCount" parameterType="com.netcai.admin.vo.OrderPercentageVo" resultType="int">
+	  SELECT COUNT(1)
+		FROM(
+		  SELECT
+		    count(1)
+		    FROM order_percentage percentage LEFT JOIN seller ON percentage.seller_id=seller.seller_id
+		    where
+		    1=1
+			    <if test=" p.sellerName != null and p.sellerName != '' ">
+			      and seller.seller_name like '%${p.sellerName}%'
+			    </if>
+			    <if test="p.createTimeStart != null  and p.createTimeStart != '' and p.createTimeStop != null  and p.createTimeStop != ''">
+					AND	date_format(percentage.create_time, '%Y-%m-%d') between date_format(#{p.createTimeStart}, '%Y-%m-%d') AND date_format(#{p.createTimeStop}, '%Y-%m-%d') 
+				</if>
+		    GROUP BY percentage.seller_id,DATE_FORMAT(percentage.create_time,'%Y-%m-%d') ORDER BY percentage.create_time )A
+  </select>
+  
+  <!-- 根据时间类型（按天或者按月）统计一个周期内的抽成金额-->
+  <select id="getAmountByTimeType" parameterType="Map" resultType="BigDecimal" >
+    SELECT SUM(order_percentage_amount) FROM order_percentage percentage
+	INNER JOIN seller ON percentage.seller_id=seller.seller_id
+	LEFT JOIN area ON FIND_IN_SET(area.id,seller.regions)
+	<trim prefix="where " prefixOverrides="and ">
+	    <if test=" regionId != null ">
+	      and area.id = #{regionId}
+	    </if>
+	    <if test="startTime !=null">
+	      and percentage.create_time <![CDATA[ >= #{startTime}]]>
+	    </if>
+	    <if test="endTime !=null">
+	      and percentage.create_time <![CDATA[ <= #{endTime}]]>
+	    </if>
+	</trim>
+  </select>
+  
+  <!-- 根据id删除抽点数据 -->
+  <delete id="deleteById" parameterType="Long" >
+    delete from order_percentage where id=#{id }
+  </delete>
+  
+</mapper>

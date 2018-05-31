@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.BuyerExpenseDao">
+  <resultMap type="com.netcai.admin.entity.BuyerExpense" id="buyerExpenseMap">
+      <result column="buyer_id" property="BuyerId"/>
+      <result column="buyer_name" property="buyerName"/>
+      <result column="boss_tel" property="buyerPhone"/>
+      <result column="amount" property="expense"/>
+  </resultMap>
+  
+  <!-- 根据时间查询查询买家消费金额   -->
+  <select id="getBuyerExpenses" parameterType="map" resultMap="buyerExpenseMap">
+      SELECT buyer.buyer_id,SUM(info.total_amount) amount FROM buyer 
+      LEFT JOIN order_info info ON info.buyer_id=buyer.buyer_id 
+      WHERE info.pay_status != 1 AND info.trade_status !=2
+      <trim >
+	    <if test="startTime!=null ">
+	      and info.best_time <![CDATA[ >= #{startTime}]]>
+	    </if>
+	    <if test="endTime!=null ">
+	      and info.best_time <![CDATA[ <= #{endTime}]]>
+	    </if>
+	  </trim>
+	  GROUP BY info.buyer_id 
+  </select>
+  
+  <!-- 查询所有有订单的买家信息  -->
+  <select id="getAllBuyers" resultMap="buyerExpenseMap">
+      SELECT buyer.buyer_id,buyer.boss_tel,buyer.buyer_name FROM buyer 
+	  LEFT JOIN order_info info ON info.buyer_id=buyer.buyer_id 
+	  WHERE info.pay_status != 1 AND info.trade_status !=2 
+      <trim >
+        <if test="buyerPhone!=null and buyerPhone!='' ">
+	      and boss_tel = #{buyerPhone}
+	    </if>
+	  </trim>
+	  GROUP BY info.buyer_id ORDER BY buyer.buyer_id DESC LIMIT #{offset},#{pageSize}
+  </select>
+  
+  <!-- 查询所有有订单的买家总数  -->
+  <select id="getPageCount" resultType="int">
+      SELECT count(DISTINCT(info.buyer_id)) FROM buyer 
+	  LEFT JOIN order_info info ON info.buyer_id=buyer.buyer_id 
+	  WHERE info.pay_status != 1 AND info.trade_status !=2
+      <trim >
+        <if test="buyerPhone!=null and buyerPhone!='' ">
+	      and boss_tel = #{buyerPhone}
+	    </if>
+	  </trim>
+  </select>
+  
+</mapper>

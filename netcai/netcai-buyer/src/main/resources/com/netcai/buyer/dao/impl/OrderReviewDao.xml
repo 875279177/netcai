@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 订单评论xml anthor chenlei -->
+<mapper namespace="com.netcai.buyer.dao.OrderReviewDao">
+
+	<resultMap type="com.netcai.buyer.entity.OrderReview" id="orderReviewResult">
+		<result column="review_id" property="reviewId" />
+		<result column="order_item_id" property="orderItemId" />
+		<result column="review_seller_id" property="reviewSellerId" />
+		<result column="review_goods_id" property="reviewGoodsId" />
+		<result column="format_id" property="formatId" />
+		<result column="review_grade" property="reviewGrade" />
+		<result column="review_desc" property="reviewDesc" />
+		<result column="review_user_id" property="reviewUserId" />
+		<result column="review_time" property="reviewTime" />
+		<result column="review_status" property="reviewStatus" />
+		<!-- 评论图片集合 -->
+		<collection property="pictureList" ofType="com.netcai.buyer.entity.ReviewPicture">
+			<result column="rp_id" property="rpId" />
+			<result column="review_pic_url" property="reviewPicUrl" />
+			<result column="create_time" property="createTime" />
+        </collection>
+	</resultMap>
+	
+	<!-- 查询评论返回字段 -->
+	<sql id="getReviewSelect">
+  		select *
+	</sql>
+	
+	<!-- 查询评论关联表 -->
+	<sql id="getReviewFrom">
+  		from order_review o 
+		left join review_picture rp on rp.review_id = o.review_id
+	</sql>
+	
+	<!-- 订单评论信息列表 -->
+	<select id="getAllOrderlReview" resultMap="orderReviewResult">
+	   <include refid="getReviewSelect" />
+	   <include refid="getReviewFrom" />
+		where o.order_item_id=#{orderItemId}
+		order by o.review_id desc
+	</select>
+	
+	<!--新增订单评论-->
+	<insert id="insertOrderReview" parameterType="com.netcai.buyer.entity.OrderReview" useGeneratedKeys="true" keyProperty="reviewId">
+		insert into order_review
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test=" orderItemId !=null">
+				order_item_id,
+			</if>
+			<if test=" reviewSellerId != null">
+				review_seller_id,
+			</if>
+			<if test=" reviewGoodsId != null">
+				review_goods_id,
+			</if>
+			<if test=" formatId != null">
+				format_id,
+			</if>
+			<if test=" reviewGrade != null">
+				review_grade,
+			</if>
+			<if test=" reviewDesc != null">
+				review_desc,
+			</if>
+			<if test=" reviewUserId != null">
+				review_user_id,
+			</if>
+			review_time,
+			<if test=" reviewStatus != null">
+				review_status,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test=" orderItemId !=null">
+				#{orderItemId},
+			</if>
+			<if test=" reviewSellerId != null">
+				#{reviewSellerId},
+			</if>
+			<if test=" reviewGoodsId != null">
+				#{reviewGoodsId},
+			</if>
+			<if test=" formatId != null">
+				#{formatId},
+			</if>
+			<if test=" reviewGrade != null">
+				#{reviewGrade},
+			</if>
+			<if test=" reviewDesc != null">
+				#{reviewDesc},
+			</if>
+			<if test=" reviewUserId != null">
+				#{reviewUserId},
+			</if>
+			now(),
+			<if test=" reviewStatus != null">
+				#{reviewStatus},
+			</if>
+		</trim>
+	</insert>
+</mapper>

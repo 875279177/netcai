@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.SysSystemConfigDao">
+
+  <resultMap type="com.netcai.admin.entity.SysSystemConfig" id="sysSystemConfigMap">
+     <result column="id" property="id"/>
+     <result column="param_code" property="paramCode"/>
+     <result column="param_name" property="paramName"/>
+     <result column="param_value" property="paramValue"/>
+     <result column="param_desc" property="paramDesc"/>
+     <result column="create_time" property="createTime"/>
+  </resultMap>
+  
+  <!-- 查询的数据 -->
+  <sql id="SysSystemConfigSelector">
+		select * from sys_system_config 
+	</sql>
+  
+  <!-- 条件查询语句 -->
+  <sql id="SysSystemConfigMapWhere">
+		<where>
+			<if test="sys.paramCode != null and sys.paramCode != ''">
+				AND	param_code = #{sys.paramCode}
+			</if>
+			<if test="sys.paramName != null and sys.paramName != ''">
+				AND	param_name = #{sys.paramName}
+			</if>
+			<if test="sys.paramValue != null and sys.paramValue != ''">
+				AND	param_value = #{sys.paramValue}
+			</if>
+			<if test="sys.paramDesc != null and sys.paramDesc != ''">
+				AND	param_desc = #{sys.paramDesc}
+			</if>
+			<if test="sys.createTime != null and sys.createTime != ''">
+				AND	create_time = #{sys.createTime}
+			</if>
+		</where>
+	</sql>
+	
+	
+	<!-- 分页 -->
+	<sql id="SysSystemConfigListLimit">
+			limit #{pageNum},#{pageSize}
+	</sql>
+  
+  <!-- 查询所有   以及条件查询-->
+  <select id="getSysSystemConfig" parameterType="SysSystemConfig" resultMap="sysSystemConfigMap">
+     	<include refid="SysSystemConfigSelector" />
+		<include refid="SysSystemConfigMapWhere" />
+		<include refid="SysSystemConfigListLimit" />
+  </select>
+  
+	<!--   查询总数 -->
+  <select id="getPageCount" resultType="int">
+		select count(*) from 
+		sys_system_config
+		<include refid="SysSystemConfigMapWhere" />
+	</select>
+	
+	<!-- 通过Id查询单个 -->
+	<select id="getSysSystemConfigByKey" parameterType="Integer" resultMap="sysSystemConfigMap">
+		<include refid="SysSystemConfigSelector" />		
+		<where>
+			id=#{id}
+		</where>
+	</select>
+	
+	<!-- 添加 -->
+	<insert id="insertSysSystemConfig" parameterType="com.netcai.admin.entity.SysSystemConfig">
+		insert into sys_system_config
+		<trim prefix="(" suffix=")">
+		 <if test="paramCode != null">
+	      param_code ,
+	    </if>
+	    <if test="paramName != null">
+	     param_name,
+	    </if>
+	    <if test="paramValue != null">
+	     param_value,
+	    </if>
+	     <if test="paramDesc != null">
+	      param_desc,
+	    </if>
+	     <if test="createTime != null">
+	      create_time
+	    </if>
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+		<if test="paramCode != null">
+	      #{paramCode},
+	    </if>
+	    <if test="paramName != null">
+	      #{paramName},
+	    </if>
+	    <if test="paramValue != null">
+	      #{paramValue},
+	    </if>
+	     <if test="paramDesc != null">
+	      #{paramDesc},
+	    </if>
+	    <if test="createTime != null">
+	      #{createTime}
+	    </if>
+		</trim>
+	</insert>
+	
+	<!-- 修改 -->
+	<update id="updateSysSystemConfig" parameterType="com.netcai.admin.entity.SysSystemConfig">
+		UPDATE sys_system_config SET 
+			<if test=" paramCode != null">
+				param_code = #{paramCode},
+			</if>
+			<if test=" paramName != null">
+				param_name = #{paramName},
+			</if>
+			<if test=" paramValue != null">
+				param_value = #{paramValue},
+			</if>
+			<if test=" paramDesc != null">
+				param_desc = #{paramDesc}
+			</if>
+			<if test=" createTime != null">
+				create_time = #{createTime}
+			</if>
+		WHERE id = #{id}
+	</update>
+	
+	<!--物理删除-->
+	<delete id="deleteSysSystemConfig">
+		DELETE FROM sys_system_config
+		WHERE id = #{id}
+	</delete>
+</mapper>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 计量单位xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.UnitDao">
+
+	<resultMap type="com.netcai.admin.entity.Unit" id="unitResult">
+		<result column="unit_id" property="unitId" />
+		<result column="unit_code" property="unitCode" />
+		<result column="unit_name" property="unitName" />
+		<result column="unit_seq" property="unitSeq" />
+		<result column="unit_status" property="unitStatus" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<!-- 分页查询计量单位信息 -->
+	<select id="getAllUnit" resultMap="unitResult">
+		select * from unit where 1=1
+		<if test=" unitCode !=null">
+			and unit_code like concat('%',#{unitCode},'%')  
+		</if>
+		<if test=" unitName != null">
+			and unit_name like concat('%',#{unitName},'%')  
+		</if>
+		order by unit_seq
+		limit #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		select count(1) from unit where 1=1
+		<if test=" unitCode !=null">
+			and unit_code like concat('%',#{unitCode},'%')  
+		</if>
+		<if test=" unitName != null">
+			and unit_name like concat('%',#{unitName},'%')  
+		</if>
+	</select>
+
+	<!-- 新增计量单位 -->
+	<insert id="insertUnit" parameterType="com.netcai.admin.entity.Unit">
+		insert into unit
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test=" unitCode !=null">
+				unit_code,
+			</if>
+			<if test=" unitName != null">
+				unit_name,
+			</if>
+			<if test=" unitSeq != null">
+				unit_seq,
+			</if>
+			<if test=" unitStatus != null">
+				unit_status,
+			</if>
+			create_time,
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test=" unitCode != null">
+				#{unitCode},
+			</if>
+			<if test=" unitName != null">
+				#{unitName},
+			</if>
+			<if test=" unitSeq != null">
+				#{unitSeq},
+			</if>
+			<if test=" unitStatus != null">
+				#{unitStatus},
+			</if>
+			now(),
+		</trim>
+	</insert>
+
+	<!-- 更新计量单位 -->
+	<update id="updateUnit" parameterType="com.netcai.admin.entity.Unit">
+		update unit
+		<set>
+			<trim suffixOverrides=",">
+				<if test=" unitCode != null">
+					unit_code = #{unitCode},
+				</if>
+				<if test=" unitName != null">
+					unit_name = #{unitName},
+				</if>
+				<if test=" unitSeq != null">
+					unit_seq = #{unitSeq},
+				</if>
+				<if test=" unitStatus != null">
+					unit_status = #{unitStatus},
+				</if>
+			</trim>
+		</set>
+		where unit_id = #{unitId}
+	</update>
+	
+	<!-- 根据id查找计量单位-->
+	<select id="getUnitById" parameterType="int" resultMap="unitResult">
+		select * from unit where unit_id = #{unitId}
+	</select>
+	
+	<!-- 取得所有在用的计量单位 -->
+	<select id="getAllUnitByStatus" parameterType="com.netcai.admin.entity.Unit" resultMap="unitResult">
+		select * from unit where unit_status=1
+	</select>
+</mapper>

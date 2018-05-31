@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.ProblemDao" >
+  <resultMap id="problemMap" type="com.netcai.admin.entity.Problem" >
+    <id column="id" property="id"  />
+    <result column="question" property="question"/>
+    <result column="answer" property="answer"  />
+    <result column="type" property="type"  />
+    <result column="classify" property="classify" />
+    <result column="status" property="status"/>
+    <result column="sequence" property="sequence"/>
+    <result column="create_time" property="createTime" />
+  </resultMap>
+  
+  <sql id="where" >
+    WHERE
+		1=1
+		<if test="r.question != null and r.question != ''">
+ 			AND p.question like '%${r.question}%'
+		</if>
+		<if test="r.type != null">
+ 			AND p.type = #{r.type}
+		</if>
+  	</sql>
+  	
+  	<!-- 排序-->
+	<sql id="orderBy">
+			ORDER BY p.classify, p.sequence DESC
+	</sql>
+  
+  	<!-- 分组-->
+	<sql id="limit">
+		<if test="pageNum != null and pageSize != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  <select id="selectById" resultMap="problemMap" parameterType="java.lang.Long" >
+    select
+    *
+    from problem p
+    where id = #{id}
+  </select>
+  
+  <select id="selectList" resultMap="problemMap" parameterType="com.netcai.admin.entity.Problem" >
+    select
+    *
+    from problem p
+    <include refid="where" />
+	<include refid="orderBy" />
+	<include refid="limit" />
+  </select>
+  
+  <select id="getPageCount" resultType="int" parameterType="com.netcai.admin.entity.Problem" >
+    select
+    	count(1)
+    from problem p
+    <include refid="where" />
+  </select>
+  
+  <insert id="insert">
+    insert into problem
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="r.question != null and r.question != null" >
+        question,
+      </if>
+      <if test="r.answer != null and r.question != null" >
+        answer,
+      </if>
+      <if test="r.type != null" >
+        type,
+      </if>
+      <if test="r.classify != null" >
+        classify,
+      </if>
+      <if test="r.status != null" >
+        status,
+      </if>
+      <if test="r.createTime != null" >
+        create_time,
+      </if>
+      <if test="r.sequence != null" >
+        sequence,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="r.question != null and r.question != null" >
+        #{r.question},
+      </if>
+      <if test="r.answer != null and r.answer != null" >
+        #{r.answer},
+      </if>
+      <if test="r.type != null" >
+        #{r.type},
+      </if>
+      <if test="r.classify != null" >
+        #{r.classify},
+      </if>
+      <if test="r.status != null" >
+        #{r.status},
+      </if>
+      <if test="r.createTime != null" >
+        #{r.createTime},
+      </if>
+      <if test="r.sequence != null" >
+         #{r.sequence},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="update" >
+    update problem
+    <set >
+      <if test="r.question != null and r.question != null" >
+        question = #{r.question},
+      </if>
+      <if test="r.answer != null and r.answer != null" >
+        answer = #{r.answer},
+      </if>
+      <if test="r.type != null" >
+        type = #{r.type},
+      </if>
+      <if test="r.classify != null" >
+        classify = #{r.classify},
+      </if>
+      <if test="r.status != null" >
+        status = #{r.status},
+      </if>
+      <if test="r.createTime != null" >
+        create_time = #{r.createTime},
+      </if>
+      <if test="r.sequence != null" >
+         sequence = #{r.sequence},
+      </if>
+    </set>
+    where id = #{r.id}
+  </update>
+</mapper>

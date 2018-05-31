@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商家信息 -->
+<mapper namespace="com.netcai.buyer.dao.UsersDao">
+
+	<resultMap type="com.netcai.buyer.entity.Users" id="usersMap">
+		<result property="id" column="id"/>
+		<result property="account" column="account"/>
+		<result property="password" column="password"/>
+		<result property="status" column="status"/>
+		<result property="trueName" column="true_name"/>
+		<result property="createTime" column="create_time"/>
+		<result property="lastLoginTime" column="last_login_time"/>
+		<result property="type" column="type"/>
+		<result property="regionId" column="region_id"/>
+	</resultMap>
+	
+    <!-- 获取用户对象根据ID-->
+	<select id="getUsersById" resultMap="usersMap">
+	   SELECT * FROM users where id=#{userId}
+	</select>
+	
+	<!-- 获取 用户对象根据账号 -->
+	<select id="getUsersByAccount" resultMap="usersMap">
+	   SELECT u.*,b.region_id  FROM users u, buyer b WHERE u.account =#{account} AND b.buyer_id = u.id
+	</select>
+	
+	<!-- 添加 -->
+	<insert id="insertUsers" useGeneratedKeys="true" keyProperty="id"
+		keyColumn="id" parameterType="Users">
+		insert into users
+		<trim prefix="(" suffix=")">
+			 <if test="account != null">
+		      account ,
+		    </if>
+		    <if test="password != null">
+		     password,
+		    </if>
+		     <if test="trueName != null">
+		      true_name,
+		    </if>
+		     <if test="status != null">
+		      status,
+		    </if>
+		     <if test="createTime != null">
+		     create_time,
+		    </if>
+		     <if test="lastLoginTime != null">
+		      last_login_time,
+		    </if>
+		     <if test="type != null">
+		      type
+		    </if>
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+			<if test="account != null">
+		      #{account},
+		    </if>
+		    <if test="password != null">
+		      #{password},
+		    </if>
+		    <if test="trueName != null">
+		      #{trueName},
+		    </if>
+		    <if test="status != null">
+		      #{status},
+		    </if>
+		    <if test="createTime != null">
+		      #{createTime},
+		    </if>
+		     <if test="lastLoginTime != null">
+		      #{lastLoginTime},
+		    </if>
+		    <if test="type != null">
+		      #{type}
+		    </if>
+		</trim>
+	</insert>
+	
+	<!-- 更新用户的状态 -->
+	<update id="updateUsersStatus">
+	     update users set status=#{status} where id=#{userId}
+	</update>
+	
+	<!-- 重置用户密码 -->
+	<update id="updatePassword">
+		update users set password=#{password} where id=#{userId}
+	</update>
+	
+</mapper>

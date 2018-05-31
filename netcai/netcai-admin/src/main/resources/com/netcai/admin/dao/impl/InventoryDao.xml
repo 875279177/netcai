@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.InventoryDao">
+  <resultMap type="com.netcai.admin.vo.InventoryVo" id="inventoryResult">
+      <result column="id" property="id"/>
+      <result column="buyer_type_id" property="buyerTypeId"/>
+      <result column="seller_id" property="sellerId"/>
+      <result column="goods_id" property="goodsId"/>
+      <result column="region_id" property="regionId"/>
+      <result column="area_name" property="regionName"/>
+      <result column="type_name" property="buyerTypeName"/>
+      <result column="seller_name" property="sellerName"/>
+      <result column="goods_name" property="goodsName"/>
+      <result column="create_time" property="createTime"/>
+  </resultMap>
+  
+    <sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and ">
+	    <if test=" inventory.buyerTypeId != null ">
+	      and A.buyer_type_id = #{inventory.buyerTypeId}
+	    </if>
+	    <if test=" inventory.regionId != null ">
+	      and A.region_id= #{inventory.regionId}
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 分页查询广告信息 -->
+	<select id="getAll" resultMap="inventoryResult">
+	    SELECT A.*,B.type_name,area.area_name,seller.seller_name,goods.goods_name FROM inventory A 
+	    LEFT JOIN buyer_type B ON A.buyer_type_id=B.id
+		LEFT JOIN area ON A.region_id=area.id
+		LEFT JOIN seller ON A.seller_id=seller.seller_id
+		LEFT JOIN goods ON A.goods_id=goods.goods_id
+        <include refid="filterCondition"></include>
+		order by create_time desc limit #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		select count(1) from inventory
+	</select>
+	
+	
+	<!-- 根据id查询  -->
+	<select id="getById" resultMap="inventoryResult">
+		SELECT A.*,B.type_name,area.area_name,seller.seller_name,goods.goods_name FROM inventory A 
+	    LEFT JOIN buyer_type B ON A.buyer_type_id=B.id
+		LEFT JOIN area ON A.region_id=area.id
+		LEFT JOIN seller ON A.seller_id=seller.seller_id
+		LEFT JOIN goods ON A.goods_id=goods.goods_id
+		WHERE A.id=#{id}
+	</select>
+	
+	<!-- 批量新增 -->
+	<insert id="batchInsert" parameterType="java.util.List">
+	  insert into inventory (buyer_type_id ,seller_id ,goods_id ,region_id ,sequence ,create_time )
+      <foreach collection="inventoryList" item="item" separator="," open="values">
+        (#{item.buyerTypeId},#{item.sellerId} , #{item.goodsId} , #{item.regionId} , #{item.sequence},#{item.createTime})
+      </foreach> 
+	</insert>
+	
+	<!-- 删除 -->
+	<delete id="delete" parameterType="Long">
+	  delete from inventory where id=#{id}
+	</delete>
+	
+</mapper>

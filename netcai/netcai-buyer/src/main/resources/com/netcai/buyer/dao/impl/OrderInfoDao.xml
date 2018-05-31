@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.OrderInfoDao">
+
+   <resultMap type="com.netcai.buyer.entity.OrderInfo" id="orderInfoMap">
+     <result column="order_id" property="orderId"/>	
+     <result column="order_number" property="orderNumber"/>
+     <result column="order_type" property="orderType"/>
+     <result column="buyer_id" property="buyerId"/>
+     <result column="trade_status" property="tradeStatus"/>
+     <result column="pay_status" property="payStatus"/>
+     <result column="best_time" property="bestTime"/>
+     <result column="remark" property="remark"/>
+     <result column="total_amount" property="totalAmount"/>
+     <result column="order_amount" property="orderAmount"/>
+     <result column="pay_time" property="payTime"/>
+     <result column="card_owner" property="cardOwner"/>
+     <result column="card_code" property="cardCode"/>
+     <result column="card_name" property="cardName"/>
+     <result column="card_number" property="cardNumber"/>
+     <result column="outer_trade_no" property="outerTradeNo"/>
+     <result column="create_time" property="createTime"/>
+  </resultMap>
+	
+  <!-- 获取所有的订单，根据支付状态 -->
+  <select id="getAllOrderInfo" resultMap="orderInfoMap">
+ 	  SELECT * FROM order_info
+ 	  WHERE buyer_id = #{buyerId}
+ 	  <!-- 待支付-->
+ 	  <if test="orderStatus==0">
+ 	     and order_type=0 and pay_status in (1,3) and trade_status=0
+ 	  </if>
+ 	  <!-- 待收货-->
+ 	  <if test="orderStatus==1">
+ 	     and pay_status in (2,3) and trade_status=0
+ 	  </if>
+ 	  <!-- 已完成 -->
+ 	  <if test="orderStatus==2">
+ 	     and pay_status in (2,3,4) and trade_status=1
+ 	  </if>
+ 	  ORDER BY create_time desc
+  </select>
+  
+  <!-- 获取买家当天下单的有效订单数 -->
+  <select id="getCountByBuyerIdAndCreateTime" resultType="int">
+ 	  SELECT 
+		count(1) 
+	  FROM 
+		order_info oi
+	  WHERE
+		 oi.trade_status != 2
+	  AND
+		 oi.pay_status != 1
+	  AND
+		 DATE_FORMAT(oi.create_time,'%Y-%m-%d') = DATE_FORMAT(#{createTime},'%Y-%m-%d')
+	  AND
+		 oi.buyer_id = #{buyerId}
+  </select>
+  
+  <!-- 获取订单，根据orderId -->
+  <select id="getOrderInfoByOrderId" resultMap="orderInfoMap">
+ 	  SELECT * FROM order_info WHERE order_id =#{orderId} 
+  </select>
+  
+  <!-- 获取订单，根据orderNumber-->
+  <select id="getOrderInfoByOrderNumber" resultMap="orderInfoMap">
+ 	  SELECT * FROM order_info WHERE order_number =#{orderNumber} 
+  </select>
+  
+  <!-- 取消订单-->
+  <update id="cancelOrderInfo">
+        update order_info set trade_status=2 WHERE order_id=#{orderId} and pay_status in(0,1)
+  </update>
+  
+  <!-- 取消订单-->
+  <update id="cancelAllOrderInfo">
+        update order_info set trade_status=2 WHERE order_id=#{orderId}
+  </update>
+  
+  
+  <!-- 更新订单的总额-->
+  <update id="updateOrderInfoTotalAmount">
+        update order_info set total_amount=#{totalAmount} WHERE order_id=#{orderId}
+  </update>
+  
+  <update id="payReturn" parameterType="com.netcai.buyer.entity.OrderInfo">
+     update order_info set trade_status=#{tradeStatus},pay_status=#{payStatus},pay_amount=#{payAmount},pay_time=#{payTime},card_owner=#{cardOwner},card_code=#{cardCode},
+     card_name=#{cardName},card_number=#{cardNumber},outer_trade_no=#{outerTradeNo} where order_number=#{orderNumber}
+  </update>
+  
+   <!-- 添加订单 -->
+   <insert id="addOrderInfo" useGeneratedKeys="true" keyProperty="orderId" keyColumn="order_id" parameterType="OrderInfo">
+		insert into order_info
+		<trim prefix="(" suffix=")">
+			<if test="orderNumber != null">
+		      order_number ,
+		    </if>
+		    <if test="orderType != null">
+		     order_type,
+		    </if>
+			<if test="buyerId != null">
+		      buyer_id ,
+		    </if>
+		    <if test="tradeStatus != null">
+		     trade_status,
+		    </if>
+		    <if test="payStatus != null">
+		     pay_status,
+		    </if>
+		     <if test="bestTime != null">
+		      best_time,
+		    </if>
+		    <if test="remark != null">
+		      remark ,
+		    </if>
+			<if test="totalAmount != null">
+		      total_amount ,
+		    </if>
+		    <if test="orderAmount != null">
+		     order_amount,
+		    </if>
+		    <if test="payTime != null">
+		     pay_time,
+		    </if>
+		     <if test="cardOwner != null">
+		      card_owner,
+		    </if>
+		    <if test="cardCode != null">
+		     card_code,
+		    </if>
+		    <if test="cardName != null">
+		     card_name,
+		    </if>
+		     <if test="cardNumber != null">
+		      card_number,
+		    </if>
+		     <if test="outerTradeNo != null">
+		      outer_trade_no,
+		    </if>
+		    <if test="createTime != null">
+		      create_time
+		    </if>
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+			<if test="orderNumber != null">
+		      #{orderNumber },
+		    </if>
+		    <if test="orderType != null">
+		     #{orderType},
+		    </if>
+			<if test="buyerId != null">
+		      #{buyerId },
+		    </if>
+		    <if test="tradeStatus != null">
+		     #{tradeStatus},
+		    </if>
+		    <if test="payStatus != null">
+		     #{payStatus},
+		    </if>
+		     <if test="bestTime != null">
+		      #{bestTime},
+		    </if>
+		    <if test="remark != null">
+		      #{remark },
+		    </if>
+			<if test="totalAmount != null">
+		      #{totalAmount },
+		    </if>
+		    <if test="orderAmount != null">
+		     #{orderAmount},
+		    </if>
+		    <if test="payTime != null">
+		     #{payTime},
+		    </if>
+		     <if test="cardOwner != null">
+		      #{cardOwner},
+		    </if>
+		    <if test="cardCode != null">
+		      #{cardCode },
+		    </if>
+			<if test="cardName != null">
+		      #{cardName },
+		    </if>
+		    <if test="cardNumber != null">
+		     #{cardNumber},
+		    </if>
+		    <if test="outerTradeNo != null">
+		     #{outerTradeNo},
+		    </if>
+		    <if test="createTime != null">
+		      #{createTime}
+		    </if>
+		</trim>
+	</insert>
+	
+	<!-- 添加买家常用清单 -->
+	<insert id="insertBuyerCommon">
+		 insert into buyer_common(buyer_id,goods_id,create_time)
+		 select oi.buyer_id,g.goods_id,now() from order_item oi
+		 inner join order_info o on o.order_id=oi.order_id
+		 inner join goods_format gf on gf.format_id=oi.format_id
+		 inner join goods g on g.goods_id=gf.goods_id
+		 where oi.order_id=#{orderId} and o.order_type=0 and g.goods_status=1 and gf.format_status=1
+		 and not exists (select 1 from buyer_common bc where g.goods_id=bc.goods_id and oi.buyer_id=bc.buyer_id)
+		 group by g.goods_id
+	</insert>
+	
+	<!--线下付款;-->
+  <update id="updatePayStatus">
+        update order_info set pay_status=#{payStatus} WHERE order_id=#{orderId}
+  </update>
+</mapper>

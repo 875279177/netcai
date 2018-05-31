@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.WithdrawalSellerLogsDao">
+
+	<!-- 新增广告信息 -->
+	<insert id="insert" parameterType="com.netcai.admin.entity.WithdrawalSellerLogs">
+	  insert into withdrawal_seller_logs
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+        <if test=" sellerId != null ">
+	        uid ,
+	    </if>
+	    <if test=" withdrawOrder != null and withdrawOrder != ''">
+	        withdraw_order ,
+	    </if>
+	    <if test=" withdrawApplyTotal != null ">
+	        withdraw_apply_total ,
+	    </if>
+	    <if test=" withdrawCharge != null ">
+	        withdraw_charge ,
+	    </if>
+	    <if test=" createTime != null">
+			create_time ,
+		</if>
+	  </trim>
+	  <trim prefix="values (" suffix=")" suffixOverrides=",">
+        <if test=" sellerId != null ">
+	        #{sellerId},
+	    </if>
+	    <if test=" withdrawOrder != null and withdrawOrder != '' ">
+	        #{withdrawOrder},
+	    </if>
+	    <if test=" withdrawApplyTotal != null ">
+	        #{withdrawApplyTotal},
+	    </if>
+	    <if test=" withdrawCharge != null ">
+	        #{withdrawCharge},
+	    </if>
+	    <if test=" createTime != null">
+			#{createTime},
+		</if>
+	  </trim>
+	</insert>
+
+</mapper>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.CouponDao" >
+  <resultMap id="couponMap" type="com.netcai.admin.entity.Coupon" >
+    <id column="id" property="id" />
+    <result column="region_id" property="regionId" />
+    <result column="type" property="type"/>
+    <result column="name" property="name"  />
+    <result column="img" property="img"  />
+    <result column="start_time" property="startTime" />
+    <result column="end_time" property="endTime"/>
+    <result column="money" property="money"/>
+    <result column="status" property="status" />
+    <result column="remarks" property="remarks"/>
+    <result column="create_time" property="createTime"/>
+    <result column="full_money" property="fullMoney"/>
+    <result column="area_name" property="areaName"/>
+  </resultMap>
+  
+   <sql id="where" >
+    WHERE
+		1=1
+		<if test="c.name != null and c.name != ''">
+ 			AND c.name like '%${c.name}%'
+		</if>
+		<if test="c.status != null">
+ 			AND c.status = #{c.status}
+		</if>
+		<if test="c.areaId != null">
+ 			AND  a.id = #{c.areaId}
+		</if>
+  	</sql>
+  
+  	<!-- 分组-->
+	<sql id="limit">
+		<if test="pageNum != null and pageSize != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  
+  <!-- 排序-->
+	<sql id="orderBy">
+			ORDER BY c.create_time DESC
+	</sql>
+  
+  <select id="getAll" resultMap="couponMap" parameterType="Coupon" >
+    SELECT
+		c.*,
+		a.area_name
+	FROM
+		coupon c
+	LEFT JOIN area a ON c.region_id = a.id
+	<include refid="where" />
+	<include refid="orderBy" />
+	<include refid="limit" />
+  </select>
+  
+  <select id="getPageCount" parameterType="Coupon" resultType="int">
+		SELECT
+			count(1)
+		FROM
+			coupon c
+		LEFT JOIN area a ON c.region_id = a.id
+		<include refid="where" />
+	</select>
+  
+  <delete id="delete" parameterType="java.lang.Long" >
+    delete from coupon
+    where id = #{id}
+  </delete>
+  
+  <insert id="batchInsert" parameterType="java.util.List">
+    insert into coupon(
+	        region_id,
+	        type,
+	        name,
+	        img,
+	        start_time,
+	        end_time,
+	        money,
+	        status,
+	        remarks,
+	        create_time,
+	        full_money)
+	        values
+        <foreach collection="c" item="item" separator=",">
+	         (#{item.regionId},
+	        #{item.type},
+	        #{item.name},
+	        #{item.img},
+	        #{item.startTime},
+	        #{item.endTime},
+	        #{item.money},
+	        #{item.status},
+	        #{item.remarks},
+	        #{item.createTime},
+	        #{item.fullMoney})
+   		</foreach>
+  </insert>
+  
+  <update id="update" parameterType="com.netcai.admin.entity.Coupon" >
+    update coupon
+    <set >
+      <if test="regionId != null" >
+        region_id = #{regionId,jdbcType=BIGINT},
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=INTEGER},
+      </if>
+      <if test="name != null" >
+        name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="img != null" >
+        img = #{img,jdbcType=VARCHAR},
+      </if>
+      <if test="startTime != null" >
+        start_time = #{startTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="endTime != null" >
+        end_time = #{endTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="money != null" >
+        money = #{money,jdbcType=DECIMAL},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="remarks != null" >
+        remarks = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="fullMoney != null" >
+        full_money = #{fullMoney,jdbcType=DECIMAL},
+      </if>
+    </set>
+    where id = #{id}
+  </update>
+  
+  <!-- 更改活动状态 -->
+  <update id="updateStatus">
+    update coupon set status = #{status} where id = #{id}
+  </update>
+</mapper>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.BillDao">
+	<resultMap type="com.netcai.admin.vo.BillVo" id="billMap">
+		<result column="bill_id" property="id" />
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_name" property="sellerName" />
+		<result column="should_money" property="expectIncome" />
+		<result column="deduct_money" property="deductMoney" />
+		<result column="reality_money" property="realIncome" />
+		<result column="period" property="period" />
+		<result column="status" property="status" />
+		<result column="create_time" property="createTime" />
+		<result column="seller_name" property="sellerName" />
+		<result column="seller_account" property="account" />
+	</resultMap>
+
+	<!-- 汇总卖家金额结果集 -->
+	<resultMap type="Map" id="amountMap">
+	    <result column="bill_id" property="billId" javaType="Long"/>
+		<result column="seller_id" property="sellerId" javaType="Long"/>
+		<result column="seller_name" property="sellerName" javaType="String"/>
+		<result column="balance_money" property="balanceMoney" javaType="BigDecimal"/>
+		<result column="bill_money" property="billMoney" javaType="BigDecimal"/>
+		<result column="reality_money" property="realIncome" javaType="BigDecimal"/>
+		<result column="order_percentage_amount" property="percentageAmount" javaType="BigDecimal"/>
+	</resultMap>
+
+	<sql id="filterCondition">
+		<trim prefix="where " prefixOverrides="and ">
+			<if test=" bill.sellerName != null and bill.sellerName != '' ">
+				and seller.seller_name like '%${bill.sellerName}%'
+			</if>
+			<if test=" bill.status != null ">
+				and bill.status = #{bill.status}
+			</if>
+			<if test=" bill.sellerId != null and bill.sellerId != ''">
+				and bill.seller_id = #{bill.sellerId}
+			</if>
+			<if test=" bill.startTimeStr !=null and  bill.startTimeStr != '' ">
+				and bill.create_time <![CDATA[ >= DATE_FORMAT(concat(#{bill.startTimeStr},' 00:00:00'),'%Y-%m-%d %H:%i:%s')]]>
+			</if>
+			<if test=" bill.endTimeStr !=null and bill.endTimeStr !='' ">
+				and bill.create_time <![CDATA[ <= DATE_FORMAT(concat(#{bill.endTimeStr},' 23:59:59'),'%Y-%m-%d %H:%i:%s')]]>
+			</if>
+		</trim>
+	</sql>
+
+	<!-- 分页查询账单配置 -->
+	<select id="getAll" resultMap="billMap">
+		SELECT bill.*,seller.seller_name,seller.seller_account FROM bill
+		INNER JOIN seller ON bill.seller_id=seller.seller_id
+		<include refid="filterCondition"></include>
+		ORDER BY bill.create_time DESC LIMIT #{offset},#{pageSize}
+	</select>
+
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		SELECT count(1) FROM bill
+		LEFT JOIN seller ON bill.seller_id=seller.seller_id
+		<include refid="filterCondition"></include>
+	</select>
+
+	<!-- 根据卖家查询已出账的账单 -->
+	<select id="getBillsBySellerId" parameterType="Map" resultMap="billMap">
+		SELECT bill.*,seller.seller_name,seller.seller_account FROM bill
+		LEFT JOIN seller ON bill.seller_id=seller.seller_id
+		WHERE bill.status=0
+		<trim>
+			<if test="sellerId !=null">
+				and bill.seller_id =#{sellerId}
+			</if>
+			<if test="startTime !=null">
+				and bill.create_time <![CDATA[ >= #{startTime}]]>
+			</if>
+			<if test="endTime!=null">
+				and bill.create_time <![CDATA[ <= #{endTime}]]>
+			</if>
+		</trim>
+		ORDER BY bill.create_time DESC
+	</select>
+
+	<!-- 根据卖家id统计其实收款 -->
+	<select id="getRealIncome" resultMap="amountMap">
+		SELECT
+		seller.seller_id,seller.seller_name,seller.balance_money,seller.bill_money,sum(reality_money)
+		reality_money FROM seller
+		LEFT JOIN bill ON bill.seller_id=seller.seller_id
+		WHERE bill.status = 0 GROUP BY bill.seller_id
+	</select>
+	
+	<!-- 根据时间查询账单实际金额和抽点金额 -->
+	<select id="getRealMoneyAndPercentageAmount" parameterType="Date" resultMap="amountMap">
+		SELECT bill.bill_id,bill.reality_money,sum(percentage.order_percentage_amount)order_percentage_amount from bill 
+		INNER JOIN order_percentage percentage ON bill.seller_id=percentage.seller_id
+		WHERE DATE_FORMAT(bill.create_time,'%Y-%m-%d')=DATE_FORMAT(#{createTime},'%Y-%m-%d') 
+		AND DATE_FORMAT(percentage.create_time,'%Y-%m-%d')=DATE_FORMAT(#{createTime},'%Y-%m-%d')
+		GROUP BY bill.seller_id
+	</select>
+	
+	<!-- 根据时间和卖家id和时间账单信息-->
+	<select id="getBillSellerIdAndByDate" resultMap="billMap">
+	    select * from bill where DATE_FORMAT(create_time,'%Y-%m-%d')=#{day} and seller_id=#{sellerId} limit 0,1
+	</select>
+
+	<!-- 批量新增 -->
+	<insert id="batchInsert" parameterType="List">
+		insert into bill (seller_id,should_money,deduct_money,reality_money,period,status,create_time) values
+		<foreach collection="list" item="item" index="index" separator="," >  
+	       (#{item.sellerId},#{item.expectIncome},#{item.deductMoney},#{item.realIncome},#{item.period},#{item.status},#{item.createTime})  
+	   </foreach>
+	</insert>
+
+	<!-- 根据账单id更新扣款和实收款 -->
+	<update id="update" parameterType="com.netcai.admin.vo.BillVo">
+		update bill
+		<set>
+			<trim>
+			    <if test=" expectIncome != null ">
+					should_money = #{expectIncome} ,
+				</if>
+				<if test=" deductMoney != null ">
+					deduct_money = #{deductMoney} ,
+				</if>
+				<if test=" realIncome != null ">
+					reality_money = #{realIncome},
+				</if>
+			</trim>
+		</set>
+		where bill_id = #{id}
+	</update>
+	
+	<!-- 批量更新实收款 -->
+	<update id="batchUpdateRealitymoney" parameterType="List">
+	    <foreach collection="list" item="item" index="index" separator=";">  
+            update bill  
+            <set>  
+              reality_money = #{item.realIncome}
+            </set>  
+            where bill_id = #{item.id}
+         </foreach>  
+	</update>
+
+	<select id="correctSellerAmount" resultType="java.util.Map">
+		SELECT
+		b.seller_id as sellerId,
+		((SELECT s.bill_money from seller s where
+		s.seller_id=b.seller_id)+(sum(b.reality_money) )) as rmb
+		FROM
+		bill b where b.status=0
+		GROUP BY b.seller_id
+	</select>
+</mapper>

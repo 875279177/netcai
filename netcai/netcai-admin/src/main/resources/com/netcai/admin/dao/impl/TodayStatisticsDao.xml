@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.TodayStatisticsDao">
+
+	<resultMap type="com.netcai.admin.entity.TodayStatistics" id="todayStatisticsResult">
+		<result column="time" property="time" />
+		<result column="names" property="names" />
+		<result column="area_id" property="areaId" />
+		<result column="order_num" property="orderNum" />
+		<result column="user_num" property="userNum" />
+		<result column="money" property="money" />
+	</resultMap>
+	
+	<!-- 查询信息 -->
+	<select id="getList" parameterType="com.netcai.admin.entity.TodayStatistics" resultMap="todayStatisticsResult">
+		SELECT
+			A_.id,
+			A_.`names`,
+			DATE_FORMAT(oi.best_time,"%Y-%m-%d") time,
+			COUNT(oi.order_id) order_num,
+			COUNT(DISTINCT b1.buyer_id) user_num,
+			SUM(oi.total_amount) money
+		FROM
+			order_info oi 
+			LEFT JOIN buyer b1 ON b1.buyer_id = oi.buyer_id
+			LEFT JOIN 
+					(SELECT
+						DATE_FORMAT(o.best_time,"%Y-%m-%d") time1,
+						a.id,
+						a.area_name names
+					FROM
+						area a 
+						LEFT JOIN buyer b  ON a.id = b.region_id
+						LEFT JOIN users u ON u.id= b.buyer_id
+						LEFT JOIN order_info o ON b.buyer_id = o.buyer_id
+					WHERE
+						a.id > 2
+						GROUP BY time1,a.id
+					ORDER BY a.id DESC,time1 DESC)A_ ON A_.id = b1.region_id
+		WHERE
+			oi.trade_status !=2
+			AND
+			oi.pay_status !=1
+			AND
+			DATE_FORMAT(oi.best_time,"%Y-%m-%d") = A_.time1
+			GROUP BY time,A_.id
+			ORDER BY time DESC,A_.id DESC
+	</select>
+</mapper>

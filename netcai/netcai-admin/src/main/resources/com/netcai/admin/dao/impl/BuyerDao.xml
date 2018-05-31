@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.netcai.admin.dao.BuyerDao">
+	<resultMap type="com.netcai.admin.vo.BuyerVo" id="buyerMap">
+		<result property="saleId" column="sale_id" />
+		<result property="salesName" column="salesName" />
+		<result property="buyerId" column="buyer_id" />
+		<result property="buyerName" column="buyer_name" />
+		<result property="buyerAddress" column="buyer_address" />
+		<result property="provinceId" column="province_id" />
+		<result property="provinceName" column="province" />
+		<result property="cityId" column="city_id" />
+		<result property="cityName" column="city" />
+		<result property="regionId" column="region_id" />
+		<result property="regionName" column="region" />
+		<result property="bossName" column="boss_name" />
+		<result property="bossTel" column="boss_tel" />
+		<result property="lng" column="lng" />
+		<result property="lat" column="lat" />
+		<result property="balanceMoney" column="balance_money" />
+		<result property="remark" column="remark" />
+		<result property="buyerLevel" column="buyer_level" />
+		<result property="buyerType" column="buyer_type" />
+		<result property="buyerLogo" column="buyer_logo" />
+		<result property="buyerImages" column="buyer_images" />
+		<result property="openTime" column="open_time" />
+		<result property="endTime" column="end_time" />
+		<result property="deliveryTime" column="delivery_time" />
+		<result property="status" column="status" />
+		<result property="password" column="password" />
+		<result property="createTime" column="create_time" />
+		<result property="deliveryAreaId" column="delivery_area_id" />
+		<result property="deliveryAreaName" column="da_address" />
+	</resultMap>
+	
+	<!-- 统计Top10的数据集  -->
+    <resultMap type="Map" id="countMap">
+      <result column="count" property="count" javaType="int"/>
+      <result column="buyerName" property="buyerName" javaType="String"/>
+      <result column="orderNum" property="orderNum" javaType="String"/>
+      <result column="typeName" property="typeName" javaType="String"/>
+    </resultMap>
+    
+    <!--分区域 统计订单报表 -->
+  <resultMap id="reportDayMap" type="com.netcai.admin.entity.ReportDay" >
+    <id column="day_id" property="dayId"  />
+    <result column="today" property="today"  />
+    <result column="order_num" property="orderNum"  />
+    <result column="order_amount" property="orderAmount"  />
+    <result column="seller_num" property="sellerNum" />
+    <result column="per_amount" property="perAmount"  />
+    <result column="av_amount" property="avAmount"  />
+    <result column="new_buyer_num" property="newBuyerNum"  />
+    <result column="new_buyer" property="newBuyer"  />
+    <result column="region_id" property="regionId"  />
+  </resultMap>
+	
+	<sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and " >
+	    <if test="buyer.buyerName != null and buyer.buyerName!='' ">
+	        and buyer.buyer_name like '%${buyer.buyerName}%'
+	    </if>
+	    <if test="buyer.bossName != null and buyer.bossName!='' ">
+	        and buyer.boss_name like '%${buyer.bossName}%'
+	    </if>
+	    <if test="buyer.bossTel != null and buyer.bossTel!='' ">
+	        and buyer.boss_tel like '%${buyer.bossTel}%' 
+	    </if>
+	    <if test="buyer.buyerId != null">
+	        and buyer.buyer_id = #{buyer.buyerId}
+	    </if>
+	    <if test="buyer.status != null">
+	        and users.status = #{buyer.status}
+	    </if>
+	    <if test="buyer.provinceId != null">
+	        and buyer.province_id = #{buyer.provinceId}
+	    </if>
+	    <if test="buyer.cityId != null">
+	        and buyer.city_id = #{buyer.cityId}
+	    </if>
+	    <if test="buyer.regionId != null">
+	        and buyer.region_id = #{buyer.regionId}
+	    </if>
+	    <if test="buyer.deliveryAreaId != null and buyer.deliveryAreaId != -1">
+	            and buyer.delivery_area_id = #{buyer.deliveryAreaId}
+	    </if>
+	    <if test="buyer.deliveryAreaId != null and buyer.deliveryAreaId == -1">
+	            and buyer.delivery_area_id is null
+	    </if>
+	    <if test="buyer.saleId != null and buyer.saleId != -1">
+	            and buyer.sale_id = #{buyer.saleId}
+	    </if>
+	    <if test="buyer.saleId != null and buyer.saleId == -1">
+	            and buyer.sale_id is null
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 分页查询买家信息  -->
+	<select id="getAllBuyer" resultMap="buyerMap">
+		SELECT 
+			da.da_address,
+			users.status,
+			users.create_time,
+			sales.true_name salesName,
+			a.area_name region,
+			buyer.* 
+		FROM buyer 
+	        INNER JOIN users ON users.id=buyer.buyer_id
+	        LEFT JOIN sales ON buyer.sale_id=sales.id
+			LEFT JOIN area a ON a.id = buyer.region_id
+			LEFT JOIN delivery_area da ON buyer.delivery_area_id = da.da_id
+        <include refid="filterCondition"></include>
+		ORDER BY users.create_time DESC LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		SELECT count(1) FROM buyer
+		INNER JOIN users ON users.id=buyer.buyer_id
+		LEFT JOIN sales ON buyer.sale_id=sales.id
+		<include refid="filterCondition"></include>
+	</select>
+	
+	<!-- 通过ID查询余额 -->
+	<select id="getById" resultType="java.math.BigDecimal">
+		select balance_money from buyer where buyer_id = #{buyerId}
+	</select>
+	
+	<!-- 改变商品数量后余额变动 -->
+	<update id="updateBalanceMoney">
+		update buyer set balance_money = #{balanceMoney} where buyer_id = #{buyerId}
+	</update>
+	
+	<!-- 查询所有买家信息(不分页)  -->
+	<select id="getAll" resultMap="buyerMap">
+		SELECT 
+			da.da_address,
+			users.status,
+			users.create_time,
+			sales.true_name salesName,
+			a.area_name region,
+			buyer.*  
+		FROM buyer 
+        INNER JOIN users ON users.id=buyer.buyer_id
+        LEFT JOIN sales ON buyer.sale_id=sales.id 
+		LEFT JOIN area a ON a.id = buyer.region_id
+		LEFT JOIN delivery_area da ON buyer.delivery_area_id = da.da_id
+        <include refid="filterCondition"></include>
+		ORDER BY users.create_time DESC
+	</select>
+	
+	<!-- 根据id查询单条数据 -->
+	<select id="getBuyerById" parameterType="Long" resultMap="buyerMap">
+	    SELECT delivery.da_address,F.*,buyer.* FROM buyer 
+		LEFT JOIN delivery_area delivery ON buyer.delivery_area_id=delivery.da_id
+		LEFT JOIN (SELECT A.id region_id,A.area_name region,A.parent_id city_id,B.area_name city,B.parent_id province_id,C.area_name province FROM area A 
+					INNER JOIN area B ON A.parent_id=B.id
+					INNER JOIN area C ON B.parent_id=C.id
+					WHERE A.`level`=3)F ON buyer.region_id=F.region_id
+		WHERE buyer.buyer_id=#{id}
+	</select>
+	
+	<!-- 查询今日入驻买家数量分区域 -->
+	<select id="getCountByThatDay" parameterType="Integer" resultMap="reportDayMap">
+		SELECT 
+			a.id regionId,
+			CASE WHEN  D.newBuyer IS NULL THEN 0 ELSE D.newBuyer END  newBuyer
+		FROM area a 
+		LEFT JOIN 	
+			(SELECT 
+					id regionId,
+					COUNT(id) newBuyer
+				FROM
+					(SELECT
+						a.id
+					FROM
+					buyer b LEFT JOIN area a ON b.region_id = a.id
+						LEFT JOIN users u ON b.buyer_id = u.id
+					WHERE
+						a.`level`=3 
+					AND
+						DATEDIFF(u.create_time,NOW())=-#{time}
+					)C GROUP BY id)D ON a.id = D.regionId
+		WHERE a.`level`=3
+	</select>
+	
+	<!-- 查询一周内订单项的前十位买家   -->
+	<select id="getTopTenWidelyBuyer" resultMap="countMap">
+	    SELECT buyer.buyer_name buyerName,A.order_number orderNum,C.type_name typeName,count(A.order_number) count FROM order_item A 
+	    LEFT JOIN order_info B ON A.order_id=B.order_id
+	    LEFT JOIN buyer ON A.buyer_id=buyer.buyer_id
+        LEFT JOIN buyer_type C ON buyer.buyer_type=C.id
+	    WHERE B.pay_status=2 AND B.pay_time BETWEEN date_add(date_format(now(), '%Y-%m-%d 00:00:00'), interval -6 day) AND date_format(now(), '%Y-%m-%d 23:59:59')
+	    GROUP BY A.order_number ORDER BY count DESC LIMIT 0,10;
+	</select>
+	
+	<!-- 查询今日入驻买家信息 -->
+	<select id="getBuyerByDate"  resultMap="buyerMap" >
+	    SELECT 
+			a.area_name region,
+			u.status,
+			u.create_time,
+			s.true_name salesName,
+			b.* 
+		FROM users u
+			LEFT JOIN buyer b ON u.id = b.buyer_id 
+			LEFT JOIN area a ON a.id = b.region_id
+			LEFT JOIN sales s ON b.sale_id=s.id 
+		WHERE
+			u.type=1 and u.status=3
+	    <trim>
+		   <if test="map.startTime !=null">
+		     and u.create_time <![CDATA[ >= #{map.startTime}]]>
+		   </if>
+		   <if test="map.endTime!=null">
+		     and u.create_time <![CDATA[ <= #{map.endTime}]]>
+		   </if>
+	    </trim>
+	    <if test="buyer !=null">
+	    	<if test="buyer.regionId !=null and buyer.regionId != ''">
+		     and b.region_id = #{buyer.regionId}
+	    	</if>
+	    </if>
+	    ORDER BY u.create_time
+	</select>
+	
+	<!-- 查询销售业绩 -->
+	<select id="getBuyerBySalesIdAndTime"  resultMap="buyerMap" >
+	    SELECT 
+			a.area_name region,
+			u.status,
+			u.create_time,
+			s.true_name salesName,
+			b.* 
+		FROM users u
+			LEFT JOIN buyer b ON u.id = b.buyer_id 
+			LEFT JOIN area a ON a.id = b.region_id
+			LEFT JOIN sales s ON b.sale_id=s.id 
+		WHERE
+			u.type=1 and u.status=3
+	   <if test="buyer.createTimeStart != null  and buyer.createTimeStart != '' and buyer.createTimeStop != null  and buyer.createTimeStop != ''">
+			AND	DATE_FORMAT(u.create_time,"%Y-%m-%d") between DATE_FORMAT(#{buyer.createTimeStart},"%Y-%m-%d") AND DATE_FORMAT(#{buyer.createTimeStop},"%Y-%m-%d")
+		</if>
+		<if test="buyer.createTime != null  and buyer.createTime != ''">
+			AND	DATE_FORMAT(u.create_time,"%Y-%m-%d") = DATE_FORMAT(#{buyer.createTime},"%Y-%m-%d") 
+		</if>
+	    <if test="buyer !=null">
+	    	<if test="buyer.regionId !=null and buyer.regionId != ''">
+		     and b.region_id = #{buyer.regionId}
+	    	</if>
+	    	<if test="buyer.saleId !=null and buyer.saleId != ''">
+		     and b.sale_id = #{buyer.saleId}
+	    	</if>
+	    </if>
+	    ORDER BY u.create_time desc
+	</select>
+	
+	<!-- 更新买家信息-->
+	<update id="updateBuyer" parameterType="com.netcai.admin.entity.Buyer" >
+	    update buyer 
+	    <set>
+	      <trim>
+			<if test=" buyerName != null and buyerName != '' ">
+		        buyer_name = #{buyerName},
+		    </if>
+		    <if test=" buyerAddress != null and buyerAddress != '' ">
+		        buyer_address = #{buyerAddress},
+		    </if>
+		    <if test=" lng != null and lng != '' ">
+				lng = #{lng},
+			</if>
+		    <if test=" lat != null and lat != '' ">
+		        lat = #{lat},
+		    </if>
+		    <if test=" provinceId != null">
+				province_id = #{provinceId},
+			</if>
+			<if test=" cityId != null">
+				city_id = #{cityId},
+			</if>
+			<if test=" regionId != null">
+				region_id = #{regionId},
+			</if>
+			<if test=" bossName != null and bossName != ''">
+				boss_name = #{bossName},
+			</if>
+			<if test=" remark != null and remark != ''">
+				remark = #{remark},
+			</if>
+			<if test=" saleId != null">
+				sale_id = #{saleId},
+			</if>
+			<if test=" buyerLevel != null ">
+				buyer_level = #{buyerLevel} ,
+			</if>
+			<if test=" buyerType != null">
+				buyer_type = #{buyerType} ,
+			</if>
+			<if test=" buyerLogo != null and buyerLogo != '' ">
+				buyer_logo = #{buyerLogo} ,
+			</if>
+			<if test=" buyerImages != null and buyerImages != '' ">
+				buyer_images = #{buyerImages} ,
+			</if>
+			<if test=" openTime != null">
+				open_time = #{openTime} ,
+			</if>
+			<if test=" endTime != null ">
+				end_time = #{endTime} ,
+			</if>
+			<if test=" deliveryTime != null ">
+				delivery_time = #{deliveryTime} ,
+			</if>
+			<if test=" deliveryAreaId != null ">
+				delivery_area_id = #{deliveryAreaId} ,
+			</if>
+	      </trim>
+	    </set>
+	    where buyer_id = #{buyerId}
+	</update>
+	
+	<!-- 新增买家信息- -->
+	<insert id="insertBuyer" parameterType="com.netcai.admin.entity.Buyer">
+	  insert into buyer
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+	    <if test=" buyerId != null ">
+	        buyer_id ,
+	    </if>
+		<if test=" buyerName != null and buyerName != '' ">
+	        buyer_name ,
+	    </if>
+	    <if test=" buyerAddress != null and buyerAddress != '' ">
+	        buyer_address ,
+	    </if>
+	    <if test=" lng != null and lng != '' ">
+			lng ,
+		</if>
+	    <if test=" lat != null and lat != '' ">
+	        lat ,
+	    </if>
+	    <if test=" provinceId != null">
+			province_id ,
+		</if>
+		<if test=" cityId != null">
+			city_id ,
+		</if>
+		<if test=" regionId != null">
+			region_id ,
+		</if> 
+		<if test=" bossName != null and bossName != '' ">
+			boss_name ,
+		</if>
+		<if test=" bossTel != null and bossTel != '' ">
+			boss_tel ,
+		</if>
+		<if test=" balanceMoney != null">
+			balance_money ,
+		</if>
+		<if test=" remark != null and remark != '' ">
+			remark ,
+		</if>
+		<if test=" saleId != null">
+			sale_id ,
+		</if>
+		<if test=" buyerLevel != null ">
+			buyer_level ,
+		</if>
+		<if test=" buyerType != null">
+			buyer_type ,
+		</if>
+		<if test=" buyerLogo != null and buyerLogo != '' ">
+			buyer_logo ,
+		</if>
+		<if test=" buyerImages != null and buyerImages != '' ">
+			buyer_images ,
+		</if>
+		<if test=" openTime != null">
+			open_time ,
+		</if>
+		<if test=" endTime != null ">
+			end_time ,
+		</if>
+		<if test=" deliveryTime != null ">
+			delivery_time ,
+		</if>
+		<if test=" deliveryAreaId != null ">
+			delivery_area_id ,
+		</if>
+	  </trim>
+	  <trim prefix="values (" suffix=")" suffixOverrides=",">
+	    <if test=" buyerId != null ">
+	        #{buyerId},
+	    </if>
+		<if test=" buyerName != null and buyerName != '' ">
+	        #{buyerName},
+	    </if>
+	    <if test=" buyerAddress != null and buyerAddress != '' ">
+	        #{buyerAddress},
+	    </if>
+	    <if test=" lng != null and lng != '' ">
+			#{lng},
+		</if>
+	    <if test=" lat != null and lat != '' ">
+	        #{lat},
+	    </if>
+	    <if test=" provinceId != null">
+		   #{provinceId},
+		</if>
+		<if test=" cityId != null">
+			#{cityId},
+		</if>
+		<if test=" regionId != null">
+			#{regionId},
+		</if>
+		<if test=" bossName != null and bossName != '' ">
+			#{bossName},
+		</if>
+		<if test=" bossTel != null and bossTel != '' ">
+			#{bossTel},
+		</if>
+		<if test=" balanceMoney != null">
+			#{balanceMoney},
+		</if>
+		<if test=" remark != null and remark != '' ">
+		    #{remark},
+		</if>
+		<if test=" saleId != null">
+			#{saleId},
+		</if>
+		<if test=" buyerLevel != null ">
+			#{buyerLevel} ,
+		</if>
+		<if test=" buyerType != null">
+			#{buyerType} ,
+		</if>
+		<if test=" buyerLogo != null and buyerLogo != '' ">
+			#{buyerLogo} ,
+		</if>
+		<if test=" buyerImages != null and buyerImages != '' ">
+			#{buyerImages} ,
+		</if>
+		<if test=" openTime != null">
+			#{openTime} ,
+		</if>
+		<if test=" endTime != null ">
+			#{endTime} ,
+		</if>
+		<if test=" deliveryTime != null ">
+			#{deliveryTime} ,
+		</if>
+		<if test=" deliveryAreaId != null ">
+			#{deliveryAreaId} ,
+		</if>
+	  </trim>
+	</insert>
+
+	<!-- 更新买家类别  5天内下单情况-->
+	<update id="updateBuyerLevel">
+	    update buyer b 
+		inner join 
+		(select b.buyer_id,count(distinct(date_format(o.best_time,'%Y-%m-%d'))) as count
+		from order_info o
+		inner join buyer b on o.buyer_id=b.buyer_id
+		inner join users u on u.id=b.buyer_id
+		where o.trade_status!=2 and o.pay_status!=1  
+		and  date_format(o.best_time,'%Y-%m-%d')>date_sub(date_format(now(),'%Y-%m-%d'), interval 5 day) 
+		and date_format(o.best_time,'%Y-%m-%d')<![CDATA[<=]]>date_format(now(),'%Y-%m-%d')
+		group by b.buyer_id 
+		having count=#{buyerLevel}
+		) f on b.buyer_id=f.buyer_id
+		set b.buyer_level=#{buyerLevel} 
+	</update>
+	
+	<!-- 更新买家类别为0  前5点没有下单-->
+	<update id="updateBuyerLevel0">
+	   update buyer b
+	   inner join users u on u.id=b.buyer_id
+	   set b.buyer_level=0 where u.status=3 
+	   and not exists(select 1 from order_info o where o.buyer_id=b.buyer_id and o.trade_status!=2 and o.pay_status!=1 
+	   and date_format(o.best_time,'%Y-%m-%d')>date_sub(date_format(now(),'%Y-%m-%d'), interval 5 day) 
+	   and date_format(o.best_time,'%Y-%m-%d')<![CDATA[<=]]>date_format(now(),'%Y-%m-%d'))
+	</update>
+	
+	<!-- 改变余额 -->
+	<update id="updateBuyerBalance">
+		update buyer set balance_money = #{balanceMoney} where buyer_id = #{buyerId}
+	</update>
+</mapper>

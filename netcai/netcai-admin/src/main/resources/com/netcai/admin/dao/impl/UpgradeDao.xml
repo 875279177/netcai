@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.UpgradeDao">
+
+	<resultMap type="com.netcai.admin.entity.Upgrade" id="upgradeMap">
+		<result column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="url" property="url" />
+		<result column="tips" property="tips" />
+		<result column="version" property="version" />
+		<result column="type" property="type" />
+		<result column="remarks" property="remarks" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+
+	<!-- 分页查询账单配置 -->
+	<select id="getUpgrade" resultMap="upgradeMap">
+		select * from upgrade where name=#{name} and type=#{type}
+	</select>
+
+</mapper>

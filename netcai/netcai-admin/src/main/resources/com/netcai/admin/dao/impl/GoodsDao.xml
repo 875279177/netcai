@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商品xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.GoodsDao">
+
+	<resultMap type="com.netcai.admin.entity.Goods" id="goodsResult">
+		<result column="goods_id" property="goodsId" />
+		<result column="goods_name" property="goodsName" />
+		<result column="goods_as" property="goodsAs" />
+		<result column="goods_label" property="goodsLabel" />
+		<result column="goods_brand" property="goodsBrand" />
+		<result column="goods_desc" property="goodsDesc" />
+		<result column="goods_seq" property="goodsSeq" />
+		<result column="goods_status" property="goodsStatus" />
+		<result column="goods_remark" property="goodsRemark" />
+		<result column="create_time" property="createTime" />
+		<!-- 商品分类 -->
+		<association property="category" javaType="com.netcai.admin.entity.Category">
+			<result column="category_id" property="categoryId" />
+			<result column="category_code" property="categoryCode" />
+			<result column="category_name" property="categoryName" />
+			<result column="parent_id" property="parentId" />
+			<result column="category_level" property="categoryLevel" />
+			<result column="category_seq" property="categorySeq" />
+			<result column="is_end" property="isEnd" />
+			<result column="category_status" property="categoryStatus" />
+        </association>
+		<!-- 商品图片集合 -->
+		<collection property="pictureList" ofType="com.netcai.admin.entity.GoodsPicture">
+			<result column="pic_id" property="picId" />
+			<result column="pic_url" property="picUrl" />
+			<result column="pic_seq" property="picSeq" />
+			<result column="is_main" property="isMain" />
+        </collection>
+        <!-- 商品规格集合 -->
+        <collection property="formatList" ofType="com.netcai.admin.entity.GoodsFormat">
+			<result column="format_id" property="formatId" />
+			<result column="goods_id" property="goodsId" />
+			<result column="unit_id" property="unitId" />
+			<result column="format_name" property="formatName" />
+			<result column="format_price" property="formatPrice" />
+			<result column="format_num" property="formatNum" />
+			<result column="format_seq" property="formatSeq" />
+			<result column="format_status" property="formatStatus" />
+        </collection>
+        <!-- 商品加工方式集合 -->
+        <collection property="methodList" ofType="com.netcai.admin.entity.GoodsMethod">
+			<result column="method_id" property="methodId" />
+        </collection>
+	</resultMap>
+	
+	<resultMap type="Map" id="goodsMapResult">
+		<result column="goods_id" property="goodsId" />
+		<result column="goods_name" property="goodsName" />
+	</resultMap>
+	
+	<!-- 选择商品返回集合 -->
+	<resultMap type="com.netcai.admin.vo.GoodsVo" id="goodsVoResult">
+	    <result column="seller_name" property="sellerName" />
+		<result column="goods_id" property="goodsId" />
+		<result column="goods_name" property="goodsName" />
+		<result column="format_id" property="formatId" />
+		<result column="format_name" property="formatName" />
+		<result column="format_price" property="formatPrice" />
+		<result column="unit_name" property="unitName" />
+	</resultMap>
+
+	<!-- 商品列表-->
+	<resultMap type="com.netcai.admin.vo.GoodsListVo" id="goodsListResult">
+		<result column="goods_id" property="goodsId" />
+		<result column="category_id" property="categoryId" />
+		<result column="category_code" property="categoryCode" />
+		<result column="category_name" property="categoryName" />
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_name" property="sellerName" />
+		<result column="seller_account" property="sellerAccount" />
+		<result column="goods_name" property="goodsName" />
+		<result column="goods_as" property="goodsAs" />
+		<result column="goods_label" property="goodsLabel" />
+		<result column="goods_brand" property="goodsBrand" />
+		<result column="goods_seq" property="goodsSeq" />
+		<result column="goods_status" property="goodsStatus" />
+		<result column="create_time" property="createTime" />
+		
+		<!-- 商品规格集合 -->
+        <collection property="formatList" ofType="com.netcai.admin.entity.GoodsFormat">
+			<result column="format_id" property="formatId" />
+			<result column="goods_id" property="goodsId" />
+			<result column="unit_id" property="unitId" />
+			<result column="format_name" property="formatName" />
+			<result column="format_price" property="formatPrice" />
+			<result column="format_num" property="formatNum" />
+			<result column="format_seq" property="formatSeq" />
+			<result column="format_status" property="formatStatus" />
+			<result column="unit_name" property="unitName" />
+        </collection>
+	</resultMap>
+	
+	<!-- 分页查询商品信息 -->
+	<select id="getAllGoods" parameterType="com.netcai.admin.vo.GoodsListVo" resultMap="goodsListResult">
+		select g.goods_id,c.category_id,c.category_code,c.category_name,s.seller_id,s.seller_name,s.seller_account,
+		g.goods_name,g.goods_as,g.goods_label,g.goods_brand,g.goods_seq,g.goods_status,g.create_time 
+		from goods g 
+		inner join category c on c.category_id=g.category_id 
+		inner join seller s on s.seller_id=g.user_id 
+		where 1=1
+		<if test=" goods.sellerId !=null">
+			and s.seller_id = #{goods.sellerId}
+		</if>
+		<if test=" goods.sellerName !=null">
+			and s.seller_name like concat('%',#{goods.sellerName},'%')  
+		</if>
+		<if test=" goods.categoryName !=null">
+			and c.category_name like concat('%',#{goods.categoryName},'%')  
+		</if>
+		<if test=" goods.searchName !=null">
+			and (g.goods_name like concat('%',#{goods.searchName},'%') 
+			or g.goods_as like concat('%',#{goods.searchName},'%') 
+			or g.goods_label like concat('%',#{goods.searchName},'%')
+			or g.goods_brand like concat('%',#{goods.searchName},'%'))
+		</if>
+		<if test=" goods.searchStatus != null">
+			and g.goods_status =  #{goods.searchStatus} 
+		</if>
+		<if test=" goods.searchStatus == null or goods.searchStatus == ''">
+			and g.goods_status !=-2
+		</if>
+		order by s.seller_id desc,g.goods_seq limit #{offset},#{pageSize} 
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" parameterType="com.netcai.admin.vo.GoodsListVo" resultType="int">
+		select count(1) from goods g
+		inner join category c on c.category_id=g.category_id 
+		inner join seller s on s.seller_id=g.user_id 
+		where 1=1
+		<if test=" goods.sellerId !=null">
+			and s.seller_id = #{goods.sellerId}
+		</if>
+		<if test=" goods.sellerName !=null">
+			and s.seller_name like concat('%',#{goods.sellerName},'%')  
+		</if>
+		<if test=" goods.categoryName !=null">
+			and c.category_name like concat('%',#{goods.categoryName},'%')  
+		</if>
+		<if test=" goods.searchName !=null">
+			and (g.goods_name like concat('%',#{goods.searchName},'%') 
+			or g.goods_as like concat('%',#{goods.searchName},'%') 
+			or g.goods_label like concat('%',#{goods.searchName},'%')
+			or g.goods_brand like concat('%',#{goods.searchName},'%'))
+		</if>
+		<if test=" goods.searchStatus != null">
+			and g.goods_status =  #{goods.searchStatus} 
+		</if>
+		<if test=" goods.searchStatus == null or goods.searchStatus == ''">
+			and g.goods_status !=-2
+		</if>
+	</select>
+	
+	
+	<!-- 分页查询商品信息 -->
+	<select id="getAllGoodsByCommon" parameterType="com.netcai.admin.vo.GoodsListVo" resultMap="goodsListResult">
+		select g.goods_id,c.category_id,c.category_code,c.category_name,s.seller_id,s.seller_name,s.seller_account,
+		gf.format_name,
+		gf.format_num,
+		gf.format_price,
+		u.unit_name,
+		g.goods_name,g.goods_as,g.goods_label,g.goods_brand,g.goods_seq,g.goods_status,g.create_time 
+		from goods g 
+		inner join category c on c.category_id=g.category_id 
+		inner join seller s on s.seller_id=g.user_id 
+		INNER JOIN users ur ON ur.id = s.seller_id
+		LEFT JOIN area a ON FIND_IN_SET(a.id,s.regions)
+		INNER JOIN goods_format gf ON gf.goods_id = g.goods_id
+		LEFT JOIN unit u ON gf.unit_id = u.unit_id
+		where 1=1
+		<if test=" goods.sellerId !=null">
+			and s.seller_id = #{goods.sellerId}
+		</if>
+		<if test=" goods.areaId !=null and goods.areaId != ''">
+			and #{goods.areaId} in (s.regions)
+		</if>
+		<if test=" goods.goodIds !=null and goods.goodIds != ''">
+			and g.goods_id not in (${goods.goodIds})
+		</if>
+		<if test=" goods.sellerName !=null">
+			and s.seller_name like concat('%',#{goods.sellerName},'%')  
+		</if>
+		<if test=" goods.categoryName !=null">
+			and c.category_name like concat('%',#{goods.categoryName},'%')  
+		</if>
+		<if test=" goods.searchName !=null">
+			and (g.goods_name like concat('%',#{goods.searchName},'%') 
+			or g.goods_as like concat('%',#{goods.searchName},'%') 
+			or g.goods_label like concat('%',#{goods.searchName},'%')
+			or g.goods_brand like concat('%',#{goods.searchName},'%'))
+		</if>
+		<if test=" goods.searchStatus != null">
+			and g.goods_status =  #{goods.searchStatus} 
+		</if>
+		<if test=" goods.formatStatus != null">
+			and gf.format_status =  #{goods.formatStatus} 
+		</if>
+		<if test=" goods.sellerStatus != null">
+			and ur.status =  #{goods.sellerStatus} 
+		</if>
+		order by s.seller_account asc,g.create_time desc,c.category_name asc,g.goods_name asc limit #{offset},#{pageSize} 
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCountByCommon" parameterType="com.netcai.admin.vo.GoodsListVo" resultType="int">
+		select count(1) from goods g
+		inner join category c on c.category_id=g.category_id 
+		inner join seller s on s.seller_id=g.user_id 
+		INNER JOIN users ur ON ur.id = s.seller_id
+		LEFT JOIN area a ON FIND_IN_SET(a.id,s.regions)
+		INNER JOIN goods_format gf ON gf.goods_id = g.goods_id
+		LEFT JOIN unit u ON gf.unit_id = u.unit_id
+		where 1=1
+		<if test=" goods.sellerId !=null">
+			and s.seller_id = #{goods.sellerId}
+		</if>
+		<if test=" goods.areaId !=null and goods.areaId != ''">
+			and #{goods.areaId} in (s.regions)
+		</if>
+		<if test=" goods.goodIds !=null and goods.goodIds != ''">
+			and g.goods_id not in (${goods.goodIds})
+		</if>
+		<if test=" goods.sellerName !=null">
+			and s.seller_name like concat('%',#{goods.sellerName},'%')  
+		</if>
+		<if test=" goods.categoryName !=null">
+			and c.category_name like concat('%',#{goods.categoryName},'%')  
+		</if>
+		<if test=" goods.searchName !=null">
+			and (g.goods_name like concat('%',#{goods.searchName},'%') 
+			or g.goods_as like concat('%',#{goods.searchName},'%') 
+			or g.goods_label like concat('%',#{goods.searchName},'%')
+			or g.goods_brand like concat('%',#{goods.searchName},'%'))
+		</if>
+		<if test=" goods.searchStatus != null">
+			and g.goods_status =  #{goods.searchStatus} 
+		</if>
+		<if test=" goods.formatStatus != null">
+			and gf.format_status =  #{goods.formatStatus} 
+		</if>
+		<if test=" goods.sellerStatus != null">
+			and ur.status =  #{goods.sellerStatus} 
+		</if>
+	</select>
+	
+	<!-- 新增商品信息 -->
+	<insert id="insertGoods" parameterType="com.netcai.admin.entity.Goods" useGeneratedKeys="true" keyProperty="goodsId">
+		insert into goods
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test=" category.categoryId !=null">
+				category_id,
+			</if>
+			<if test=" goodsName != null">
+				goods_name,
+			</if>
+			<if test=" goodsAs != null">
+				goods_as,
+			</if>
+			<if test="goodsLabel != null">
+				goods_label,
+			</if>
+			<if test=" goodsBrand != null">
+				goods_brand,
+			</if>
+			<if test=" goodsDesc != null">
+				goods_desc,
+			</if>
+			<if test=" userId != null">
+				user_id,
+			</if>
+			<if test=" goodsSeq != null">
+				goods_seq,
+			</if>
+			<if test=" goodsStatus != null">
+				goods_status,
+			</if>
+			<if test=" goodsRemark != null">
+				goods_remark,
+			</if>
+			create_time,
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test=" category.categoryId !=null">
+				#{category.categoryId},
+			</if>
+			<if test=" goodsName != null">
+				#{goodsName},
+			</if>
+			<if test=" goodsAs != null">
+				#{goodsAs},
+			</if>
+			<if test="goodsLabel != null">
+				#{goodsLabel},
+			</if>
+			<if test=" goodsBrand != null">
+				#{goodsBrand},
+			</if>
+			<if test=" goodsDesc != null">
+				#{goodsDesc},
+			</if>
+			<if test=" userId != null">
+				#{userId},
+			</if>
+			<if test=" goodsSeq != null">
+				#{goodsSeq},
+			</if>
+			<if test=" goodsStatus != null">
+				#{goodsStatus},
+			</if>
+			<if test=" goodsRemark != null">
+				#{goodsRemark},
+			</if>
+			now(),
+		</trim>
+	</insert>
+
+	<!-- 更新商品信息 -->
+	<update id="updateGoods" parameterType="com.netcai.admin.entity.Goods">
+		update goods
+		<set>
+			<trim suffixOverrides=",">
+			   	<if test=" category.categoryId !=null">
+					category_id = #{category.categoryId},
+				</if>
+				<if test=" goodsName != null">
+					goods_name = #{goodsName},
+				</if>
+				<if test=" goodsAs != null">
+					goods_as = #{goodsAs},
+				</if>
+				<if test=" goodsLabel != null">
+					goods_label = #{goodsLabel},
+				</if>
+				<if test=" goodsBrand != null">
+					goods_brand = #{goodsBrand},
+				</if>
+				<if test=" goodsDesc != null">
+					goods_desc = #{goodsDesc},
+				</if>
+				<if test=" goodsSeq != null">
+					goods_seq = #{goodsSeq},
+				</if>
+				<if test=" goodsStatus != null">
+					goods_status = #{goodsStatus},
+				</if>
+				<if test=" goodsRemark != null">
+					goods_remark = #{goodsRemark},
+				</if>
+			</trim>
+		</set>
+		where goods_id = #{goodsId}
+	</update>
+	
+	<!-- 根据id查找商品信息-->
+	<select id="getGoodsById" parameterType="int" resultMap="goodsResult">
+		select * from goods g 
+		left join category c on c.category_id = g.category_id
+		left join goods_picture gp on g.goods_id=gp.goods_id 
+		left join goods_format gf on g.goods_id=gf.goods_id 
+		left join goods_method gm on g.goods_id=gm.goods_id 
+		where g.goods_id = #{goodsId}
+		order by gp.pic_seq
+	</select>
+	
+	<!-- 搜索商品信息 -->
+	<select id="searchGoods" parameterType="com.netcai.admin.vo.GoodsVo" resultMap="goodsVoResult">
+		select g.goods_id,g.goods_name,gf.format_id,gf.format_name,gf.format_price,u.unit_name,s.seller_name 
+		from goods_format gf
+		inner join goods g on g.goods_id=gf.goods_id
+		inner join unit u on u.unit_id=gf.unit_id
+		inner join seller s on s.seller_id = g.user_id
+		where g.goods_status=1 and gf.format_status=1 and g.user_id in (${goodsVo.userIds})
+		<if test=" goodsVo.activityId !=''">
+			and not exists(select 1 from activity_goods ag where ag.goods_formart_id=gf.format_id and gf.goods_id=ag.goods_id and ag.activity_id=#{goodsVo.activityId})  
+		</if>
+		<if test=" goodsVo.goodsName !=''">
+			and g.goods_name like concat('%',#{goodsVo.goodsName},'%')  
+		</if>
+		<if test=" goodsVo.formatName !=''">
+			and gf.format_name like concat('%',#{goodsVo.formatName},'%')
+		</if>
+	</select>
+	
+	<!-- 查询商品最大的顺序号 -->
+	<select id="getMaxGoodsSeq" resultType="int">
+		select ifnull(max(goods_seq),0) as goods_seq from goods where user_id = #{userId}
+	</select>
+	
+	<!-- 根据卖家查询商品信息 -->
+	<select id="selectGoodsByUserId" parameterType="Long" resultMap="goodsMapResult">
+		select goods_id,goods_name from goods where user_id = #{userId}
+	</select>
+	
+    <!-- 上架/下架商品 -->
+	<update id="updateGoodsStatus">
+		update goods set goods_status = #{goodsStatus} where goods_id in (${goodsIds})
+	</update>
+	
+	<!-- 复制商品信息 -->
+	<insert id="copyGoods" parameterType="com.netcai.admin.entity.Goods" useGeneratedKeys="true" keyProperty="goodsId">
+		insert into goods(category_id,goods_name,goods_as,goods_label,goods_brand,goods_desc,user_id,goods_seq,goods_status,goods_remark,create_time) 
+		(select category_id,goods_name,goods_as,goods_label,goods_brand,goods_desc,#{userId},goods_seq,-1,goods_remark,now() from goods where goods_id=#{goodsId})
+	</insert>
+	
+	<!-- 删除商品判断-->
+	<select id="checkGoods" resultType="java.lang.Integer">
+		select 1 from goods g 
+		where g.goods_id=#{goodsId} 
+		and 
+		(exists (select 1 from goods_cart gc,goods_format gf where gf.format_id=gc.format_id and g.goods_id=gf.goods_id) or
+		exists (select 1 from order_item oi, goods_format gf where oi.format_id=gf.format_id and g.goods_id=gf.goods_id) or
+		exists (select 1 from activity_goods ag where ag.goods_id=g.goods_id)
+		)
+	</select>
+	
+	<!-- 删除商品-->
+	<delete id="deleteGoods">
+		delete from goods_format where goods_id = #{goodsId}; 
+		delete from goods_method where goods_id = #{goodsId};  
+		delete from goods where goods_id = #{goodsId};
+	</delete>
+	
+	<!-- 批量调整商品的顺序号 -->
+	<update id="batchUpdateGoodsSeq"  parameterType="com.netcai.admin.entity.GoodsSeq">  
+        <foreach collection="goodsSeqList" item="item" index="index" separator=";">  
+            update goods set goods_seq=${item.goodsSeq}  where goods_id = ${item.goodsId}  
+        </foreach>  
+    </update>  
+</mapper>

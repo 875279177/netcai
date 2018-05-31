@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/mvc 
+        http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+
+	<!-- 开启注解 -->
+	<mvc:annotation-driven />
+	<!-- 扫描带注解的包 -->
+	<context:component-scan base-package="com.netcai.buyer.controller" />
+	
+	<!-- 扫描带注解的包 AOP-->
+	<context:component-scan base-package="com.netcai.buyer.aspect" />
+	
+ 	<mvc:default-servlet-handler/>
+	
+	<!-- aop -->
+	<aop:aspectj-autoproxy proxy-target-class="true"/>
+	
+	<!-- 视图解析器 -->
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+			<property name="prefix" value="/WEB-INF/jsp/"></property>
+			<property name="suffix" value=".jsp"></property>
+	</bean>
+	
+	<!-- 定义拦截器 -->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<mvc:exclude-mapping path="/buyer/login" />
+			<mvc:exclude-mapping path="/buyer/register/first/step" />
+		    <mvc:exclude-mapping path="/buyer/register/second/step" />
+			<mvc:exclude-mapping path="/buyer/sms" />
+			<mvc:exclude-mapping path="/buyer/protocol" />
+			<mvc:exclude-mapping path="/buyer/search" />
+			<mvc:exclude-mapping path="/buyer/type/list" />
+			<mvc:exclude-mapping path="/buyer/goodsCart/list" />
+			<mvc:exclude-mapping path="/buyer/goodsCart/commitCart" />
+			<mvc:exclude-mapping path="/buyer/goodsCart/updateCart" />
+			<mvc:exclude-mapping path="/buyer/goodsCart/insertCart" />
+			<mvc:exclude-mapping path="/buyer/goodsCart/deleteCart" />
+			<mvc:exclude-mapping path="/buyer/goodsCart/showCart" />
+			<mvc:exclude-mapping path="/buyer/order/list" />
+			<mvc:exclude-mapping path="/buyer/order/showItem" />
+			<mvc:exclude-mapping path="/buyer/order/getCouponReceives" />
+			<mvc:exclude-mapping path="/buyer/add/order" />
+			<mvc:exclude-mapping path="/buyer/order/item/delete" />
+			<mvc:exclude-mapping path="/buyer/order/info/delete" />
+			<mvc:exclude-mapping path="/buyer/get/seller" />
+			<mvc:exclude-mapping path="/buyer/find/password/one" />
+			<mvc:exclude-mapping path="/buyer/find/password/two" />
+			<mvc:exclude-mapping path="/buyer/alipay/invoke" />
+			<mvc:exclude-mapping path="/buyer/alipay/notify" />
+			<mvc:exclude-mapping path="/buyer/weixin/invoke" />
+			<mvc:exclude-mapping path="/buyer/weixin/notify" />
+			<mvc:exclude-mapping path="/buyer/coupon/list" />
+			<mvc:exclude-mapping path="/buyer/coupon/judge" />
+			<mvc:exclude-mapping path="/buyer/coupon/add" />
+			<mvc:exclude-mapping path="/buyer/order/getTradeTime" />
+			<mvc:exclude-mapping path="/buyer/modifySales" />
+			<mvc:exclude-mapping path="/buyer/notice/index" />
+			<mvc:exclude-mapping path="/buyer/notice/update" />
+			<mvc:exclude-mapping path="/buyer/orderInfo/offlinePayment" />
+			<mvc:exclude-mapping path="/buyer/orderInfo/isOfflinePower" />
+			<mvc:exclude-mapping path="/buyer/order/sendingPrice" />
+			<mvc:exclude-mapping path="/buyer/myIndex" />
+			<mvc:exclude-mapping path="/buyer/groups/createOrder" />
+			<mvc:exclude-mapping path="/404" />
+			<mvc:exclude-mapping path="/500" />
+			<bean class="com.netcai.buyer.interceptor.GlobalInterceptor"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	
+	
+	<!-- 避免IE执行AJAX时,返回JSON出现下载文件 -->
+	<bean id="mappingJacksonHttpMessageConverter"
+		class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+		<property name="supportedMediaTypes">
+			<list>
+				<value>text/html;charset=UTF-8</value>
+				<value>application/json;charset=UTF-8</value>
+			</list>
+		</property>
+	</bean>
+
+	<!-- 启动Spring MVC的注解功能，完成请求和注解POJO的映射 -->
+	<bean
+		class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<ref bean="mappingJacksonHttpMessageConverter" />
+			</list>
+		</property>
+	</bean>
+	
+	<!-- 全局异常处理.-->
+	<bean id="exceptionHandler" class="com.netcai.buyer.exception.ExceptionHandler"/> 
+
+	<!-- 处理文件上传 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding" value="utf-8" />
+		<property name="maxUploadSize" value="10240000" />
+	</bean>
+
+</beans>  

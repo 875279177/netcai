@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.GroupsDao">
+
+	<resultMap type="com.netcai.admin.vo.GroupsVo" id="groupsMap">
+		<result property="id" column="group_id" />
+		<result property="groupNumber" column="group_no" />
+		<result property="title" column="group_title" />
+		<result property="logo" column="group_logo" />
+		<result property="regionIds" column="group_area" />
+		<result property="beginTime" column="begin_time" />
+		<result property="endTime" column="end_time" />
+		<result property="maxNumber" column="max_num" />
+		<result property="minGroupsAmount" column="buyer_amt" />
+		<result property="groupsAmount" column="min_amt" />
+		<result property="remarks" column="remarks" />
+		<result property="status" column="group_status" />
+		<result property="createUserId" column="create_user_id" />
+		<result property="createTime" column="create_time" />
+		<result property="goodsId" column="goods_id" />
+		<result property="goodsName" column="goods_name" />
+		<result property="formatId" column="format_id" />
+		<result property="formatName" column="format_name" />
+		<result property="groupPrice" column="group_price" />
+		<result property="formatPrice" column="format_price" />
+		<result property="count" column="group_num" />
+	</resultMap>
+	
+	<sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and ">
+	    <if test=" groups.groupNumber != null and groups.groupNumber != '' ">
+	      and group_no = #{groups.groupNumber}
+	    </if>
+	    <if test=" groups.title != null and groups.title != '' ">
+	      and group_title like '%${groups.title}%'
+	    </if>
+	    <if test=" groups.status != null ">
+	      and group_status = #{groups.status}
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 分页查询团购活动信息 -->
+	<select id="getAll" resultMap="groupsMap">
+		select * from groups 
+        <include refid="filterCondition"></include>
+		order by create_time desc limit #{start},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getTotalCount" resultType="int">
+		select count(1) from groups 
+		<include refid="filterCondition"></include>
+	</select>
+	
+	<!-- 根据id查询-->
+	<select id="getById" parameterType="Long" resultMap="groupsMap">
+		select * from groups where group_id=#{id}
+	</select>
+	
+	<!-- 新增  -->
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="group_id" parameterType="com.netcai.admin.vo.GroupsVo">
+	    insert into groups
+	    <trim prefix="(" suffix=")" suffixOverrides=",">
+		    <if test=" groupNumber != null and groupNumber != '' ">
+				group_no,
+			</if>
+		    <if test=" title != null and title != ''">
+				group_title,
+			</if>
+			<if test=" logo != null">
+				group_logo,
+			</if>
+			<if test=" regionIds != null and regionIds != '' ">
+				group_area,
+			</if>
+			<if test=" beginTime != null">
+				begin_time,
+			</if>
+			<if test=" endTime != null">
+				end_time,
+			</if>
+			<if test=" maxNumber != null">
+				max_num,
+			</if>
+			<if test=" minGroupsAmount != null">
+				buyer_amt,
+			</if>
+			<if test=" groupsAmount != null">
+				min_amt,
+			</if>
+			<if test=" remarks != null and remarks != ''">
+				remarks,
+			</if>
+			<if test=" status != null">
+				group_status,
+			</if>
+			<if test=" createUserId != null">
+				create_user_id,
+			</if>
+			<if test=" createTime != null">
+				create_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+		    <if test=" groupNumber != null and groupNumber != '' ">
+				#{groupNumber},
+			</if>
+			<if test=" title != null and title != '' ">
+				#{title},
+			</if>
+			<if test=" logo != null">
+				#{logo},
+			</if>
+			<if test=" regionIds != null and regionIds != ''">
+				#{regionIds},
+			</if>
+			<if test=" beginTime != null">
+				#{beginTime},
+			</if>
+			<if test=" endTime != null">
+				#{endTime},
+			</if>
+			<if test=" maxNumber != null">
+				#{maxNumber},
+			</if>
+			<if test=" minGroupsAmount != null">
+				#{minGroupsAmount},
+			</if>
+			<if test=" groupsAmount != null">
+				#{groupsAmount},
+			</if>
+			<if test=" remarks != null and remarks != '' ">
+				#{remarks},
+			</if>
+			<if test=" status != null">
+				#{status},
+			</if>
+			<if test=" createUserId != null">
+				#{createUserId},
+			</if>
+			<if test=" createTime != null">
+				#{createTime},
+			</if>
+		</trim>
+	</insert>
+	
+	<!-- 批量修改状态 -->
+    <update id="updateBatch" parameterType="java.util.List">
+	    <foreach collection="list" item="item">
+	  		update groups set group_status = #{item.status} where group_id = #{item.id};
+	  		<if test="item.gbStatus != null and item.gbStatus != 1">
+	  			update groups_buyer set gb_status = #{item.gbStatus} where group_id = #{item.id};
+	  		</if>
+	    </foreach>
+    </update>
+	
+	<!-- 更新团购活动信息-->
+	<update id="update" parameterType="com.netcai.admin.vo.GroupsVo" >
+	    update groups 
+	    <set>
+	        <trim>
+				<if test=" title != null and title != '' ">
+					group_title = #{title},
+				</if>
+				<if test=" logo != null and logo != ''">
+					group_logo = #{logo},
+				</if>
+				<if test=" regionIds != null and regionIds != ''">
+					group_area = #{regionIds},
+				</if>
+				<if test=" beginTime != null">
+					begin_time = #{beginTime},
+				</if>
+				<if test=" endTime != null">
+					end_time = #{endTime},
+				</if>
+				<if test=" maxNumber != null">
+					max_num = #{maxNumber},
+				</if>
+				<if test=" minGroupsAmount != null">
+					buyer_amt = #{minGroupsAmount},
+				</if>
+				<if test=" groupsAmount != null">
+					min_amt = #{groupsAmount},
+				</if>
+				<if test=" remarks != null and remarks != '' ">
+					remarks = #{remarks},
+				</if>
+				<if test=" createUserId != null">
+					create_user_id = #{createUserId},
+				</if>
+		      </trim>
+	      </set>
+	      where group_id=#{id}
+	</update>
+	
+	<!-- 更新状态 -->
+	<update id="updateStatus" >
+	    update groups set group_status=#{status} where group_id=#{id}
+	</update>
+</mapper>

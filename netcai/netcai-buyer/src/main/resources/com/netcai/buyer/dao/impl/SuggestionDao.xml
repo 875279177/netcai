@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商家信息 -->
+<mapper namespace="com.netcai.buyer.dao.SuggestionDao">
+
+	<resultMap type="com.netcai.buyer.entity.Suggestion" id="suggestionMap">
+		<result column="id" property="id" />
+		<result column="suggestion_content" property="suggestionContent" />
+		<result column="suggestion_imgs" property="suggestionImgs" />
+		<result column="user_id" property="userId" />
+		<result column="create_time" property="createTime" />
+		<!-- 建议回复的集合 -->
+		<collection property="suggestionReplies" ofType="com.netcai.buyer.entity.SuggestionReply">
+		    <id column="sr_id" property="id"/>
+			<result column="suggestion_id" property="suggestionId" />
+			<result column="content" property="replyContent" />
+			<result column="sr_time" property="createTime" />
+		</collection>
+	</resultMap>
+	
+	<!-- 根据用户id查询用户建议以及建议回复 -->
+	<select id="selectAllByUserId" resultMap="suggestionMap" >
+	    select s.*,sr.id sr_id,sr.suggestion_id,sr.content,sr.create_time sr_time from suggestion s
+		left join suggestion_reply sr on s.id=sr.suggestion_id
+		where s.user_id = #{id}
+		ORDER BY s.create_time,sr.create_time DESC
+	</select>
+	
+	<!-- 添加 -->
+	<insert id="saveSuggestion" parameterType="com.netcai.buyer.entity.Suggestion">
+		 insert into suggestion(suggestion_content,suggestion_imgs,user_id,create_time) values(#{suggestionContent},#{suggestionImgs},#{userId},#{createTime})
+	</insert>
+</mapper>

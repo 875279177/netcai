@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 卖家的商品分类xml anthor chenlei -->
+<mapper namespace="com.netcai.buyer.dao.SellerCategoryDao">
+
+	<resultMap type="com.netcai.buyer.entity.SellerCategory" id="sellerCategoryResult">
+		<result column="sc_id" property="scId" />
+		<result column="user_id" property="userId" />
+		<result column="category_id" property="categoryId" />
+		<result column="category_code" property="categoryCode" />
+		<result column="category_name" property="categoryName" />
+		<result column="category_level" property="categoryLevel" />
+		<result column="is_end" property="isEnd" />
+		<result column="sc_seq" property="scSeq" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<!-- 查询卖家的商品分类 -->
+	<select id="getSellerCategoryList" parameterType="com.netcai.buyer.entity.SellerCategory" resultMap="sellerCategoryResult">
+		select sc.sc_id,sc.user_id,sc.category_id,c.category_code,c.category_name,c.category_level,c.is_end,sc.sc_seq,sc.create_time 
+		from seller_category sc
+		inner join category c on sc.category_id = c.category_id
+		where 1=1
+		<if test=" userId !=null">
+			and sc.user_id = #{userId} 
+		</if>
+		<if test=" categoryLevel != null">
+			and c.category_level =  #{categoryLevel} 
+		</if>
+		<if test=" categoryId != null">
+			and c.parent_id =  #{categoryId}  
+		</if>
+		order by sc.sc_seq
+	</select>
+</mapper>

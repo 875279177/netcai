@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.RefundCauseDao">
+  <resultMap type="com.netcai.admin.entity.RefundCause" id="refundCauseMap">
+      <result column="cause_id" property="id"/>
+      <result column="cause_name" property="name"/>
+      <result column="type" property="type"/>
+  </resultMap>
+	
+  <!-- 查询全部 -->
+  <select id="getAll" resultMap="refundCauseMap">
+      select cause_name,cause_id,type from order_refund_cause 
+  </select>
+  
+  <!-- 根据多个id查询 -->
+  <select id="getByIds" resultMap="refundCauseMap">
+      select cause_name,cause_id from order_refund_cause where cause_id in
+      <foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+		 #{item}  
+	  </foreach> 
+  </select>
+   
+</mapper>

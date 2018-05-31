@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商家信息 -->
+<mapper namespace="com.netcai.admin.dao.SellerDao">
+
+	<resultMap type="com.netcai.admin.entity.Seller" id="sellerMap">
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_account" property="sellerAccount" />
+		<result column="seller_name" property="sellerName" />
+		<result column="seller_alias" property="sellerAlias" />
+		<result column="seller_logo" property="sellerLogo" />
+		<result column="seller_rank" property="sellerRank" />
+		<result column="seller_grade" property="sellerGrade" />
+		<result column="seller_address" property="sellerAddress" />
+		<result column="seller_keyword" property="sellerKeyword" />
+		<result column="seller_tel" property="sellerTel" />
+		<result column="balance_money" property="balanceMoney" />
+		<result column="seller_licence" property="sellerLicence" />
+		<result column="seller_type" property="sellerType" />
+		<result column="bill_money" property="billMoney" />
+		<result column="area_name" property="areaName" />
+		<result column="area_id" property="areaId" />
+		<result column="regions" property="regions" />
+        <!--   用户对象 -->
+        <association property="users" javaType="com.netcai.admin.entity.Users">
+     		<id column="uid" property="id"/>
+			<result column="true_name" property="trueName"/>
+			<result column="id" property="id"/>
+			<result column="type" property="type"/>
+			<result column="account" property="account"/>
+			<result column="status" property="status"/>
+			<result column="create_time" property="createTime"/>
+        </association>
+	</resultMap>
+	
+	<!-- 查询商家时返回对象   -->
+	<resultMap type="com.netcai.admin.vo.SellerVo" id="sellerVoMap">
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_name" property="sellerName" />
+		<result column="seller_tel" property="sellerTel" />
+	</resultMap>
+	
+	<!-- 统计商家每天营业额返回数据   -->
+	<resultMap type="Map" id="sellerAcountMap">
+		<result column="seller_id" property="sellerId" javaType="Long" />
+		<result column="amount" property="amount" javaType="BigDecimal"/>
+		<result column="payTime" property="payTime" javaType="Date"/>
+	</resultMap>
+	
+	<!-- 统计商家每天营业额返回数据   -->
+	<resultMap type="com.netcai.admin.vo.SellerAmountTodayVo" id="sellerAmountTodayMap">
+		<result column="seller_name" property="sellerName" />
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_account" property="account" />
+		<result column="order_num" property="orderNum" />
+		<result column="goods_amount" property="totayIncome" />
+		<result column="balance_money" property="balanceMoney" />
+		<result column="bill_money" property="withdrawalAmount" />
+		<result column="withdrawaled_amount" property="withdrawaledAmount" />
+		<result column="already_settled" property="alreadySettled" />
+		<result column="wait_settled" property="waitSettled" />
+		<result property="areaName" column="area_name" />
+	</resultMap>
+	
+	<!-- 查询的数据 -->
+  <sql id="SellerSelector">
+	select 
+		GROUP_CONCAT(a.area_name) area_name,
+		a.id area_id,
+		s.*,
+		u.status,
+		u.id,
+		u.true_name
+	from seller s 
+		LEFT JOIN users u ON s.seller_id = u.id 
+		LEFT JOIN area a ON FIND_IN_SET(a.id,s.regions)
+	</sql>
+	
+	<!-- 条件查询语句 -->
+  <sql id="SellerMapWhere">
+		<where>
+			AND u.type='2'
+			<if test="s.sellerName != null and s.sellerName != ''">
+				AND	s.seller_name like concat('%',LTrim(RTrim(#{s.sellerName})),'%')  
+			</if>
+			<if test="s.sellerAccount != null and s.sellerAccount != ''">
+				AND	s.seller_account like concat('%',LTrim(RTrim(#{s.sellerAccount})),'%') 
+			</if>
+			<if test="s.areaId != null and s.areaId != ''">
+				AND	a.id = #{s.areaId}
+			</if>
+			<if test="s.users != null">
+				<if test="s.users.status != null">
+					AND u.status = #{s.users.status}
+				</if>
+			</if>
+		</where>
+	</sql>
+	
+	<!-- 条件查询语句 -->
+    <sql id="queryCriteria">
+		<if test="seller.sellerName != null and seller.sellerName != ''">
+			AND	seller.seller_name like '%${seller.sellerName}%'  
+		</if>
+		<if test="seller.account != null and seller.account != ''">
+			AND	seller.seller_account = #{seller.account}  
+		</if>
+		<if test="seller.time != null ">
+			AND date_format(info.best_time,'%Y-%m-%d')=date_format(#{seller.time},'%Y-%m-%d')
+		</if>
+		<if test="seller.areaId != null">
+ 			AND  area.id = #{seller.areaId}
+		</if>
+	</sql>
+	
+	<!-- 分页 -->
+	<sql id="SellerListLimit">
+			limit #{pageNum},#{pageSize}
+	</sql>
+	
+	<!-- 排序-->
+	<sql id="SellerListOrderBy">
+			ORDER BY u.create_time DESC
+	</sql>
+	
+	 <!-- 查询所有   以及条件查询-->
+	  <select id="getSeller" parameterType="Seller" resultMap="sellerMap">
+	     	<include refid="SellerSelector" />
+			<include refid="SellerMapWhere" />
+			GROUP BY s.seller_id
+			<include refid="SellerListOrderBy" />
+			<include refid="SellerListLimit" />
+	  </select>
+	  
+	  <!-- 查询总数 -->
+  	<select id="getPageCount" parameterType="Seller" resultType="int">
+		select 
+			count(*) 
+		from seller s 
+			LEFT JOIN users u ON s.seller_id = u.id 
+			LEFT JOIN area a ON FIND_IN_SET(a.id,s.regions)
+			<include refid="SellerMapWhere" />
+	</select>
+	
+	<!-- 通过Id查询单个 -->
+	<select id="getSellerByKey" parameterType="Long" resultMap="sellerMap">
+		select 
+			s.*,
+			u.status,
+			u.id,
+			u.true_name,
+			a.area_name
+		from seller s 
+			LEFT JOIN users u ON s.seller_id = u.id 
+			LEFT JOIN area a ON FIND_IN_SET(a.id,s.regions)
+		WHERE
+			s.seller_id=#{id}
+	</select>
+	
+	<!-- 判断新增用户是否存在 -->
+	<select id="getByAccount" resultType="Integer">
+		SELECT * FROM seller WHERE seller_account=#{account}
+	</select>
+	
+	<!-- 查询卖家信息   -->
+	<select id="getSellers" parameterType="int" resultMap="sellerMap">
+		select seller.* from seller
+		inner join users on seller.seller_id=users.id
+		<trim prefix="where">
+		  <if test="status != -2">
+		    users.status=#{status}
+		  </if>
+		</trim>
+	</select>
+	
+	<!-- 根据buyerID所在区域  查询卖家信息   -->
+	<select id="getSellerByBuyerId"  resultMap="sellerMap">
+		SELECT
+			s.*
+		FROM seller s
+			LEFT JOIN buyer b ON FIND_IN_SET(b.region_id,s.regions)
+			INNER JOIN users u ON u.id = s.seller_id
+		WHERE
+			b.buyer_id=#{buyerId}
+			<if test="sellerType != null">
+	 			AND  s.seller_type = #{sellerType}
+			</if>
+		AND
+			u.`status` = 3
+		AND
+			u.type = 2
+	</select>
+	
+	<!-- 查询每个卖家每天的总营业额(生成账单)  -->
+	<select id="getAmountByDate" parameterType="map" resultMap="sellerAcountMap">
+		SELECT A.seller_id,SUM(A.goods_amount)amount FROM order_item A 
+		INNER JOIN order_info B ON A.order_number=B.order_number
+		INNER JOIN seller ON A.seller_id=seller.seller_id 
+        INNER JOIN users ON users.id=A.seller_id
+		WHERE B.pay_status !=1 AND B.trade_status !=2 AND users.status in(3,4) AND A.order_status=1
+		<trim>
+		  <if test="startTime !=null">
+		    and B.create_time <![CDATA[ >= #{startTime}]]>
+		  </if>
+		  <if test="endTime !=null">
+		    and B.create_time <![CDATA[ <= #{endTime}]]>
+		  </if>
+		</trim>
+		GROUP BY A.seller_id 
+	</select>
+	
+	<!-- 根据id查询卖家每天营业额明细  -->
+	<select id="getAmountDetail" parameterType="map" resultMap="sellerAcountMap">
+		SELECT A.goods_amount amount,B.pay_time payTime FROM order_item A
+		LEFT JOIN order_info B ON A.order_number=B.order_number
+		WHERE B.pay_status=2 AND B.trade_status=1 
+		<trim>
+		  <if test="sellerId != null ">
+		    and A.seller_id = #{sellerId}
+		  </if>
+		  <if test="startTime !=null">
+		    and B.pay_time <![CDATA[ >= #{startTime}]]>
+		  </if>
+		  <if test="endTime !=null">
+		    and B.pay_time <![CDATA[ <= #{endTime}]]>
+		  </if>
+		</trim>
+	</select>
+	
+	<!-- 查询今日入驻卖家信息 -->
+	<select id="getSellerByDate" parameterType="map" resultMap="sellerMap" >
+	    SELECT users.account,users.status,users.create_time,seller.* FROM users
+	    LEFT JOIN seller ON users.id=seller.seller_id 
+	    WHERE users.id=seller.seller_id and users.type=2 and users.status=3
+	    <trim >
+		   <if test="startTime!=null">
+		     and users.create_time <![CDATA[ >= #{startTime}]]>
+		   </if>
+		   <if test="endTime!=null">
+		     and users.create_time <![CDATA[ <= #{endTime}]]>
+		   </if>
+	    </trim>	
+	    ORDER BY users.create_time    
+	</select>
+	
+	<!-- 查询全部卖家今日收益、今日订单数量、可用余额、可提现金额 -->
+	<select id="getSellerAmountByToday" resultMap="sellerAmountTodayMap">
+	SELECT 	
+		GROUP_CONCAT(DISTINCT(area.area_name)) area_name,
+		C.seller_name,
+		C.seller_id,
+		C.seller_account,
+		C.order_num,
+		C.goods_amount,
+		C.balance_money,
+		C.bill_money,
+		C.withdrawaled_amount,
+		SUM(CASE WHEN b.status =1 THEN b.reality_money ELSE 0 END) already_settled,
+		SUM(CASE WHEN b.status =0 THEN b.reality_money ELSE 0 END) wait_settled
+	FROM
+		(
+		SELECT 
+			seller_name,
+			seller_id,
+			seller_account,
+			order_num,
+			goods_amount,
+			balance_money,
+			bill_money,
+			CASE WHEN SUM(w.withdraw_apply_total) IS NOT NULL THEN SUM(w.withdraw_apply_total) ELSE 0 END  withdrawaled_amount 
+		FROM (SELECT
+				seller.seller_name,
+				seller.seller_id,
+				seller.seller_account,
+				count(DISTINCT(info.order_id))order_num,
+				sum(item.goods_amount)goods_amount,
+				seller.balance_money,	
+				seller.bill_money 
+			FROM order_info info 
+				LEFT JOIN order_item item on info.order_id=item.order_id
+				LEFT JOIN seller ON seller.seller_id=item.seller_id
+				WHERE 
+				info.pay_status !=1 
+				AND info.trade_status !=2
+				AND item.order_status =1
+				<include refid="queryCriteria" />
+				GROUP BY seller.seller_id ORDER BY order_num DESC )A
+			LEFT JOIN withdrawal w ON w.uid = A.seller_id AND w.`status`=3
+			GROUP BY A.seller_id ORDER BY order_num DESC )C
+		LEFT JOIN bill b ON b.seller_id = C.seller_id 
+		LEFT JOIN seller s ON s.seller_id=C.seller_id
+		LEFT JOIN area ON FIND_IN_SET(area.id,s.regions)
+		GROUP BY C.seller_id ORDER BY order_num DESC
+		LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询卖家今日收益、今日订单数量、可用余额、可提现金额的总记录数-->
+	<select id="getSellerAmountCount" resultType="int">
+	    SELECT count(1) FROM (
+            SELECT seller.seller_name,seller.seller_account,count(DISTINCT(info.order_id))order_num,sum(item.goods_amount)goods_amount,seller.balance_money,seller.bill_money 
+                FROM order_info info 
+		        LEFT JOIN order_item item on info.order_id=item.order_id
+		        LEFT JOIN seller ON seller.seller_id=item.seller_id
+				LEFT JOIN area ON FIND_IN_SET(area.id,seller.regions)
+			    WHERE info.pay_status !=1 AND info.trade_status !=2 
+			    <include refid="queryCriteria" />
+			    GROUP BY seller.seller_id ORDER BY order_num DESC )sellerInfo
+	</select>
+	
+	<!-- 更新买家信息-->
+	<update id="update" parameterType="Seller" >
+	    update seller 
+	    <set>
+	      <trim>
+			<if test="sellerTel != null and sellerTel != ''">
+		     seller_tel= #{sellerTel} ,
+		    </if>
+		    <if test="sellerAccount != null and sellerAccount != ''">
+		     seller_account= #{sellerAccount} ,
+		    </if>
+		    <if test="sellerName != null and sellerName != ''">
+		     seller_name= #{sellerName} ,
+		    </if>
+		     <if test="sellerAlias != null and sellerAlias != ''">
+		      seller_alias= #{sellerAlias} ,
+		    </if>
+		     <if test="sellerLogo != null and sellerLogo != ''">
+		      seller_logo= #{sellerLogo} ,
+		    </if>
+		    <if test="sellerRank != null and sellerRank != ''">
+		      seller_rank = #{sellerRank} ,
+		    </if>
+		    <if test="sellerGrade != null and sellerGrade != ''">
+		      seller_grade = #{sellerGrade} ,
+		    </if>
+		    <if test="sellerAddress != null and sellerAddress != ''">
+		     seller_address= #{sellerAddress} ,
+		    </if>
+		    <if test="sellerKeyword != null and sellerKeyword != ''">
+		     seller_keyword= #{sellerKeyword} ,
+		    </if>
+		     <if test="remark != null and remark != ''">
+		      remark= #{remark} ,
+		    </if>
+		    <if test="regions != null and regions != ''">
+		      regions= #{regions} ,
+		    </if>
+		    <if test="sellerType != null ">
+		      seller_type= #{sellerType} ,
+		    </if>
+	      </trim>
+	    </set>
+	    where seller_id = #{sellerId}
+	</update>
+	
+	<!-- 添加 -->
+	<insert id="insertSeller" parameterType="Seller">
+		insert into seller
+		<trim prefix="(" suffix=")">
+			<if test="sellerTel != null">
+		     seller_tel,
+		    </if>
+		    <if test="sellerAccount != null">
+		     seller_account,
+		    </if>
+		    <if test="sellerName != null">
+		     seller_name,
+		    </if>
+		     <if test="sellerAlias != null">
+		      seller_alias,
+		    </if>
+		     <if test="sellerLogo != null">
+		      seller_logo,
+		    </if>
+		    <if test="sellerRank != null">
+		      seller_rank ,
+		    </if>
+		    <if test="sellerGrade != null and sellerGrade != ''">
+		      seller_grade ,
+		    </if>
+		    <if test="sellerAddress != null">
+		     seller_address,
+		    </if>
+		    <if test="sellerKeyword != null">
+		     seller_keyword,
+		    </if>
+		     <if test="balanceMoney != null">
+		      balance_money,
+		    </if>
+		     <if test="billMoney != null">
+		      bill_money,
+		    </if>
+		    <if test="remark != null">
+		      remark,
+		    </if>
+		    <if test="regions != null and regions != ''">
+		      regions,
+		    </if>
+		    <if test="sellerType != null ">
+		      seller_type,
+		    </if>
+		    seller_id
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+			<if test="sellerTel != null">
+		      #{sellerTel},
+		    </if>
+		    <if test="sellerAccount != null">
+		      #{sellerAccount},
+		    </if>
+		     <if test="sellerName != null">
+		      #{sellerName},
+		    </if>
+		    <if test="sellerAlias != null">
+		      #{sellerAlias},
+		    </if>
+		    <if test="sellerLogo != null">
+		      #{sellerLogo},
+		    </if>
+		    <if test="sellerRank != null">
+		      #{sellerRank},
+		    </if>
+		    <if test="sellerGrade != null and sellerGrade != ''">
+		      #{sellerGrade},
+		    </if>
+		    <if test="sellerAddress != null">
+		      #{sellerAddress},
+		    </if>
+		     <if test="sellerKeyword != null">
+		      #{sellerKeyword},
+		    </if>
+		    <if test="balanceMoney != null">
+		      #{balanceMoney},
+		    </if>
+		    <if test="billMoney != null">
+		      #{billMoney},
+		    </if>
+		    <if test="remark != null">
+		      #{remark},
+		    </if>
+		    <if test="regions != null and regions != ''">
+		      #{regions} ,
+		    </if>
+		    <if test="sellerType != null ">
+		      #{sellerType} ,
+		    </if>
+		      #{sellerId}
+		</trim>
+	</insert>
+	
+	<!-- 查询可用的商家 (促销活动选择商家时使用)-->
+    <select id="searchSeller" parameterType="com.netcai.admin.vo.SellerVo" resultMap="sellerVoMap">
+     	select s.seller_id,s.seller_name,s.seller_tel
+		from seller s 
+		inner join users u on s.seller_id=u.id
+		LEFT JOIN area a ON FIND_IN_SET(a.id,s.regions)
+		where u.status=3
+		<if test="sellerVo.areaId !=null">
+		    and a.id= #{sellerVo.areaId}
+		</if>
+		<if test="sellerVo.sellerName !=null">
+		    and s.seller_name like concat('%',#{sellerVo.sellerName},'%')  
+		</if>
+		<if test="sellerVo.activityId !=null">
+		    and not exists(select 1 from activity_seller where s.seller_id=seller_id and activity_id=#{sellerVo.activityId})  
+		</if>
+    </select>
+    
+    <!-- 通过ID查询余额 -->
+	<select id="getById" resultType="java.math.BigDecimal">
+		select balance_money from seller where seller_id = #{sellerId}
+	</select>
+	
+	<!-- 通过ID查询可提现金额 -->
+	<select id="getBillMoneyById" resultType="java.math.BigDecimal">
+		select bill_money from seller where seller_id = #{sellerId}
+	</select>
+	
+	<!-- 根据区id查询区域下所有的卖家 -->
+	<select id="getSellerByRegionId" parameterType="Long" resultMap="sellerVoMap">
+	  SELECT seller.seller_id,seller.seller_name FROM seller 
+		LEFT JOIN area  ON FIND_IN_SET(area.id,seller.regions)
+		INNER JOIN users ON users.id=seller.seller_id
+		WHERE users.status=3 AND area.id=#{regionId}
+	</select>
+		
+	<!-- 更新卖家余额 -->
+	<update id="updateBalanceMoney">
+		update seller set balance_money = #{balanceMoney} where seller_id = #{sellerId}
+	</update>
+	
+	<!-- 更新卖家余额 -->
+	<update id="updateBalanceMoneyAndBillMoney">
+		update seller set balance_money = #{balanceMoney},bill_money = #{billMoney} where seller_id = #{sellerId}
+	</update>
+</mapper>

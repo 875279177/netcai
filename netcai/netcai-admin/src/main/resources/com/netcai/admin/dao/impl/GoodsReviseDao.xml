@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商品上下架调整 xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.GoodsReviseDao">
+    <resultMap type="com.netcai.admin.vo.GoodsReviseVo" id="goodsReviseResult">
+      <result property="goodsName" column="goods_name" />
+      <result property="formatName" column="format_name" />
+      <result property="trueName" column="true_name" />
+      <result property="reviseForm" column="revise_form" />
+      <result property="status" column="status" />
+      <result property="reviceTime" column="revice_time" />
+      <result column="seller_name" property="sellerName" />
+      <result column="goods_brand" property="goodsBrand" />
+      <result column="goods_label" property="goodsLabel" />
+      <result column="format_price" property="formatPrice" />
+    </resultMap>
+    
+    <sql id="filterCondition">
+	  <trim prefix=" where " prefixOverrides="and">
+	    <if test="goodsRevise.goodsName != null and goodsRevise.goodsName !='' ">
+	        and g.goods_name like '%${goodsRevise.goodsName}%'
+	    </if>
+	    <if test="goodsRevise.formatName != null and goodsRevise.formatName !='' ">
+	        and gf.format_name like '%${goodsRevise.formatName}%'
+	    </if>
+	    <if test="goodsRevise.sellerName != null and goodsRevise.sellerName !=''">
+	        and s.seller_name like '%${goodsRevise.sellerName}%'
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 新增商品上下架调整记录 -->
+	<insert id="insertGoodsRevise" parameterType="com.netcai.admin.entity.GoodsRevise" useGeneratedKeys="true" keyProperty="grId">
+		insert into goods_revise (goods_id,format_id,status,revise_id,revise_form,revice_time)
+        values(#{goodsId},#{formatId},#{status},#{reviseId},2,now())
+	</insert>
+	
+	<!-- 分页查询商品上下架调整记录 -->
+	<select id="getAllGoodsRevise" resultMap="goodsReviseResult">
+	    SELECT 
+	    s.seller_name,
+	    gr.revise_form,
+	    g.goods_name,
+	    gr.status,
+	    gr.revice_time,
+	    gf.format_name,
+	    gf.format_price,
+	    g.goods_brand,
+		g.goods_label,
+	    case gr.revise_form when 2 then (select concat('[',username,']',name) from sys_user where gr.revise_id=id) when 1 then (select concat('[',account,']',true_name) from users where gr.revise_id=id) end as true_name
+		FROM goods_revise gr 
+		LEFT JOIN goods_format gf ON gf.format_id=gr.format_id
+		LEFT JOIN goods g ON g.goods_id=gr.goods_id
+		INNER JOIN seller s ON g.user_id = s.seller_id
+		<include refid="filterCondition"></include>
+		ORDER BY gr.revice_time DESC LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+	    SELECT count(1) 
+	    FROM goods_revise gr 
+		LEFT JOIN goods_format gf ON gf.format_id=gr.format_id
+		LEFT JOIN goods g ON g.goods_id=gr.goods_id
+		INNER JOIN seller s ON g.user_id = s.seller_id
+		<include refid="filterCondition"></include>
+	</select>
+</mapper>

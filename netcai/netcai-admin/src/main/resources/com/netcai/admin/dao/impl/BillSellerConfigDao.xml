@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.BillSellerConfigDao">
+	<resultMap type="com.netcai.admin.vo.BillSellerConfigVo" id="billSellerConfigMap">
+		<result column="id" property="id" />
+		<result column="area_id" property="regionId" />
+		<result column="area_name" property="regionName" />
+		<result column="seller_id" property="sellerId" />
+		<result column="seller_name" property="sellerName" />
+		<result column="phone" property="phone" />
+		<result column="status" property="status" />
+		<result column="period" property="period" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and ">
+	    <if test=" billSeller.regionId != null ">
+	      and area.id = #{billSeller.regionId}
+	    </if>
+	    <if test=" billSeller.status != null ">
+	      and bsc.status = #{billSeller.status}
+	    </if>
+	    <if test=" billSeller.sellerName !=null and billSeller.sellerName != '' ">
+	      and seller.seller_name like '%${billSeller.sellerName}%'
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 分页查询账单配置 -->
+	<select id="getAll" resultMap="billSellerConfigMap">
+		select area.id area_id,area.area_name,seller.seller_name,seller.seller_account phone,bsc.* from bill_seller_config bsc
+		inner join seller on bsc.seller_id=seller.seller_id
+		LEFT JOIN area ON FIND_IN_SET(area.id,seller.regions)
+        <include refid="filterCondition"></include>
+		order by bsc.create_time desc limit #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		select count(1) from bill_seller_config bsc
+		inner join seller on bsc.seller_id=seller.seller_id
+		LEFT JOIN area ON FIND_IN_SET(area.id,seller.regions)
+		<include refid="filterCondition"></include>
+	</select>
+	
+	<!-- 根据id查询单条数据 -->
+	<select id="getById" parameterType="Long" resultMap="billSellerConfigMap">
+	    SELECT seller.seller_name sellerName,seller.seller_account phone,A.* FROM bill_seller_config A 
+		LEFT JOIN seller ON A.seller_id=seller.seller_id where id = #{id}
+	</select>
+	
+	<!-- 启用-->
+	<update id="enabled" parameterType="Long" >
+	    update bill_seller_config set status = 1 where id = #{id}
+	</update>
+	
+	<!-- 禁用  -->
+	<update id="disabled" parameterType="Long" >
+	    update bill_seller_config set status = -1 where id = #{id}
+	</update>
+	
+	<!-- 更新-->
+	<update id="update" parameterType="com.netcai.admin.vo.BillSellerConfigVo" >
+	    update bill_seller_config  
+	    <set>
+	      <trim>
+			<if test=" period != null ">
+		        period = #{period},
+		    </if>
+	      </trim>
+	    </set>
+	    where id = #{id}
+	</update>
+	
+	<!-- 新增 -->
+	<insert id="insert" parameterType="com.netcai.admin.vo.BillSellerConfigVo">
+	  insert into bill_seller_config
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+        <if test=" sellerId != null ">
+	        seller_id ,
+	    </if>
+	    <if test=" period != null ">
+	        period ,
+	    </if>
+	    <if test=" status != null ">
+	        status ,
+	    </if>
+	    <if test=" createTime != null">
+			create_time ,
+		</if>
+	  </trim>
+	  <trim prefix="select " suffixOverrides=",">
+	    <if test=" sellerId != null ">
+	        #{sellerId},
+	    </if>
+        <if test=" period != null ">
+	        #{period},
+	    </if>
+	    <if test=" status != null ">
+	        #{status},
+	    </if>
+	    <if test=" createTime != null">
+			#{createTime},
+		</if>
+	  </trim>
+	  FROM DUAL WHERE NOT EXISTS(SELECT * FROM bill_seller_config where seller_id = #{sellerId});
+	</insert>
+</mapper>

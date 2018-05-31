@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.PayLogsDao">
+
+   <resultMap type="com.netcai.buyer.entity.PayLogs" id="payLogsMap">
+     <result column="log_id" property="logId"/>
+     <result column="user_id" property="userId"/>
+     <result column="order_id" property="orderId"/>
+     <result column="order_number" property="orderNumber"/>
+     <result column="order_amount" property="orderAmount"/>
+     <result column="outer_trade_no" property="outerTradeNo"/>
+     <result column="status" property="status"/>
+     <result column="create_time" property="createTime"/>
+  </resultMap>
+  
+  <!-- 根据订单号获取订单日志 -->
+  <select id="getPayLogsByOrderNumber" resultMap="payLogsMap">
+     select * from pay_logs where order_number=#{orderNumber}
+  </select>
+  
+	
+   <!-- 添加付款日志 -->
+   <insert id="addPayLogs">
+		insert into pay_logs
+		<trim prefix="(" suffix=")">
+			<if test="userId != null">
+		      user_id ,
+		    </if>
+			<if test="orderId != null">
+		      order_id ,
+		    </if>
+		    <if test="orderNumber != null">
+		      order_number ,
+		    </if>
+		    <if test="orderAmount != null">
+		      order_amount ,
+		    </if>
+		    <if test="outerTradeNo != null">
+		     outer_trade_no,
+		    </if>
+		    <if test="status != null">
+		     status,
+		    </if>
+		    <if test="createTime != null">
+		      create_time
+		    </if>
+		</trim>
+		values
+		<trim prefix="(" suffix=")">
+			<if test="userId != null">
+		      #{userId},
+		    </if>
+			<if test="orderId != null">
+		      #{orderId},
+		    </if>
+		    <if test="orderNumber != null">
+		      #{orderNumber},
+		    </if>
+		    <if test="orderAmount != null">
+		      #{orderAmount},
+		    </if>
+		    <if test="outerTradeNo != null">
+		     #{outerTradeNo},
+		    </if>
+		    <if test="status != null">
+		     #{status},
+		    </if>
+		    <if test="createTime != null">
+		      #{createTime}
+		    </if>
+		</trim>
+	</insert>
+	
+	<!-- 更新付款日志 -->
+	<update id="updatePayLogs">
+	   	update pay_logs set outer_trade_no=#{outerTradeNo},status=#{status} where order_number=#{orderNumber}
+	</update>
+	
+</mapper>

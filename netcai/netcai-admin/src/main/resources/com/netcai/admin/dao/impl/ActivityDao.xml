@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 促销活动xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.ActivityDao">
+
+	<resultMap type="com.netcai.admin.entity.Activity" id="activityResult">
+		<result column="activity_id" property="activityId" />
+		<result column="activity_title" property="activityTitle" />
+		<result column="activity_begin_time" property="activityBeginTime" />
+		<result column="activity_end_time" property="activityEndTime" />
+		<result column="activity_channel" property="activityChannel" />
+		<result column="activity_type" property="activityType" />
+		<result column="activity_status" property="activityStatus" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<!-- 分页查询活动信息 -->
+	<select id="getAllActivity" parameterType="com.netcai.admin.entity.Activity" resultMap="activityResult">
+		select activity_id,activity_title,date_format(activity_begin_time,'%Y-%m-%d %H:%i') as activity_begin_time,
+		date_format(activity_end_time,'%Y-%m-%d %H:%i') as activity_end_time,
+		activity_channel,activity_type,activity_status,create_time
+		from activity where 1=1
+		<if test=" activity.activityTitle != null">
+			and activity_title like concat('%',#{activity.activityTitle},'%')  
+		</if>
+		<if test=" activity.activityStatus != null">
+			and activity_status =  #{activity.activityStatus} 
+		</if>
+		order by activity_id desc limit #{offset},#{pageSize} 
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" parameterType="com.netcai.admin.entity.Activity" resultType="int">
+		select count(1) from activity where 1=1
+		<if test=" activity.activityTitle != null">
+			and activity_title like concat('%',#{activity.activityTitle},'%')  
+		</if>
+		<if test=" activity.activityStatus != null">
+			and activity_status =  #{activity.activityStatus} 
+		</if>
+	</select>
+	
+	<!-- 新增活动信息 -->
+	<insert id="insertActivity" parameterType="com.netcai.admin.entity.Activity" useGeneratedKeys="true" keyProperty="activityId">
+		insert into activity
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test=" activityTitle != null">
+				activity_title,
+			</if>
+			<if test=" activityLogo != null">
+				activity_logo,
+			</if>
+			<if test="activityBeginTime != null">
+				activity_begin_time,
+			</if>
+			<if test=" activityEndTime != null">
+				activity_end_time,
+			</if>
+			<if test=" activityChannel != null">
+				activity_channel,
+			</if>
+			<if test=" activityType != null">
+				activity_type,
+			</if>
+			<if test=" activityVigor != null">
+				activity_vigor,
+			</if>
+			<if test=" activityShare != null">
+				activity_share,
+			</if>
+			<if test=" activityStatus != null">
+				activity_status,
+			</if>
+			<if test=" activityDesc != null">
+				activity_desc,
+			</if>
+			create_time,
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test=" activityTitle != null">
+				#{activityTitle},
+			</if>
+			<if test=" activityLogo != null">
+				#{activityLogo},
+			</if>
+			<if test="activityBeginTime != null">
+				date_format(#{activityBeginTime},'%Y-%m-%d %H:%i'),
+			</if>
+			<if test=" activityEndTime != null">
+				date_format(#{activityEndTime},'%Y-%m-%d %H:%i'),
+			</if>
+			<if test=" activityChannel != null">
+				#{activityChannel},
+			</if>
+			<if test=" activityType != null">
+				#{activityType},
+			</if>
+			<if test=" activityVigor != null">
+				#{activityVigor},
+			</if>
+			<if test=" activityShare != null">
+				#{activityShare},
+			</if>
+			<if test=" activityStatus != null">
+				#{activityStatus},
+			</if>
+			<if test=" activityDesc != null">
+				#{activityDesc},
+			</if>
+			now(),
+		</trim>
+	</insert>
+
+	<!-- 更新活动信息 -->
+	<update id="updateActivity" parameterType="com.netcai.admin.entity.Activity">
+		update activity
+		<set>
+			<trim suffixOverrides=",">
+			   	<if test=" activityTitle != null">
+					activity_title = #{activityTitle},
+				</if>
+				<if test=" activityLogo != null">
+					activity_logo = #{activityLogo},
+				</if>
+				<if test="activityBeginTime != null">
+					activity_begin_time = date_format(#{activityBeginTime},'%Y-%m-%d %H:%i'),
+				</if>
+				<if test=" activityEndTime != null">
+					activity_end_time = date_format(#{activityEndTime},'%Y-%m-%d %H:%i'),
+				</if>
+				<if test=" activityChannel != null">
+					activity_channel = #{activityChannel},
+				</if>
+				<if test=" activityType != null">
+					activity_type = #{activityType},
+				</if>
+				<if test=" activityVigor != null">
+					activity_vigor = #{activityVigor},
+				</if>
+				<if test=" activityShare != null">
+					activity_share = #{activityShare},
+				</if>
+				<if test=" activityStatus != null">
+					activity_status = #{activityStatus},
+				</if>
+				<if test=" activityDesc != null">
+					activity_desc = #{activityDesc},
+				</if>
+			</trim>
+		</set>
+		where activity_id = #{activityId}
+	</update>
+	
+	<!-- 活动详情返回结果 -->
+	<resultMap type="com.netcai.admin.vo.ActivityVo" id="activityInfoResult">
+		<result column="activity_id" property="activityId" />
+		<result column="activity_title" property="activityTitle" />
+		<result column="activity_logo" property="activityLogo" />
+		<result column="activity_begin_time" property="activityBeginTime" />
+		<result column="activity_end_time" property="activityEndTime" />
+		<result column="activity_channel" property="activityChannel" />
+		<result column="activity_type" property="activityType" />
+		<result column="activity_vigor" property="activityVigor" />
+		<result column="activity_share" property="activityShare" />
+		<result column="activity_status" property="activityStatus" />
+		<result column="activity_desc" property="activityDesc" />
+		<result column="create_time" property="createTime" />
+		<!-- 活动规则集合 -->
+		<collection property="activityFormatVoList" ofType="com.netcai.admin.vo.ActivityFormatVo">
+			<result column="activity_format_id" property="activityFormatId" />
+			<result column="format_title" property="formatTitle" />
+			<result column="format_full_rmb" property="formatFullRmb" />
+			<result column="format_minus_rmb" property="formatMinusRmb" />
+			<result column="format_status" property="formatStatus" />
+        </collection>
+        <!-- 活动商家集合 -->
+        <collection property="activitySellerVoList" ofType="com.netcai.admin.vo.ActivitySellerVo">
+			<result column="activity_seller_id" property="activitySellerId" />
+			<result column="seller_id" property="sellerId" />
+			<result column="seller_name" property="sellerName" />
+			<result column="seller_tel" property="sellerTel" />
+        </collection>
+         <!-- 活动商品集合 -->
+        <collection property="activityGoodsVoList" ofType="com.netcai.admin.vo.ActivityGoodsVo">
+			<result column="activity_goods_id" property="activityGoodsId" />
+			<result column="goods_id" property="goodsId" />
+			<result column="goods_name" property="goodsName" />
+			<result column="goods_formart_id" property="goodsFormartId" />
+			<result column="format_name" property="formatName" />
+			<result column="format_price" property="formatPrice" />
+			<result column="unit_name" property="unitName" />
+			<result column="goods_seller_name" property="goodsSellerName" />
+			<result column="activity_price" property="activityPrice" />
+        </collection>
+	</resultMap>
+	
+	<!-- 活动详情 -->
+	<select id="getActivityInfo" parameterType="int" resultMap="activityInfoResult">
+		select a.*,
+		af.activity_format_id,af.format_title,af.format_full_rmb,af.format_minus_rmb,af.format_status,
+		s.activity_seller_id,s.seller_id,sl.seller_name,sl.seller_tel,
+		ag.activity_goods_id,ag.goods_id,g.goods_name,ag.goods_formart_id,gf.format_name,gf.format_price,u.unit_name,sd.seller_name as goods_seller_name,ag.activity_price
+		from activity a
+		left join activity_format af on a.activity_id=af.activity_id
+		left join activity_seller s on a.activity_id=s.activity_id
+		left join seller sl on s.seller_id=sl.seller_id
+		left join activity_goods ag on a.activity_id=ag.activity_id
+		left join goods g on g.goods_id=ag.goods_id
+		left join goods_format gf on gf.goods_id=g.goods_id and gf.format_id=ag.goods_formart_id
+		left join unit u on u.unit_id=gf.unit_id
+		left join seller sd on sd.seller_id=g.user_id
+		where a.activity_id = #{activityId}
+	</select>
+</mapper>

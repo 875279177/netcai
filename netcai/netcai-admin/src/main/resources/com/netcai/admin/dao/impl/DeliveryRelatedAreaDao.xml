@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.DeliveryRelatedAreaDao">
+   <resultMap type="com.netcai.admin.entity.DeliveryRelatedArea" id="deliveryRelatedAreaMap">
+		<result property="id" column="dda_id" />
+		<result property="deliveryId" column="dda_delivery_id" />
+		<result property="deliveryAreaId" column="dda_da_id" />
+		<result property="userId" column="dda_user_id" />
+		<result property="createTime" column="dda_create_time" />
+   </resultMap>
+	
+   <!--  根据map查询  -->
+   <select id="getByMap" parameterType="Map" resultMap="deliveryRelatedAreaMap">
+     select * from delivery_da 
+      <trim prefix="where " prefixOverrides="and ">
+	    <if test=" deliveryAreaId != null ">
+	      and dda_da_id = #{deliveryAreaId}
+	    </if>
+	    <if test=" deliveryId != null ">
+	      and dda_delivery_id = #{deliveryId}
+	    </if>
+     </trim>
+   </select>
+   
+   <!-- 批量新增数据 -->
+	<insert id="batchInsert" parameterType="com.netcai.admin.entity.DeliveryRelatedArea">
+	  insert into delivery_da (dda_delivery_id,dda_da_id,dda_user_id,dda_create_time)
+	    values
+	  <foreach collection="list" item="item" index="index" separator="," >  
+        (#{item.deliveryId},#{item.deliveryAreaId},#{item.userId},#{item.createTime})  
+      </foreach>  
+	</insert>
+	
+	<!-- 修改数据 -->
+	<update id="update" parameterType="com.netcai.admin.entity.DeliveryRelatedArea">
+	  update delivery_da
+	  <set>
+	    <trim>
+	      <if test=" deliveryId != null ">
+	        dda_delivery_id =#{deliveryId},
+		  </if>
+		  <if test=" userId != null">
+			dda_user_id =#{userId} ,
+	      </if>
+		</trim>
+	  </set>
+	  where dda_da_id=#{deliveryAreaId}
+	</update>
+	
+	<!-- 根据配送人员id删除数据 -->
+	<delete id="deleteByDeliveryId" parameterType="Long" >
+	  DELETE FROM delivery_da WHERE dda_delivery_id=#{deliveryId}
+	</delete>
+   
+</mapper>

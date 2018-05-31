@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.netcai.admin.dao.SalesDao">
+
+	<resultMap type="com.netcai.admin.entity.Sales" id="salesMap">
+		<result property="id" column="id" />
+		<result property="phone" column="phone" />
+		<result property="password" column="password" />
+		<result property="realName" column="true_name" />
+		<result property="status" column="status" />
+		<result property="realName" column="true_name" />
+		<result property="level" column="level" />
+		<result property="experience" column="experience" />
+		<result property="createTime" column="create_time" />
+		<result property="lastUpdateTime" column="last_update_time" />
+		<result property="parentId" column="parent_id" />
+	</resultMap>
+	
+	<!-- 统计开发的买家数前十的销售人员数据集 -->
+	<resultMap type="Map" id="countMap">
+	   <result column="count" property="count" javaType="int"/>
+	   <result column="name" property="name" javaType="String"/>
+	   <result column="phone" property="phone" javaType="String"/>
+	   <result column="createTime" property="createTime" javaType="Date"/>
+	</resultMap>
+	
+   <!-- 销售绩效  -->
+  <resultMap type="com.netcai.admin.vo.SalesPerf" id="salesPerfMap">
+      <result column="true_name" property="trueName"/>
+      <result column="seller_name" property="sellerName"/>
+      <result column="buyer_name" property="buyerName"/>
+      <result column="sum_amount" property="sumAmount"/>
+      <result column="create_time" property="createTime"/>
+      <result column="best_time" property="bestTime"/>
+  </resultMap>
+	
+	<sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and ">
+	    <if test=" sales.realName != null and sales.realName != '' ">
+	      and true_name like '%${sales.realName}%'
+	    </if>
+	    <if test=" sales.phone != null and sales.phone != '' ">
+	      and phone = #{sales.phone}
+	    </if>
+	    <if test=" sales.status != null ">
+	      and status = #{sales.status}
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 分页查询销售人员信息 -->
+	<select id="getAllSales" resultMap="salesMap">
+		select * from sales
+        <include refid="filterCondition"></include>
+		order by create_time desc limit #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		select count(1) from sales
+		<include refid="filterCondition"></include>
+	</select>
+	
+	<!-- 根据id查询单条数据 -->
+	<select id="getSalesById" parameterType="Long" resultMap="salesMap">
+	    select * from sales where id=#{id}
+	</select>
+	
+	<!-- 分组-->
+	<sql id="limit">
+		<if test="pageNum != null and pageSize != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+	
+    <!-- 根据手机号查询销售人员信息 -->
+	<select id="getSalesByPhone" parameterType="String" resultMap="salesMap">
+	    select * from sales where phone=#{phone}
+	</select>
+	
+	<!-- 销售绩效 -->
+  <select id="getSalesPerfList" resultMap="salesPerfMap">
+      	select 
+	      	s.true_name,
+	      	se.seller_name,
+	      	b.buyer_name,
+	      	sum(oi.goods_amount) sum_amount,
+	      	o.create_time,
+	      	date_format(o.best_time,'%Y-%m-%d') as best_time
+      	from order_item oi
+			inner join order_info o on o.order_id=oi.order_id
+			inner join buyer b on oi.buyer_id=b.buyer_id
+			inner join sales s on s.id=b.sale_id
+			inner join seller se on oi.seller_id=se.seller_id
+		where 
+			o.trade_status!=2 and o.pay_status!=1 and oi.order_status=1
+			<if test="o.createTimeStart != null  and o.createTimeStart != ''">
+				AND	o.create_time <![CDATA[ >= #{o.createTimeStart}]]> 
+			</if>
+			<if test="o.createTimeStop != null  and o.createTimeStop != ''">
+				AND	o.create_time <![CDATA[ <= #{o.createTimeStop}]]>
+			</if>
+			<if test="o.beatTimeStart != null  and o.beatTimeStart != ''">
+				AND	o.best_time <![CDATA[ >= #{o.beatTimeStart}]]> 
+			</if>
+			<if test="o.beatTimeStop != null  and o.beatTimeStop != ''">
+				AND	o.best_time <![CDATA[ <=#{o.beatTimeStop} ]]> 
+			</if>
+			<if test="o.salesId != null">
+				AND	s.id = #{o.salesId}
+			</if>
+			group by s.id,se.seller_id,b.buyer_id,date_format(o.best_time,'%Y-%m-%d')
+			order by s.id,o.best_time
+			<include refid="limit" />
+  </select>
+  
+  <!-- 销售绩效 -->
+  <select id="getSalesPerfCount" resultType="int">
+      	SELECT COUNT(1)FROM(
+	      	select 
+		      	count(1)
+	      	from order_item oi
+				inner join order_info o on o.order_id=oi.order_id
+				inner join buyer b on oi.buyer_id=b.buyer_id
+				inner join sales s on s.id=b.sale_id
+				inner join seller se on oi.seller_id=se.seller_id
+			where 
+				o.trade_status!=2 and o.pay_status!=1 and oi.order_status=1
+				<if test="o.createTimeStart != null  and o.createTimeStart != ''">
+					AND	o.create_time <![CDATA[ >= #{o.createTimeStart}]]> 
+				</if>
+				<if test="o.createTimeStop != null  and o.createTimeStop != ''">
+					AND	o.create_time <![CDATA[ <= #{o.createTimeStop}]]>
+				</if>
+				<if test="o.beatTimeStart != null  and o.beatTimeStart != ''">
+					AND	o.best_time <![CDATA[ >= #{o.beatTimeStart}]]> 
+				</if>
+				<if test="o.beatTimeStop != null  and o.beatTimeStop != ''">
+					AND	o.best_time <![CDATA[ <=#{o.beatTimeStop} ]]> 
+				</if>
+				<if test="o.salesId != null">
+					AND	s.id = #{o.salesId}
+				</if>
+				group by s.id,se.seller_id,b.buyer_id)A
+  </select>
+	
+	<!-- 统计一周内销售业绩前十的销售人员 -->
+	<select id="getTopTenSales" resultMap="countMap">
+	    SELECT sales.true_name name,sales.phone,sales.create_time createTime,count(1) count FROM buyer 
+		LEFT JOIN users ON buyer.buyer_id=users.id
+		LEFT JOIN sales ON buyer.sale_id=sales.id
+		WHERE sales.id<![CDATA[ <> ""]]> AND users.create_time BETWEEN date_add(date_format(now(), '%Y-%m-%d 00:00:00'), interval -6 day) AND date_format(now(), '%Y-%m-%d 23:59:59')
+		GROUP BY buyer.sale_id ORDER BY count DESC LIMIT 0,10;
+	</select>
+	<!-- 根据id查询单条数据 -->
+	<select id="getListSales" resultType="list" resultMap="salesMap">
+	    select * from sales where 1=1 
+	    <if test="status!=null">
+	        and status=#{status}
+	    </if> 
+	    <if test="level==1">
+	        and level in (0,1,2)
+	    </if> 
+	    <if test="level==2">
+	        and level=3
+	    </if> 
+	</select>
+	
+	<!-- 禁用  -->
+	<update id="disabled" parameterType="Long" >
+	    update sales set status=-1,last_update_time=now() where id=#{id}
+	</update>
+	
+	<!-- 启用  -->
+	<update id="enabled" parameterType="Long" >
+	    update sales set status=1,last_update_time=now() where id=#{id}
+	</update>
+	
+	<!-- 更新销售人员信息-->
+	<update id="updateSales" parameterType="com.netcai.admin.entity.Sales" >
+	    update sales 
+	    <set>
+	      <trim>
+			<if test=" realName != null and realName != '' ">
+		        true_name = #{realName},
+		    </if>
+		    <if test=" phone != null and phone != '' ">
+		        phone = #{phone},
+		    </if>
+		    <if test=" password != null and password != ''">
+				password = #{password},
+			</if>
+		    <if test=" status != null ">
+		        status = #{status},
+		    </if>
+		    <if test=" level != null ">
+	            level = #{level},
+		    </if>
+		    <if test=" parentId != null ">
+	            parent_id = #{parentId},
+		    </if>
+		    <if test=" experience != null ">
+		        experience = #{experience},
+		    </if>
+		    <if test=" createTime != null">
+				create_time = #{createTime},
+			</if>
+			<if test=" lastUpdateTime != null">
+				last_update_time = #{lastUpdateTime},
+			</if>
+	      </trim>
+	    </set>
+	    where id=#{id}
+	</update>
+	
+	<!-- 新增销售人员信息 -->
+	<insert id="insertSales" parameterType="com.netcai.admin.entity.Sales">
+	  insert into sales
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+	    <if test=" realName != null and realName != '' ">
+	        true_name,
+	    </if>
+	    <if test=" phone != null and phone != '' ">
+	        phone,
+	    </if>
+	    <if test=" password != null and password != ''">
+			password,
+		</if>
+	    <if test=" status != null ">
+	        status,
+	    </if>
+	    <if test=" level != null ">
+	        level,
+	    </if>
+	    <if test=" parentId != null ">
+	         parent_id,
+		</if>
+	    <if test=" experience != null ">
+	        experience,
+	    </if>
+	    <if test=" createTime != null">
+			create_time,
+		</if>
+		<if test=" lastUpdateTime != null">
+			last_update_time,
+		</if>
+	  </trim>
+	  <trim prefix="values (" suffix=")" suffixOverrides=",">
+	    <if test=" realName != null and realName != '' ">
+	        #{realName},
+	    </if>
+	    <if test=" phone != null and phone != '' ">
+	        #{phone},
+	    </if>
+	    <if test=" password != null and password != ''">
+			#{password},
+		</if>
+	    <if test=" status != null ">
+	        #{status},
+	    </if>
+	    <if test=" level != null ">
+	        #{level},
+	    </if>
+	    <if test=" parentId != null ">
+	        #{parentId},
+		</if>
+	    <if test=" experience != null ">
+	        #{experience},
+	    </if>
+	    <if test=" createTime != null">
+			#{createTime},
+		</if>
+		<if test=" lastUpdateTime != null">
+			#{lastUpdateTime},
+		</if>
+	  </trim>
+	</insert>
+</mapper>

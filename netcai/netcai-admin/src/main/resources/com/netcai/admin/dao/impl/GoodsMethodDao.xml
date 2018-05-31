@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商品加工方式xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.GoodsMethodDao">
+
+	<resultMap type="com.netcai.admin.entity.GoodsMethod" id="goodsMethodResult">
+		<result column="gm_id" property="gmId" />
+		<result column="goods_id" property="goodsId" />
+		<result column="method_id" property="methodId" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<!-- 批量新增商品加工方式-->
+	<insert id="batchInsertGoodsMethod" parameterType="com.netcai.admin.entity.Goods">
+		insert into goods_method (goods_id,method_id,create_time) values   
+		<foreach collection="methodList" item="item" separator=",">  
+		(#{goodsId},#{item},now())  
+		</foreach>  
+	</insert>
+	
+	<!-- 删除商品的加工方式 -->
+	<delete id="deleteGoodsMethod" parameterType="com.netcai.admin.entity.Goods">
+		delete from goods_method where goods_id = #{goodsId}   
+	</delete>
+
+	<!-- 复制商品加工方式-->
+	<insert id="copyGoodsMethod">
+		insert into goods_method (goods_id,method_id,create_time) 
+        (select #{newGoodsId},method_id,now() from goods_method where goods_id=#{oldGoodsId})   
+	</insert>
+</mapper>

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.GroupsBuyerDao" >
+  <resultMap id="groupsBuyerMap" type="com.netcai.admin.entity.GroupsBuyer" >
+    <id column="gb_id" property="gbId"/>
+    <result column="buyer_id" property="buyerId"/>
+    <result column="group_id" property="groupId"/>
+    <result column="item_id" property="itemId"/>
+    <result column="order_id" property="orderId"/>
+    <result column="gb_num" property="gbNum"/>
+    <result column="gb_price" property="gbPrice"/>
+    <result column="gb_amt" property="gbAmt"/>
+    <result column="gb_status" property="gbStatus"/>
+    <result column="gb_time" property="gbTime"/>
+    <result column="area_name" property="areaName"/>
+    
+     <!--买家 -->
+     <association property="buyer" javaType="com.netcai.admin.entity.Buyer">
+			<result column="boss_tel" property="bossTel" />
+			<!-- 买家店铺名称   店铺名称 -->
+			<result column="buyer_name" property="buyerName" />
+			<result property="bossName" column="boss_name" />
+			<result property="buyerAddress" column="buyer_address" />
+     </association>
+     
+     <!--商品 -->
+     <association property="goods" javaType="com.netcai.admin.entity.Goods">
+			<result column="goods_brand" property="goodsBrand" />
+			<result column="goods_name" property="goodsName" />
+     </association>
+     
+     <!--订单 -->
+     <association property="groups" javaType="com.netcai.admin.entity.Groups">
+			<result property="title" column="group_title" />
+			<result property="endTime" column="end_time" />
+     </association>
+     
+     <!--团购活动配置表 -->
+     <association property="orderInfo" javaType="com.netcai.admin.entity.OrderInfo">
+			<result column="order_number" property="orderNumber"/>
+     </association>
+  </resultMap>
+  
+  	<sql id="Where">
+		<where>
+			1=1
+		  <if test="g.goods != null">
+	      		<if test="g.goods.goodsName">
+	      			AND (g.goods_name like concat('%',#{g.goods.goodsName},'%') or g.goods_brand like concat('%',#{g.goods.goodsBrand},'%'))
+	      		</if>
+	      </if>
+	      <if test="g.buyer != null">
+		      <if test="g.buyer.regionId != null">
+		      	AND a.id=#{g.buyer.regionId}
+		      </if>
+		      <if test="g.buyer.buyerName != null and g.buyer.buyerName != ''">
+				AND	(b.buyer_name like concat('%',#{g.buyer.buyerName},'%') or b.boss_tel like concat('%',#{g.buyer.buyerName},'%'))
+			  </if>
+	      </if>
+	      <if test="g.gbStatus != null">
+	      		AND gb.gb_status = #{g.gbStatus}
+	      </if>
+	      <if test="g.groups != null">
+	      		<if test="g.groups.title != null and g.groups.title != ''">
+	      			AND gs.group_title like concat('%',#{g.groups.title},'%')
+	      		</if>
+	      </if>
+		</where>
+	</sql>
+
+	<sql id="Order">
+		ORDER BY gb.gb_time DESC
+	</sql>
+	
+		<!-- 分页 -->
+	<sql id="Limit">
+		<if test="pageNum != null ">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  <select id="getList" parameterType="com.netcai.admin.entity.GroupsBuyer" resultMap="groupsBuyerMap" >
+    select 
+    	gb.*,
+    	b.buyer_name,
+		b.boss_tel,
+		g.goods_brand,
+		g.goods_name,
+		gs.group_title,
+		oif.order_number,
+		a.area_name
+    from groups_buyer gb
+	LEFT JOIN groups_item oi ON oi.item_id = gb.item_id
+	LEFT JOIN buyer b ON b.buyer_id = gb.buyer_id
+	LEFT JOIN goods_format gf ON gf.format_id = oi.format_id
+	LEFT JOIN goods g ON g.goods_id = gf.goods_id
+    LEFT JOIN area a ON a.id = b.region_id
+    LEFT JOIN groups gs ON gs.group_id = gb.group_id
+    LEFT JOIN order_info oif ON oif.order_id = gb.order_id
+    <include refid="Where" />
+    <include refid="Order" />
+    <include refid="Limit" />
+  </select>
+  
+  <select id="getCount" parameterType="com.netcai.admin.entity.GroupsBuyer" resultType="int" >
+    select 
+    	count(1)
+    from groups_buyer gb
+	LEFT JOIN order_item oi ON oi.item_id = gb.item_id
+	LEFT JOIN buyer b ON b.buyer_id = gb.buyer_id
+	LEFT JOIN goods_format gf ON gf.format_id = oi.format_id
+	LEFT JOIN goods g ON g.goods_id = gf.goods_id
+    LEFT JOIN area a ON a.id = b.region_id
+    LEFT JOIN groups gs ON gs.group_id = gb.group_id
+    LEFT JOIN order_info oif ON oif.order_id = gb.order_id
+    <include refid="Where" />
+  </select>
+  
+	<!--   团购失败 -->
+	<select id="getGroupsFail" resultMap="groupsBuyerMap">
+	    SELECT
+			gbr.buyer_id,
+			gbr.order_id,
+			gbr.group_id,
+			g.group_title,
+			g.end_time,
+			b.boss_tel,
+			b.boss_name
+		FROM
+			groups_buyer gbr
+		INNER JOIN (
+			SELECT
+				gb.group_id,
+				g.min_amt,
+				sum(gb.gb_amt) AS yg_amt,
+				g.group_title,
+				g.end_time
+			FROM
+				groups_buyer gb
+			INNER JOIN groups g ON g.group_id = gb.group_id
+			WHERE
+				gb.gb_status = 1
+			AND date_format(g.create_time, '%Y-%m-%d') = date_format(now(), '%Y-%m-%d')
+			AND g.group_status = 1
+			GROUP BY
+				gb.group_id
+			HAVING
+				yg_amt  <![CDATA[ < min_amt]]> 
+		) g ON gbr.group_id = g.group_id
+		INNER JOIN buyer b ON b.buyer_id = gbr.buyer_id
+		WHERE
+			gbr.gb_status = 1
+		AND
+			g.end_time <![CDATA[ <= NOW()]]> 
+		 GROUP BY gbr.group_id,gbr.buyer_id
+  </select>
+  
+  	<!--   团购成功 -->
+	<select id="getGroupsSuccessful" resultMap="groupsBuyerMap" >
+	    SELECT
+			gbr.buyer_id,
+			gbr.order_id,
+			gbr.group_id,
+			g.group_title,
+			g.end_time,
+			b.boss_tel,
+			b.boss_name
+		FROM
+			groups_buyer gbr
+		INNER JOIN (
+			SELECT
+				gb.group_id,
+				g.min_amt,
+				sum(gb.gb_amt) AS yg_amt,
+				g.group_title,
+				g.end_time
+			FROM
+				groups_buyer gb
+			INNER JOIN groups g ON g.group_id = gb.group_id
+			WHERE
+				gb.gb_status = 1
+			AND date_format(g.create_time, '%Y-%m-%d') = date_format(now(), '%Y-%m-%d')
+			AND g.group_status = 1
+			GROUP BY
+				gb.group_id
+			HAVING
+				yg_amt  <![CDATA[ >= min_amt]]>
+		) g ON gbr.group_id = g.group_id
+		INNER JOIN buyer b ON b.buyer_id = gbr.buyer_id
+		WHERE
+			gbr.gb_status = 1
+		AND
+			g.end_time <![CDATA[ <= NOW()]]> 
+		 GROUP BY gbr.group_id,gbr.buyer_id
+  </select>
+</mapper>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.GroupsDao">
+  <!-- 团购集合 -->
+  <resultMap type="com.netcai.buyer.vo.GroupsVo" id="groupsMap">
+     <result column="group_id" property="groupId"/>
+     <result column="group_no" property="groupNo"/>
+     <result column="group_title" property="groupTitle"/>
+     <result column="group_logo" property="groupLogo"/>
+     <result column="begin_time" property="beginTime"/>
+     <result column="end_time" property="endTime"/>
+     <result column="max_num" property="maxNum"/>
+     <result column="buyer_amt" property="buyerAmt"/>
+     <result column="min_amt" property="minAmt"/>
+     <result column="status" property="status"/>
+     <result column="join_num" property="joinNum"/>
+     <result column="lave_amt" property="laveAmt"/>
+     <result column="remarks" property="remarks"/>
+  </resultMap>
+	
+  <!-- 获取团购活动 -->
+  <select id="getGroupsList"  resultMap="groupsMap">
+      select g.group_id,g.group_no,g.group_title,g.group_logo,g.begin_time,g.end_time,g.max_num,g.buyer_amt,g.min_amt,g.remarks,
+	   (case  when gb.buyer_amt>=g.min_amt then 1 else -1 end) as status, 
+	    ifnull(gb.join_num,0) as join_num,(g.min_amt-ifnull(gb.buyer_amt,0)) as lave_amt
+	  from groups g
+		left join (select b.group_id,count(distinct b.buyer_id) as join_num,sum(b.gb_amt) as buyer_amt 
+		from groups_buyer b 
+		where b.gb_status=1 group by b.group_id) gb
+		on g.group_id=gb.group_id
+	  where g.group_status=1 and date_format(g.begin_time,'%Y-%m-%d')=date_format(now(),'%Y-%m-%d')
+	  <if test="regionId != null ">
+		   and find_in_set(#{regionId},g.group_area)
+	  </if>
+	  order by g.begin_time desc
+  </select>
+  
+  <!-- 团购集合 -->
+  <resultMap type="com.netcai.buyer.vo.GroupsVo" id="groupsInfoMap">
+     <result column="group_id" property="groupId"/>
+     <result column="group_no" property="groupNo"/>
+     <result column="group_title" property="groupTitle"/>
+     <result column="group_logo" property="groupLogo"/>
+     <result column="begin_time" property="beginTime"/>
+     <result column="end_time" property="endTime"/>
+     <result column="max_num" property="maxNum"/>
+     <result column="buyer_amt" property="buyerAmt"/>
+     <result column="min_amt" property="minAmt"/>
+     <result column="status" property="status"/>
+     <result column="join_num" property="joinNum"/>
+     <result column="lave_amt" property="laveAmt"/>
+     <result column="remarks" property="remarks"/>
+     <!-- 团购明细集合 -->
+	 <collection property="itemList" ofType="com.netcai.buyer.vo.GroupsItemVo">
+	    <result column="item_id" property="itemId" />
+	    <result column="seller_id" property="sellerId" />
+		<result column="goods_id" property="goodsId" />
+		<result column="goods_name" property="goodsName" />
+		<result column="goods_as" property="goodsAs" />
+		<result column="goods_label" property="goodsLabel" />
+		<result column="goods_brand" property="goodsBrand" />
+		<result column="pic_url" property="picUrl" />
+		<result column="format_id" property="formatId" />
+		<result column="unit_Name" property="unitName" />
+		<result column="format_name" property="formatName" />
+		<result column="format_price" property="formatPrice" />
+		<result column="format_num" property="formatNum" />
+		<result column="group_price" property="groupPrice" />
+		<result column="group_num" property="groupNum" />
+     </collection>
+  </resultMap>
+  
+  <!-- 获取团购活动详情 -->
+  <select id="getGroupsInfo"  resultMap="groupsInfoMap">
+      select g.group_id,g.group_no,g.group_title,g.group_logo,g.begin_time,g.end_time,g.max_num,g.buyer_amt,g.min_amt,g.remarks,
+		(case  when gb.buyer_amt>=g.min_amt then 1 else -1 end) as status, 
+		ifnull(gb.join_num,0) as join_num,(g.min_amt-ifnull(gb.buyer_amt,0)) as lave_amt,
+		gi.item_id,gs.user_id as seller_id,gs.goods_id,gs.goods_name,gs.goods_as,gs.goods_label,gs.goods_brand,
+		(select pic_url from goods_picture where goods_id=gs.goods_id order by is_main desc limit 0,1) as pic_url,
+		gf.format_id,u.unit_name,gf.format_name,gf.format_price,gf.format_num,gi.group_price,gi.group_num
+	  from groups g
+		left join (select b.group_id,count(distinct b.buyer_id) as join_num,sum(b.gb_amt) as buyer_amt 
+		from groups_buyer b 
+		where b.gb_status=1 group by b.group_id) gb
+		on g.group_id=gb.group_id
+		inner join groups_item gi on g.group_id=gi.group_id 
+		inner join goods gs on gs.goods_id=gi.goods_id
+		inner join goods_format gf on gf.format_id=gi.format_id
+		inner join unit u on u.unit_id=gf.unit_id
+	  where g.group_id=#{groupId} and g.group_status=1
+  </select>
+  
+  <!-- 批量新增买家团购记录-->
+  <insert id="batchInsertGroupBuyer" parameterType="com.netcai.buyer.entity.GroupBuyer">
+	 insert into groups_buyer (buyer_id,group_id,item_id,order_id,gb_num,gb_price,gb_amt,gb_status,gb_time) values   
+	 <foreach collection="gbList" item="item" separator=",">  
+	   (#{item.buyerId},#{item.groupId},#{item.itemId},#{item.orderId},#{item.gbNum},#{item.gbPrice},#{item.gbAmt},-1,now())  
+	 </foreach>  
+  </insert>
+  
+  <!-- 根据订单ID修改买家团购成功标识-->
+  <update id="updateGbStatusByOrderId">
+	 update groups_buyer set gb_status = 1 where order_id=#{orderId}   
+  </update>
+  
+  <!-- 根据订单号修改买家团购成功标识-->
+  <update id="updateGbStatusByOrderNumber">
+	 update groups_buyer gb
+     inner join order_info o on o.order_id=gb.order_id
+     set gb.gb_status = 1 where o.order_number=#{orderNumber}   
+  </update>
+</mapper>

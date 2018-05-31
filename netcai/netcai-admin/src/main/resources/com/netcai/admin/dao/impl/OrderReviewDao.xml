@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.OrderReviewDao">
+
+  <resultMap type="com.netcai.admin.entity.OrderReview" id="orderReviewMap">
+     <result column="review_id" property="id"/>
+     <result column="order_item_id" property="orderItemId"/>
+     <result column="review_seller_id" property="reviewSellerId"/>
+     <result column="review_goods_id" property="reviewGoodsId"/>
+     <result column="format_id" property="formatId"/>
+     <result column="review_grade" property="reviewGrade"/>
+     <result column="review_desc" property="reviewDesc"/>
+     <result column="review_user_id" property="reviewUserId"/>
+     <result column="review_time" property="reviewTime"/>
+     <result column="review_status" property="reviewStatus"/>
+     
+     <!-- 卖家 -->
+     <association property="seller" javaType="com.netcai.admin.entity.Seller">
+     		<id column="seller_id" property="id"/>
+			<result column="seller_account" property="sellerAccount" />
+			<!-- 店铺名称 -->
+			<result column="seller_name" property="sellerName" />
+     </association> 
+     
+     <!--所属订单明细 -->
+     <association property="orderItem" javaType="com.netcai.admin.entity.OrderItem">
+     		<id column="item_id" property="id"/>
+     </association>
+     
+     <!--买家 -->
+     <association property="buyer" javaType="com.netcai.admin.entity.Buyer">
+     		<id column="buyer_id" property="saleId"/>
+			<result column="boss_tel" property="bossTel" />
+			<result column="boss_name" property="bossName" />
+			<!-- 买家店铺名称   店铺名称 -->
+			<result column="buyer_name" property="buyerName" />
+     </association>
+     
+      <!--所属商品 -->
+     <association property="goods" javaType="com.netcai.admin.entity.Goods">
+     		<id column="goods_id" property="goodsId"/>
+     		<id column="goods_name" property="goodsName"/>
+     </association>
+     
+      <!--所属商品规格-->
+     <association property="goodsformat" javaType="com.netcai.admin.entity.GoodsFormat">
+     		<id column="format_id" property="formatId"/>
+     </association>
+  </resultMap>
+  
+  <!-- 查询的数据 -->
+  <sql id="OrderReviewSelector">
+	select o.*,
+		s.seller_account ,
+		s.seller_name ,
+		b.boss_tel ,
+		b.boss_name ,
+		b.buyer_name ,
+		oi.item_id  ,
+		g.goods_id,
+		g.goods_name ,
+		gf.format_id 
+	from order_review o
+		LEFT JOIN seller s ON o.review_seller_id = s.seller_id
+		LEFT JOIN buyer b on o.review_user_id = b.buyer_id
+		LEFT JOIN order_item oi ON o.order_item_id = oi.item_id
+		LEFT JOIN goods g ON o.review_goods_id = g.goods_id
+		LEFT JOIN goods_format gf ON o.format_id = gf.format_id
+	</sql>
+  
+  <!-- 条件查询语句 -->
+  <sql id="OrderReviewMapWhere">
+		<where>
+			o.review_status = 1
+			<if test="o.reviewStatus != null and o.reviewStatus != ''">
+				AND	o.review_status = #{o.reviewStatus}
+			</if>
+			<if test="o.seller != null">
+				<if test="o.seller.sellerName != null and o.seller.sellerName != ''">
+					AND	s.seller_name like concat('%',#{o.seller.sellerName},'%')
+				</if>
+			</if>
+			<if test="o.goods != null">
+				<if test="o.goods.goodsName != null and o.goods.goodsName != ''">
+					AND	g.goods_name like concat('%',#{o.goods.goodsName},'%')
+				</if>
+			</if>
+		</where>
+	</sql>
+	
+	
+	<!-- 分页 -->
+	<sql id="OrderReviewListLimit">
+		<if test="pageNum != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  <!-- 查询所有   以及条件查询-->
+  <select id="getOrderReview" parameterType="OrderReview" resultMap="orderReviewMap">
+     	<include refid="OrderReviewSelector" />
+		<include refid="OrderReviewMapWhere" />
+		<include refid="OrderReviewListLimit" />
+  </select>
+  
+	<!--   查询总数 -->
+  <select id="getPageCount" parameterType="OrderReview" resultType="Integer">
+			select 
+				count(*) 
+			from order_review o
+				LEFT JOIN seller s ON o.review_seller_id = s.seller_id
+				LEFT JOIN buyer b on o.review_user_id = b.buyer_id
+				LEFT JOIN order_item oi ON o.order_item_id = oi.item_id
+				LEFT JOIN goods g ON o.review_goods_id = g.goods_id
+				LEFT JOIN goods_format gf ON o.format_id = gf.format_id
+				<include refid="OrderReviewMapWhere" />
+  </select>
+	
+	<!-- 通过Id查询单个 -->
+	<select id="getOrderReviewById" parameterType="Integer" resultMap="orderReviewMap">
+		<include refid="OrderReviewSelector" />		
+		<where>
+				o.review_status = 1
+			AND
+				o.review_id=#{id}
+		</where>
+	</select>
+	
+		<!-- 修改review_status -->
+	<update id="updateStatus" parameterType="OrderReview">
+		UPDATE order_review o SET 
+			o.review_status = #{status}
+		WHERE o.review_id = #{id}
+	</update>
+</mapper>

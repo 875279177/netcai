@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.ReportedDao" >
+  <resultMap id="reportedMap" type="com.netcai.admin.entity.Reported" >
+    <id column="r_id" property="rId" />
+    <result column="r_order_id" property="rOrderId" />
+    <result column="r_item_id" property="rItemId" />
+    <result column="r_type" property="rType" />
+    <result column="r_content" property="rContent"/>
+    <result column="r_time" property="rTime"/>
+    <result column="r_from" property="rFrom"/>
+    <result column="r_user_id" property="rUserId" />
+    <result column="r_read_status" property="rReadStatus"/>
+    <result column="r_read_time" property="rReadTime"/>
+    <result column="r_solve_status" property="rSolveStatus" />
+    <result column="r_solve_time" property="rSolveTime" />
+    <result column="order_number" property="orderNumber" />
+    <result column="name" property="name" />
+    <result column="seller_name" property="sellerName" />
+    <result property="buyerName" column="buyer_name" />
+    <result property="createTime" column="create_time" />
+    <result column="best_time" property="bestTime" />
+    <result column="format_name" property="formatName" />
+    <result column="goods_name" property="goodsName" />
+    <result column="goods_amount" property="goodsAmount"/>
+    <result column="goods_number" property="goodsNumber"/>
+    <result property="deliveryName" column="delivery_name" />
+    <result property="realName" column="true_name" />
+    <result column="goods_price" property="goodsPrice"/>
+    <result column="pay_status" property="payStatus"/>
+    <result property="areaName" column="area_name" />
+  </resultMap>
+  
+  	<!-- 排序-->
+	<sql id="orderBy">
+			ORDER BY r.r_time DESC
+	</sql>
+  
+  	<!-- 分组-->
+	<sql id="limit">
+		<if test="pageNum != null and pageSize != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+	
+	<sql id="where" >
+    WHERE
+		1=1
+		<if test="r.rType != null">
+ 			AND r.r_type like '%${r.rType}%'
+		</if>
+		<if test="r.rReadStatus != null">
+ 			AND r.r_read_status = #{r.rReadStatus}
+		</if>
+		<if test="r.payStatus != null">
+ 			AND oif.pay_status = #{r.payStatus}
+		</if>
+		<if test="r.rSolveStatus != null">
+ 			AND r.r_solve_status = #{r.rSolveStatus}
+		</if>
+		<if test="r.orderNumber != null and r.orderNumber != ''">
+ 			AND oif.order_number = #{r.orderNumber}
+		</if>
+		<if test="r.buyerName != null and r.buyerName != ''">
+ 			AND (b.buyer_name like concat('%',#{r.buyerName},'%') or b.boss_tel like concat('%',#{r.buyerName},'%'))
+		</if>
+		<if test="r.sellerName != null and r.sellerName != ''">
+			AND	(se.seller_account like concat('%',#{r.sellerName},'%') or se.seller_name like concat('%',#{r.sellerName},'%'))
+		</if>
+		<if test="r.orderNumber != null and r.orderNumber != ''">
+ 			AND oif.order_number = #{r.orderNumber}
+		</if>
+		<if test="r.name != null and r.name != ''">
+ 			AND (s.true_name like '%${r.name}%' or d.delivery_name like '%${r.name}%' or su.`name` like '%${r.name}%')
+		</if>
+		<if test="r.queryTime != null and r.queryTime != ''">
+			AND	date_format(r.r_time ,'%Y-%m-%d') = #{r.queryTime}
+		</if>
+		<if test="r.saleId != null">
+ 			AND sal.id = #{r.saleId}
+		</if>
+		<if test="r.deliveryId != null">
+ 			AND del.id = #{r.deliveryId}
+		</if>
+		<if test="r.deliveryName != null and r.deliveryName != ''">
+ 			AND del.delivery_name like concat('%', #{r.deliveryName},'%')
+		</if>
+		<if test="r.rTypes != null and r.rTypes != ''">
+			AND	r.r_type in (${r.rTypes})
+		</if>
+		<if test="r.goodsName != null and r.goodsName != ''">
+ 			AND g.goods_name like concat('%', #{r.goodsName},'%')
+		</if>
+		<if test="r.areaId != null">
+ 			AND a.id = #{r.areaId}
+		</if>
+  	</sql>
+  	
+  	<select id="getPageList" resultMap="reportedMap" parameterType="Reported" >
+	    SELECT
+			r.*,
+			a.area_name,
+			se.seller_name,
+			b.buyer_name,
+			oif.order_number,
+			oif.create_time,
+			oif.best_time,
+			oim.goods_number,
+			gf.format_name,
+			oim.goods_price,
+			oim.goods_amount,
+			g.goods_name,
+			sal.true_name,
+			del.delivery_name,
+			oif.pay_status,
+			CASE WHEN r.r_from = '1' THEN d.delivery_name WHEN r.r_from =  '2' THEN s.true_name 
+			WHEN r.r_from = '3' THEN su.`name` WHEN r.r_from =  '4' THEN sel.seller_name WHEN r.r_from =  '5' THEN pc.user_name ELSE '暂无' END name
+		FROM
+			reported r 
+		LEFT JOIN order_info oif ON oif.order_id = r.r_order_id
+		LEFT JOIN order_item oim ON oim.item_id = r.r_item_id
+		LEFT JOIN sales s ON s.id = r.r_user_id
+		LEFT JOIN delivery d ON d.id = r.r_user_id
+		LEFT JOIN sys_user su ON su.id = r.r_user_id
+		LEFT JOIN seller sel ON sel.seller_id = r.r_user_id
+		LEFT JOIN goods_format gf ON gf.format_id = oim.format_id
+		LEFT JOIN goods g ON g.goods_id = gf.goods_id
+		LEFT JOIN buyer b ON b.buyer_id = oif.buyer_id
+		LEFT JOIN seller se ON se.seller_id = oim.seller_id
+		LEFT JOIN sales sal ON sal.id = b.sale_id
+		LEFT JOIN delivery del ON del.id = oim.delivery_id
+		LEFT JOIN purchase pc ON pc.id =  r.r_user_id
+		LEFT JOIN area a ON a.id = b.region_id
+		<include refid="where" />
+		GROUP BY oim.item_id
+		<include refid="orderBy" />
+		<include refid="limit" />
+  	</select>
+  	
+  	<select id="getPageCount" resultType="int" parameterType="Reported" >
+	    SELECT
+			COUNT(1)
+		FROM(
+		    SELECT
+				count(1)
+			FROM
+				reported r 
+			LEFT JOIN order_info oif ON oif.order_id = r.r_order_id
+			LEFT JOIN order_item oim ON oim.item_id = r.r_item_id
+			LEFT JOIN sales s ON s.id = r.r_user_id
+			LEFT JOIN delivery d ON d.id = r.r_user_id
+			LEFT JOIN sys_user su ON su.id = r.r_user_id
+			LEFT JOIN seller sel ON sel.seller_id = r.r_user_id
+			LEFT JOIN goods_format gf ON gf.format_id = oim.format_id
+			LEFT JOIN goods g ON g.goods_id = gf.goods_id
+			LEFT JOIN buyer b ON b.buyer_id = oif.buyer_id
+			LEFT JOIN seller se ON se.seller_id = oim.seller_id
+			LEFT JOIN sales sal ON sal.id = b.sale_id
+			LEFT JOIN delivery del ON del.id = oim.delivery_id
+			LEFT JOIN area a ON a.id = b.region_id
+			<include refid="where" />
+			GROUP BY oim.item_id)A
+  	</select>
+	
+  <!-- 更改阅读状态 -->
+  <update id="updateReadStatus">
+    update reported set r_read_status = #{rReadStatus},r_read_time=now() where r_id = #{id}
+  </update>
+  
+  <!-- 更改解决状态 -->
+  <update id="updateSolveStatus">
+    update reported set r_solve_status = #{rSolveStatus},r_solve_time=now() where r_id = #{id}
+  </update>
+</mapper>

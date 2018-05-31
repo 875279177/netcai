@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商家信息 -->
+<mapper namespace="com.netcai.admin.dao.UsersDao">
+	<resultMap type="com.netcai.admin.entity.Users" id="usersMap">
+		<result column="id" property="id" />
+		<result column="account" property="account" />
+		<result column="password" property="password" />
+		<result column="status" property="status" />
+		<result column="true_name" property="trueName" />
+		<result column="create_time" property="createTime" />
+		<result column="last_login_time" property="lastLoginTime" />
+		<result column="type" property="type" />
+	</resultMap>
+	
+	<!-- 查询的数据 -->
+  <sql id="UsersSelector">
+		select 
+		*
+		from 
+		users 
+	</sql>
+	
+	<!-- 统计买家数量 -->
+	<select id="getBuyerCount" parameterType="map" resultType="int" >
+	    select count(1) from users 
+		INNER JOIN buyer on users.id=buyer.buyer_id
+		INNER JOIN area on buyer.region_id=area.id 
+		where users.type=1 and users.status=3
+	    <trim >
+		   <if test="startTime !=null">
+		     and users.create_time <![CDATA[ >= #{startTime}]]>
+		   </if>
+		   <if test="endTime !=null">
+		     and users.create_time <![CDATA[ <= #{endTime}]]>
+		   </if>
+		   <if test="regionId !=null">
+		     and area.id = #{regionId}
+		   </if>
+	    </trim>	    
+	</select>
+	
+	<!-- 统计卖家数量 -->
+	<select id="getSellerCount" parameterType="map" resultType="int" >
+	    select count(users.id) from users 
+		INNER JOIN seller on users.id=seller.seller_id
+		where users.type=2 and users.status=3
+	    <trim >
+		    <if test="startTime!=null">
+		      and users.create_time <![CDATA[ >= #{startTime}]]>
+		    </if>
+		    <if test="endTime!=null">
+		      and users.create_time <![CDATA[ <= #{endTime}]]>
+		    </if>
+		    <if test="regionId !=null">
+		     and FIND_IN_SET(#{regionId},seller.regions)
+		   </if>
+		</trim>	
+	</select>
+	
+	<!-- 通过account查询单个 -->
+	<select id="getUsersByAccount" parameterType="String" resultMap="usersMap">
+	<include refid="UsersSelector" />	
+		<where>
+		   account = #{account}
+		</where>
+	</select>
+	
+	<!-- 根据id查询  -->
+	<select id="getUsersById" parameterType="Long" resultMap="usersMap">
+	    select * from users where id = #{id}
+	</select>
+	
+	<!-- 启用 -->
+	<update id="startTypeById" parameterType="Long">
+		UPDATE users SET 
+			status = 3
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 禁用 -->
+	<update id="stopTypeById" parameterType="Long">
+		UPDATE users SET 
+			status = -1
+		WHERE id = #{id}
+	</update>
+	
+	
+	<!-- 更新状态-->
+	<update id="updateStatusById" parameterType="com.netcai.admin.entity.Users">
+		UPDATE users SET 
+			status =  #{status}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 更新买家信息-->
+	<update id="update" parameterType="com.netcai.admin.entity.Users" >
+	    update users 
+	    <set>
+	      <trim>
+			<if test="account != null">
+		     account= #{account} ,
+		    </if>
+		    <if test="password != null and password !=''">
+		     password= #{password} ,
+		    </if>
+		    <if test="status != null">
+		     status= #{status} ,
+		    </if>
+		     <if test="trueName != null">
+		      true_name= #{trueName} ,
+		    </if>
+		     <if test="createTime != null">
+		      create_time= #{createTime} ,
+		    </if>
+		    <if test="lastLoginTime != null">
+		      last_login_time = #{lastLoginTime} ,
+		    </if>
+		    <if test="type != null">
+		      type = #{type} ,
+		    </if>
+	      </trim>
+	    </set>
+	    where id = #{id}
+	</update>
+	
+	<!-- 添加 -->
+	<insert id="insertUsers" useGeneratedKeys="true" keyProperty="id"
+		keyColumn="id" parameterType="Users">
+		insert into users
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="account != null and account != '' ">
+		      account ,
+		    </if>
+		    <if test="password != null and password != '' ">
+		      password,
+		    </if>
+		    <if test="trueName != null and trueName != '' ">
+		      true_name,
+		    </if>
+		    <if test="status != null">
+		      status,
+		    </if>
+		    <if test="createTime != null">
+		      create_time,
+		    </if>
+		    <if test="lastLoginTime != null">
+		      last_login_time,
+		    </if>
+		    <if test="type != null">
+		      type,
+		    </if>
+		</trim>
+		<trim prefix="values(" suffix=")" suffixOverrides=",">
+			<if test="account != null and account != '' ">
+		      #{account},
+		    </if>
+		    <if test="password != null and password != '' ">
+		      #{password},
+		    </if>
+		    <if test="trueName != null and trueName != '' ">
+		      #{trueName},
+		    </if>
+		    <if test="status != null">
+		      #{status},
+		    </if>
+		    <if test="createTime != null">
+		      #{createTime},
+		    </if>
+		     <if test="lastLoginTime != null">
+		      #{lastLoginTime},
+		    </if>
+		    <if test="type != null">
+		      #{type},
+		    </if>
+		</trim>
+	</insert>
+</mapper>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.OrderCancelLogsDao">
+
+
+	<insert id="addOrderCancelLogs">
+		insert into
+		order_cancel_logs(buyer_id,order_sn,trade_money,current_money,last_money,remarks,create_time)
+		values(#{buyerId},#{orderSn},#{tradeMoney},#{currentMoney},#{lastMoney},#{remarks},#{createTime})
+	</insert>
+
+</mapper>

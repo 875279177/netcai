@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.WithdrawalConfigDao">
+	<resultMap type="com.netcai.admin.entity.WithdrawalConfig" id="withdrawalConfigMap">
+		<result column="id" property="id" />
+		<result column="seller_id" property="sellerId" />
+		<result column="remarks" property="remarks" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+
+	<!-- 查询全部 -->
+	<select id="selectBySellerId" parameterType="Long" resultMap="withdrawalConfigMap">
+		select * from withdrawal_config where seller_id = #{sellerId}
+	</select>
+
+</mapper>

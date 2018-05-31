@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.MessageDao">
+
+  <resultMap type="com.netcai.admin.entity.Message" id="messageMap">
+     <result column="msg_id" property="msgId"/>
+     <result column="user_id" property="userId"/>
+     <result column="msg_name" property="msgName"/>
+     <result column="msg_content" property="msgContent"/>
+     <result column="msg_type" property="msgType"/>
+     <result column="status" property="status"/>
+     <result column="create_time" property="createTime"/>
+     <result column="account" property="account"/>
+     <result column="type" property="type"/>
+     <result column="shop_name" property="shopName" />
+  </resultMap>
+
+	<!-- 分页 -->
+	<sql id="Limit">
+		<if test="pageNum != null ">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+
+  <!-- 获取单个消息 -->
+  <select id="getMessageById"  resultMap="messageMap">
+      SELECT * from message where msg_id=#{msgId}
+  </select>
+
+	<sql id="Where">
+		<where>
+			1=1
+		  <if test="message.userId != null and message.userId != ''">
+	      	AND m.user_id=#{message.userId}
+	      </if>
+	      <if test="message.msgType != null and message.msgType != ''">
+	      	AND m.msg_type=#{message.msgType}
+	      </if>
+	      <if test="message.msgContent != null and message.msgContent != ''">
+	      	AND m.msg_content like concat('%', #{message.msgContent},'%')
+	      </if>
+	      <if test="message.createTimeStart != null  and message.createTimeStart != '' and message.createTimeStop != null  and message.createTimeStop != ''">
+			AND	m.create_time between #{message.createTimeStart} AND #{message.createTimeStop} 
+		  </if>
+	      and m.status=1
+		</where>
+	</sql>
+
+	<sql id="Order">
+		ORDER BY create_time DESC
+	</sql>
+	
+  <!-- 获取所有的消息 -->
+  <select id="getAll"  resultMap="messageMap">
+        SELECT 
+        	m.*,
+			u.account,
+			u.type,
+			CASE WHEN s.seller_id IS NOT NULL THEN s.seller_name WHEN m.user_id = 0 THEN "所有人" ELSE b.buyer_name END shop_name
+        from message m 
+        LEFT JOIN users u ON m.user_id = u.id
+	   	LEFT JOIN seller s ON s.seller_id = u.id
+		LEFT JOIN buyer b ON b.buyer_id = u.id
+      <include refid="Where" />
+      <include refid="Order" />
+      <include refid="Limit" />
+  </select>
+  
+  <!-- 统计消息 -->
+  <select id="getCountMessage" resultType="int">
+        SELECT count(*) 
+        from message m 
+        LEFT JOIN users u ON m.user_id = u.id
+	   	LEFT JOIN seller s ON s.seller_id = u.id
+		LEFT JOIN buyer b ON b.buyer_id = u.id
+      <include refid="Where" />
+  </select>
+  
+  <!-- 打标删除 -->
+  <update id="deleteMessage">
+      update message set status=-1 where msg_id=#{msgId}
+  </update>
+  
+  <!-- 修改 -->
+  <update id="update">
+      update 
+      	message 
+      set 
+      	msg_content=#{message.msgContent}
+      where 
+      	msg_id=#{message.msgId}
+  </update>
+  
+  <insert id="saveBatch" parameterType="java.util.List">
+	  insert into message(
+	      user_id ,
+	      msg_name ,
+	      msg_content,
+	      msg_type,
+	      status,
+	      create_time)
+			values
+	 <foreach collection="messages" item="item" separator=",">
+	 	  (
+	      #{item.userId },
+	      #{item.msgName},
+	      #{item.msgContent},
+	      #{item.msgType},
+	      #{item.status},
+	      #{item.createTime})
+	   </foreach>
+  </insert>
+</mapper>

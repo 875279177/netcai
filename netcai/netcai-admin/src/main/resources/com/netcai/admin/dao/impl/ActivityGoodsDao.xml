@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 活动商品xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.ActivityGoodsDao">
+	
+	<!-- 批量新增商品规则-->
+	<insert id="batchInsertActivityGoods" parameterType="com.netcai.admin.entity.Activity">
+		insert into activity_goods (activity_id,goods_id,goods_formart_id,activity_price,create_time) values   
+		<foreach collection="activityGoodsList" item="item" separator=",">  
+		(#{activityId},#{item.goodsId},#{item.goodsFormartId},#{item.activityPrice},now())  
+		</foreach>  
+	</insert>
+	
+	<!-- 删除活动商品-->
+	<delete id="deleteActivityGoods" parameterType="int">
+		delete from activity_goods where activity_id =  #{activityId}  
+	</delete>
+
+</mapper>

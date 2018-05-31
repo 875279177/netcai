@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.SysUserDao">
+	<resultMap type="com.netcai.admin.entity.SysUser" id="sysUserMap">
+		<result property="id" column="id" />
+		<result property="userName" column="username" />
+		<result property="password" column="password" />
+		<result property="email" column="email" />
+		<result property="phone" column="phone" />
+		<result property="name" column="name" />
+		<result property="salt" column="salt" />
+		<result property="status" column="status" />
+		<result property="remarks" column="remarks" />
+		<result property="createTime" column="create_time" />
+		<result property="lastUpdateTime" column="last_update_time" />
+	</resultMap>
+	
+	<sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and ">
+	    <if test="user.username != null and user.username !='' ">
+	        and name like '%${user.username}%'
+	    </if>
+	    <if test="user.phone != null and user.phone !='' ">
+	        and phone = #{user.phone}
+	    </if>
+	    <if test="user.status != null ">
+	        and status = #{user.status}
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 分页查询系统用户 -->
+	<select id="getAllSysUser" resultMap="sysUserMap" resultType="list" >
+	    select * from sys_user 
+	    <include refid="filterCondition"></include>
+	    order by create_time desc limit #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int" >
+	    select count(*) from sys_user
+	</select>
+	
+	<!-- 根据登录名查询用户信息 -->
+	<select id="getUserByUserName" parameterType="String" resultMap="sysUserMap" >
+	    select * from sys_user where username=#{username} and status=1
+	</select>
+	
+	<!-- 根据id查询用户信息 -->
+	<select id="getUserById" parameterType="Long" resultMap="sysUserMap" >
+		select * from sys_user where id= #{id}
+	</select>
+	
+	<!-- 新增系统用户 -->
+	<insert id="insertSysUser" parameterType="com.netcai.admin.entity.SysUser" useGeneratedKeys="true" keyProperty="id">
+		insert into sys_user
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+		    <if test="userName != null and userName != '' ">
+		      username,
+		    </if>
+		    <if test="password != null and password != '' ">
+		      password,
+		    </if>
+		    <if test="email != null and email != '' ">
+		      email,
+		    </if>
+		    <if test="phone != null and phone != '' ">
+		      phone,
+		    </if>
+		    <if test="name != null and name != '' ">
+		      name,
+		    </if>
+		    <if test="salt != null and salt != '' ">
+		      salt,
+		    </if>
+		    <if test="status != null ">
+		      status,
+		    </if>
+		    <if test="remarks != null and remarks != '' ">
+		      remarks,
+		    </if>
+		    <if test="createTime != null ">
+		      create_time,
+		    </if>
+		</trim>
+		<trim prefix="values(" suffix=")" suffixOverrides=",">
+		    <if test="userName != null and userName != '' ">
+		      #{userName},
+		    </if>
+		    <if test="password != null and password != '' ">
+		      #{password},
+		    </if>
+		    <if test="email != null and email != '' ">
+		      #{email},
+		    </if>
+		    <if test="phone != null and phone != '' ">
+		      #{phone},
+		    </if>
+		    <if test="name != null and name != '' ">
+		      #{name},
+		    </if>
+		    <if test="salt != null and salt != '' ">
+		      #{salt},
+		    </if>
+		    <if test="status != null ">
+		      #{status},
+		    </if>
+		    <if test="remarks != null and remarks != '' ">
+		      #{remarks},
+		    </if>
+		    <if test="createTime != null ">
+		      #{createTime},
+		    </if>
+		</trim>
+	</insert>
+	
+	<!-- 更新用户信息 -->
+	<update id="updateSysUser" parameterType="com.netcai.admin.entity.SysUser" >
+	    update sys_user
+	    <trim suffixOverrides=",">
+	      <set>
+	        <if test="userName != null and userName != '' ">
+		      userName = #{userName},
+		    </if>
+		    <if test="password != null and password != '' ">
+		      password = #{password},
+		    </if>
+		    <if test="email != null and email != '' ">
+		      email = #{email},
+		    </if>
+		    <if test="phone != null and phone != '' ">
+		      phone = #{phone},
+		    </if>
+		    <if test="name != null and name != '' ">
+		      name = #{name},
+		    </if>
+		    <if test="salt != null and salt != '' ">
+		      salt = #{salt},
+		    </if>
+		    <if test="remarks != null and remarks != '' ">
+		      remarks = #{remarks},
+		    </if>
+		    <if test="lastUpdateTime != null ">
+		      last_update_time = #{lastUpdateTime},
+		    </if>
+	      </set>
+	    </trim>
+	    where id = #{id}
+	</update>
+	
+	<!-- 禁用系统用户 -->
+	<update id="disabledSysUser" parameterType="Long" >
+	    update sys_user set status=-1 where id = #{id}
+	</update>
+	
+	<!-- 启用系统用户 -->
+	<update id="enabledSysUser" parameterType="Long" >
+	    update sys_user set status=1 where id = #{id}
+	</update>
+	
+	<!-- 添加用户角色 -->
+	<insert id="insertUserRole">
+		insert into sys_user_role (user_id,role_id) values
+		<foreach collection="roleIds" item="item" separator=",">  
+		(#{userId},#{item})  
+		</foreach>  
+	</insert>
+	
+	<!-- 删除用户角色-->
+	<delete id="deleteUserRole">
+		delete from sys_user_role where user_id = #{userId}
+	</delete>
+</mapper>

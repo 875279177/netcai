@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.BannerDao">
+
+  <resultMap type="com.netcai.buyer.vo.BannerVo" id="bannerMap">
+     <result column="banner_id" property="bannerId"/>
+     <result column="banner_title" property="bannerTitle"/>
+     <result column="banner_url" property="bannerUrl"/>
+     <result column="banner_ids" property="bannerIds"/>
+  </resultMap>
+	
+  <!-- 通过区域ID获取广告 -->
+  <select id="getBannerByRegionId"  resultMap="bannerMap">
+      select * from banner where banner_status=1
+      <if test=" regionId != null">
+		  and banner_region = #{regionId}
+	  </if>
+       order by banner_seq asc
+  </select>
+</mapper>

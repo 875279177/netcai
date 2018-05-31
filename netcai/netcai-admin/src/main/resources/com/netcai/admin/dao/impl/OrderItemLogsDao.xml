@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.OrderItemLogsDao" >
+  <resultMap id="orderItemLogsMap" type="com.netcai.admin.entity.OrderItemLogs" >
+     <id column="id" property="id"  />
+    <result column="order_item_id" property="orderItemId" />
+    <result column="seller_id" property="sellerId" />
+    <result column="buyer_id" property="buyerId" />
+    <result column="trade_type" property="tradeType" />
+    <result column="goods_unit_price" property="goodsUnitPrice"  />
+    <result column="goods_final_number" property="goodsFinalNumber"  />
+    <result column="goods_final_price" property="goodsFinalPrice"  />
+    <result column="trade_money" property="tradeMoney" />
+    <result column="remark" property="remark"  />
+    <result column="create_time" property="createTime" />
+  </resultMap>
+  
+  <insert id="insert" parameterType="com.netcai.admin.entity.OrderItemLogs" >
+    insert into order_item_logs ( order_item_id, seller_id, 
+      buyer_id, trade_type, goods_unit_price, 
+      goods_final_number, goods_final_price, trade_money, 
+      remark, create_time)
+    values ( #{orderItemId}, #{sellerId}, 
+      #{buyerId}, #{tradeType}, #{goodsUnitPrice}, 
+      #{goodsFinalNumber}, #{goodsFinalPrice}, #{tradeMoney}, 
+      #{remark}, #{createTime})
+  </insert>
+</mapper>

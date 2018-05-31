@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 卖家的商品分类xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.SellerCategoryDao">
+
+	<resultMap type="com.netcai.admin.entity.SellerCategory" id="sellerCategoryResult">
+		<result column="sc_id" property="scId" />
+		<result column="user_id" property="userId" />
+		<result column="category_id" property="categoryId" />
+		<result column="parent_id" property="parentId" />
+		<result column="category_code" property="categoryCode" />
+		<result column="category_name" property="categoryName" />
+		<result column="category_level" property="categoryLevel" />
+		<result column="is_end" property="isEnd" />
+		<result column="sc_seq" property="scSeq" />
+	</resultMap>
+	
+	<!-- 查询卖家的商品分类 -->
+	<select id="getSellerCategoryList" resultMap="sellerCategoryResult">
+		select sc.sc_id,sc.user_id,sc.category_id,c.parent_id,c.category_code,c.category_name,c.category_level,c.is_end,sc.sc_seq
+		from seller_category sc
+		inner join category c on sc.category_id = c.category_id
+		where sc.user_id = #{userId}
+		<if test="level != null">
+		    and c.category_level=#{level}
+		</if>
+		order by sc.sc_seq
+	</select>
+	
+	<!-- 批量新增卖家商品分类 -->
+	<insert id="batchInsertSellerCategory">
+		insert into seller_category (user_id,category_id,sc_seq,create_time) values
+		<foreach collection="scList" item="item" separator=",">  
+		(#{item.userId},#{item.categoryId},#{item.scSeq},now())  
+		</foreach>  
+	</insert>
+	
+	<!-- 删除卖家商品分类-->
+	<delete id="deleteSellerCategory">
+		delete from seller_category where user_id = #{userId}
+	</delete>
+	
+</mapper>

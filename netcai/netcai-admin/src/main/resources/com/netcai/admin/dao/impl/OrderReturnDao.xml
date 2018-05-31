@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.OrderReturnDao">
+
+  <resultMap type="com.netcai.admin.entity.OrderReturn" id="orderReturnMap">
+    <id column="return_id" property="id" jdbcType="BIGINT" />
+    <result column="item_id" property="itemId" jdbcType="INTEGER" />
+    <result column="buyer_id" property="buyerId" jdbcType="BIGINT" />
+    <result column="order_id" property="orderId" jdbcType="BIGINT" />
+    <result column="order_number" property="orderNumber" jdbcType="VARCHAR" />
+    <result column="cause_id" property="causeId" jdbcType="INTEGER" />
+    <result column="should_return" property="shouldReturn" jdbcType="DECIMAL" />
+    <result column="actual_return" property="actualReturn" jdbcType="DECIMAL" />
+    <result column="return_status" property="returnStatus" jdbcType="TINYINT" />
+    <result column="refund_status" property="refundStatus" jdbcType="TINYINT" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="DATE" />
+     
+     <!--买家 -->
+     <association property="buyer" javaType="com.netcai.admin.entity.Buyer">
+     		<id column="buyer_id" property="saleId"/>
+			<result column="boss_tel" property="bossTel" />
+			<result column="boss_name" property="bossName" />
+			<!-- 买家店铺名称   店铺名称 -->
+			<result column="buyer_name" property="buyerName" />
+     </association>
+     
+      <!--  订单的子项目 -->
+    <association property="orderItem" javaType="com.netcai.admin.entity.OrderItem">
+    		<id column="item_id" property="id"/>
+			<result column="order_id" property="orderId" />
+			<result column="order_status" property="orderStatus" />
+			<result column="format_id" property="formatId" />
+			<result column="delivery_type" property="deliveryType" />
+			<result column="remark" property="remark" />
+			<result column="goods_amount" property="goodsAmount"/>
+     		<result column="delivery_money" property="deliveryMoney"/>
+     		
+     		<!--sku 数量 规格-->
+		     <association property="goodsFormat" javaType="com.netcai.admin.entity.GoodsFormat">
+		     		<id column="format_id" property="formatId"/>
+					<result column="goods_id" property="goodsId" />
+					<result column="unit_id" property="unitId" />
+					<result column="format_name" property="formatName" />
+					<result column="format_price" property="formatPrice" />
+					<result column="format_num" property="formatNum" />
+					<result column="format_seq" property="formatSeq" />
+					<result column="format_status" property="formatStatus" />
+		     </association>
+    </association>
+    
+     <!--退换货原因 -->
+     <association property="orderReturnCause" javaType="com.netcai.admin.entity.OrderReturnCause">
+     		<id column="cause_id" property="id"  />
+    		<result column="cause_name" property="causeName" />
+     </association>
+  </resultMap>
+  
+  <!-- 查询的数据 -->
+  <sql id="OrderReturnSelector">
+		select o.*,
+			b.boss_name ,
+			b.buyer_name ,
+			orc.cause_name ,
+			g.format_name,
+			g.format_price,
+			g.format_num
+		from order_return o
+			LEFT JOIN buyer b ON  o.buyer_id = b.buyer_id
+			LEFT JOIN order_item oi ON o.item_id = oi.item_id
+			LEFT JOIN order_return_cause orc ON o.cause_id = orc.cause_id
+			LEFT JOIN goods_format g ON oi.format_id = g.format_id
+	</sql>
+  
+  <!-- 条件查询语句 -->
+  <sql id="OrderReturnMapWhere">
+		<where>
+			1=1
+			<if test="o.orderItem != null">
+				<if test="o.orderItem.goodsFormat != null">
+					<if test="o.orderItem.goodsFormat.formatName != null and o.orderItem.goodsFormat.formatName != ''">
+						AND	g.format_name = #{o.orderItem.goodsFormat.formatName}
+					</if>
+				</if>
+			</if>
+			<if test="o.orderReturnCause != null ">
+				<if test="o.orderReturnCause.causeName != null and o.orderReturnCause.causeName != ''">
+					AND	orc.cause_name = #{o.orderReturnCause.causeName}
+				</if>
+			</if>
+			<if test="o.orderNumber != null and o.orderNumber != ''">
+				AND	o.order_number = #{o.orderNumber}
+			</if>
+		</where>
+	</sql>
+	
+	
+	<!-- 分页 -->
+	<sql id="OrderReturnListLimit">
+		<if test="pageNum != null">
+			limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  <!-- 查询所有   以及条件查询-->
+  <select id="getOrderReturn" parameterType="OrderReturn" resultMap="orderReturnMap">
+     	<include refid="OrderReturnSelector" />
+		<include refid="OrderReturnMapWhere" />
+		<include refid="OrderReturnListLimit" />
+  </select>
+  
+	<!--   查询总数 -->
+  <select id="getPageCount" parameterType="OrderReturn" resultType="int">
+		select count(*) 
+			from order_return o
+		LEFT JOIN buyer b ON  o.buyer_id = b.buyer_id
+			LEFT JOIN order_item oi ON o.item_id = oi.item_id
+			LEFT JOIN order_return_cause orc ON o.cause_id = orc.cause_id
+			LEFT JOIN goods_format g ON oi.format_id = g.format_id
+			<include refid="OrderReturnMapWhere" />
+  </select>
+	
+	<!-- 通过Id查询单个 -->
+	<select id="getOrderReturnById" parameterType="Integer" resultMap="orderReturnMap">
+		<include refid="OrderReturnSelector" />		
+		<where>
+			o.return_id=#{id}
+		</where>
+	</select>
+</mapper>

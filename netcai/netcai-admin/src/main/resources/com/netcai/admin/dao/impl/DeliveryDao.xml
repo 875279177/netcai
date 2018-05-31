@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.netcai.admin.dao.DeliveryDao">
+
+	<resultMap type="com.netcai.admin.entity.Delivery" id="deliveryMap">
+		<result property="id" column="id" />
+		<result property="areaId" column="area_id" />
+		<result property="deliveryPhone" column="delivery_phone" />
+		<result property="deliveryPassword" column="delivery_password" />
+		<result property="deliveryName" column="delivery_name" />
+		<result property="deliverySex" column="delivery_sex" />
+		<result property="deliveryIdCard" column="delivery_idcard" />
+		<result property="deliveryAge" column="delivery_age" />
+		<result property="deliveryType" column="delivery_type" />
+		<result property="sequence" column="sequence" />
+		<result property="remark" column="remark" />
+		<result property="status" column="status" />
+		<result property="permissionType" column="permission_type" />
+		<result property="createTime" column="create_time" />
+		<result property="lastUpdateTime" column="last_update_time" />
+	</resultMap>
+	
+	<sql id="filterCondition">
+	  <trim prefix="where " prefixOverrides="and ">
+	    <if test=" delivery.areaId != null ">
+	      and area_id = #{delivery.areaId}
+	    </if>
+	    <if test=" delivery.deliveryName != null and delivery.deliveryName != '' ">
+	      and delivery_name like '%${delivery.deliveryName}%'
+	    </if>
+	    <if test=" delivery.deliveryPhone != null and delivery.deliveryPhone != '' ">
+	      and delivery_phone = #{delivery.deliveryPhone}
+	    </if>
+	    <if test=" delivery.deliveryType != null">
+	      and delivery_type = #{delivery.deliveryType}
+	    </if>
+	    <if test=" delivery.status != null">
+	      and status = #{delivery.status}
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 分页查询配送人员信息 -->
+	<select id="getAll" resultMap="deliveryMap">
+		select * from delivery
+        <include refid="filterCondition"></include>
+		order by last_update_time desc limit #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		select count(id) from delivery
+		<include refid="filterCondition"></include>
+	</select>
+	
+	<!-- 查询所有的配送人员信息 -->
+	<select id="getDeliverys" resultMap="deliveryMap">
+		select * from delivery where permission_type =1 and status = 1
+	</select>
+	
+	<!-- 查询ById -->
+	<select id="getById" resultType="long" resultMap="deliveryMap">
+		select * from delivery
+		where id = #{deliveryId}
+	</select>
+	
+	<!-- 根据map查询单条数据 -->
+	<select id="getDelivery" parameterType="map" resultMap="deliveryMap">
+	    select * from delivery 
+	    <trim prefix="where " prefixOverrides="and ">
+	    <if test=" id != null ">
+	      and id = #{id}
+	    </if>
+	    <if test=" areaId != null ">
+	      and area_id = #{areaId}
+	    </if>
+	    <if test=" deliveryPhone != null and deliveryPhone != '' ">
+	      and delivery_phone = #{deliveryPhone}
+	    </if>
+	    <if test=" deliveryIdCard != null and delivery.deliveryIdCard != '' ">
+	      and delivery_idcard = #{deliveryIdCard}
+	    </if>
+	  </trim>
+	</select>
+	
+	<!-- 禁用  -->
+	<update id="disabled" parameterType="Long" >
+	    update delivery set status=-1,last_update_time=now() where id=#{id}
+	</update>
+	
+	<!-- 启用  -->
+	<update id="enabled" parameterType="Long" >
+	    update delivery set status=1,last_update_time=now() where id=#{id}
+	</update>
+	
+	<!-- 更新配送人员信息-->
+	<update id="updateDelivery" parameterType="com.netcai.admin.entity.Delivery" >
+	    update delivery 
+	    <set>
+	      <trim>
+	        <if test=" areaId != null">
+			    area_id = #{areaId},
+			</if>
+		    <if test=" deliveryPhone != null and deliveryPhone != ''">
+				delivery_phone = #{deliveryPhone},
+			</if>
+			<if test=" deliveryPassword != null and deliveryPassword != ''">
+				delivery_password = #{deliveryPassword},
+			</if>
+			<if test=" deliveryName != null and deliveryName != ''">
+				delivery_name = #{deliveryName},
+			</if>
+			<if test=" deliverySex != null">
+				delivery_sex = #{deliverySex},
+			</if>
+			<if test=" deliveryIdCard != null and deliveryIdCard != ''">
+				delivery_idcard = #{deliveryIdCard},
+			</if>
+			<if test=" deliveryAge != null">
+				delivery_age = #{deliveryAge},
+			</if>
+			<if test=" deliveryType != null">
+				delivery_type = #{deliveryType},
+			</if>
+			<if test=" remark != null">
+				remark= #{remark},
+			</if>
+			<if test=" permissionType != null">
+				permission_type= #{permissionType},
+			</if>
+			<if test=" lastUpdateTime != null">
+				last_update_time = #{lastUpdateTime},
+			</if>
+	      </trim>
+	    </set>
+	    where id=#{id}
+	</update>
+	
+	<!-- 新增配送人员信息 -->
+	<insert id="insertDelivery" parameterType="com.netcai.admin.entity.Delivery">
+	  insert into delivery
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+	    <if test=" areaId != null">
+			area_id,
+		</if>
+	    <if test=" deliveryPhone != null">
+			delivery_phone,
+		</if>
+		<if test=" deliveryPassword != null">
+			delivery_password,
+		</if>
+		<if test=" deliveryName != null">
+			delivery_name,
+		</if>
+		<if test=" deliverySex != null">
+			delivery_sex,
+		</if>
+		<if test=" deliveryIdCard != null">
+			delivery_idcard,
+		</if>
+		<if test=" deliveryAge != null">
+			delivery_age,
+		</if>
+		<if test=" deliveryType != null">
+			delivery_type,
+		</if>
+		<if test=" sequence != null">
+			sequence,
+		</if>
+		<if test=" remark != null">
+			remark,
+		</if>
+		<if test=" status != null">
+			status,
+		</if>
+		<if test=" createTime != null">
+			create_time,
+		</if>
+		<if test=" lastUpdateTime != null">
+			last_update_time,
+		</if>
+	  </trim>
+	  <trim prefix="values (" suffix=")" suffixOverrides=",">
+	    <if test=" areaId != null">
+			#{areaId},
+		</if>
+		<if test=" deliveryPhone != null">
+			#{deliveryPhone},
+		</if>
+		<if test=" deliveryPassword != null">
+			#{deliveryPassword},
+		</if>
+		<if test=" deliveryName != null">
+			#{deliveryName},
+		</if>
+		<if test=" deliverySex != null">
+			#{deliverySex},
+		</if>
+		<if test=" deliveryIdCard != null">
+			#{deliveryIdCard},
+		</if>
+		<if test=" deliveryAge != null">
+			#{deliveryAge},
+		</if>
+		<if test=" deliveryType != null">
+			#{deliveryType},
+		</if>
+		<if test=" sequence != null">
+			#{sequence},
+		</if>
+		<if test=" remark != null">
+			#{remark},
+		</if>
+		<if test=" status != null">
+			#{status},
+		</if>
+		<if test=" createTime != null">
+			#{createTime},
+		</if>
+		<if test=" lastUpdateTime != null">
+			#{lastUpdateTime},
+		</if>
+	  </trim>
+	</insert>
+	
+	<!-- 配送人员坐标-->
+	<resultMap type="com.netcai.admin.vo.DeliveryCoordinateVo" id="coordinateMap">
+		<result property="lng" column="lng" />
+		<result property="lat" column="lat" />
+		<result property="address" column="address" />
+		<result property="createTime" column="create_time" />
+	</resultMap>
+	
+	<!-- 获取配送人员坐标-->
+	<select id="getDeliveryCoordinate" resultMap="coordinateMap">
+		select dc.lng,dc.lat,dc.address,date_format(dc.create_time,'%Y-%m-%d %H:%i:%s') as create_time
+		from delivery_coordinate dc
+		inner join delivery d on dc.delivery_id=d.id
+		where dc.delivery_id= #{deliveryId} and date_format(dc.create_time,'%Y-%m-%d')=date_format(now(),'%Y-%m-%d')
+		order by dc.create_time asc 
+	</select>
+</mapper>

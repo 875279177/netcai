@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 商品价格调整 xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.PriceReviseDao">
+    <resultMap type="com.netcai.admin.vo.PriceReviseVo" id="priceReviseResult">
+      <result property="goodsName" column="goods_name" />
+      <result property="formatName" column="format_name" />
+      <result property="unitName" column="unit_name" />
+      <result property="trueName" column="true_name" />
+      <result property="reviseFrom" column="revise_from" />
+      <result property="oldPrice" column="old_price" />
+      <result property="revisePrice" column="revise_price" />
+      <result property="updateTime" column="update_time" />
+      <result column="seller_name" property="sellerName" />
+    </resultMap>
+    
+    <sql id="filterCondition">
+	  <trim prefix=" where " prefixOverrides="and">
+	    <if test="priceRevise.goodsName != null and priceRevise.goodsName !='' ">
+	        and goods.goods_name like '%${priceRevise.goodsName}%'
+	    </if>
+	    <if test="priceRevise.formatName != null and priceRevise.formatName !='' ">
+	        and B.format_name like '%${priceRevise.formatName}%'
+	    </if>
+	    <if test="priceRevise.startTime != null ">
+	        and A.update_time <![CDATA[ >= #{priceRevise.startTime}]]>
+	    </if>
+	    <if test="priceRevise.endTime != null ">
+	        and A.update_time <![CDATA[ <= #{priceRevise.endTime}]]>
+	    </if>
+	    <if test="priceRevise.sellerName != null and priceRevise.sellerName !=''">
+	        and s.seller_name like '%${priceRevise.sellerName}%'
+	    </if>
+	  </trim>
+	</sql>
+	
+	<!-- 新增价格调整记录 -->
+	<insert id="insertPriceRevise" parameterType="com.netcai.admin.entity.PriceRevise" useGeneratedKeys="true" keyProperty="prId">
+		insert into price_revise (format_id,old_price,revise_price,user_id,update_time,revise_from)
+        values(#{formatId},#{oldPrice},#{revisePrice},#{userId},now(),1)
+	</insert>
+	
+	<!-- 分页查询价格调整记录 -->
+	<select id="getAllPriceRevise" resultMap="priceReviseResult">
+	    SELECT s.seller_name,A.revise_from,goods.goods_name ,unit.unit_name ,A.old_price,A.revise_price,A.update_time,B.format_name,
+	    case A.revise_from when 1 then (select concat('[',username,']',name) from sys_user where A.user_id=id) when 2 then (select concat('[',account,']',true_name) from users where A.user_id=id) end as true_name
+		FROM price_revise A 
+		LEFT JOIN goods_format B ON A.format_id=B.format_id
+		LEFT JOIN goods ON B.goods_id=goods.goods_id
+		LEFT JOIN unit ON B.unit_id=unit.unit_id
+		INNER JOIN seller s ON goods.user_id = s.seller_id
+		<include refid="filterCondition"></include>
+		ORDER BY A.update_time DESC LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+	    SELECT count(1) 
+	    FROM price_revise A 
+		LEFT JOIN goods_format B ON A.format_id=B.format_id
+		LEFT JOIN goods ON B.goods_id=goods.goods_id
+		LEFT JOIN unit ON B.unit_id=unit.unit_id
+		INNER JOIN seller s ON goods.user_id = s.seller_id
+		<include refid="filterCondition"></include>
+	</select>
+</mapper>

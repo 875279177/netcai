@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.netcai.admin.dao.BuyerReceiptDao" >
+  <resultMap id="buyerReceiptMap" type="com.netcai.admin.entity.BuyerReceipt" >
+    <result column="br_id" property="brId" />
+    <result column="buyer_id" property="buyerId" />
+    <result column="receipt_date" property="receiptDate"/>
+    <result column="sale_id" property="saleId"/>
+    <result column="delivery_id" property="deliveryId" />
+    <result column="ys_amt" property="ysAmt"/>
+    <result column="ss_amt" property="ssAmt"/>
+    <result column="sk_status" property="skStatus" />
+    <result column="sk_reamk" property="skReamk"  />
+    <result column="sk_time" property="skTime"  />
+    <result column="hs_status" property="hsStatus" />
+    <result column="hs_user_id" property="hsUserId"/>
+    <result column="hs_time" property="hsTime" />
+    <result column="rz_status" property="rzStatus" />
+    <result column="rz_user_id" property="rzUserId" />
+    <result column="rz_time" property="rzTime" />
+    <result column="buyer_name" property="buyerName" />
+    <result column="true_name" property="trueName" />
+    <result column="delivery_name" property="deliveryName" />
+    <result column="hs_name" property="hsName" />
+    <result column="rz_name" property="rzName" />
+    <result column="total_amount" property="totalAmount"/>
+    <result column="old_amt" property="oldAmt"/>
+    <result property="areaName" column="area_name" />
+  </resultMap>
+  
+   <sql id="where" >
+    WHERE
+		1=1
+		and br.receipt_date <![CDATA[> "2017-11-1 00:00:00" ]]>
+		<if test="b.buyerName != null and b.buyerName != ''">
+ 			AND b.buyer_name like concat('%',#{b.buyerName},'%')
+		</if>
+		<if test="b.deliveryName != null and b.deliveryName != ''">
+ 			AND d.delivery_name like concat('%',#{b.deliveryName},'%') 
+		</if>
+		<if test="b.deliveryIds != null and b.deliveryIds != ''">
+ 			AND br.delivery_id in (${b.deliveryIds})
+		</if>
+		<if test="b.saleId != null">
+ 			AND br.sale_id = #{b.saleId}
+		</if>
+		<if test="b.hsStatus != null">
+ 			AND  br.hs_status = #{b.hsStatus}
+		</if>
+		<if test="b.rzStatus != null">
+ 			AND  br.rz_status = #{b.rzStatus}
+		</if>
+		<if test="b.skStatus != null">
+ 			AND  br.sk_status = #{b.skStatus}
+		</if>
+		<if test="b.alike != null and b.alike != ''">
+ 			AND (br.ys_amt <![CDATA[!= br.ss_amt ]]> OR  br.ss_amt IS NULL)
+		</if>
+		<if test="b.beatTimeStart != null  and b.beatTimeStart != ''">
+			AND	DATE_FORMAT(br.receipt_date,'%Y-%m-%d') <![CDATA[ >= #{b.beatTimeStart}]]> 
+		</if>
+		<if test="b.beatTimeStop != null  and b.beatTimeStop != ''">
+			AND	DATE_FORMAT(br.receipt_date,'%Y-%m-%d') <![CDATA[ <=#{b.beatTimeStop} ]]> 
+		</if>
+		<if test="b.areaId != null">
+ 			AND a.id = #{b.areaId}
+		</if>
+  	</sql>
+  
+  	<!-- 分组-->
+	<sql id="limit">
+		<if test="pageNum != null and pageSize != null">
+		limit #{pageNum},#{pageSize}
+		</if>
+	</sql>
+  
+  	<!-- 排序-->
+	<sql id="orderBy">
+		ORDER BY receipt_date DESC, br.sk_time DESC
+	</sql>
+  
+  <select id="selectList" resultMap="buyerReceiptMap" parameterType="com.netcai.admin.entity.BuyerReceipt" >
+    SELECT
+		br.*,
+		a.area_name,
+		b.buyer_name,
+		s.true_name,
+		d.delivery_name,
+		shs.`name` hs_name,
+		srz.`name` rz_name,
+		(select sum(oi.goods_amount) from order_item oi 
+	     inner join order_info o on o.order_id=oi.order_id
+	     where oi.order_status=1 and o.trade_status!=2 and o.pay_status=3
+	     and oi.buyer_id=br.buyer_id and DATE_FORMAT(o.best_time,'%Y-%m-%d')=br.receipt_date
+	    ) as total_amount
+	FROM
+		buyer_receipt br
+		LEFT JOIN buyer b ON br.buyer_id = b.buyer_id
+		LEFT JOIN sales s ON s.id = br.sale_id
+		LEFT JOIN delivery d ON d.id = br.delivery_id
+		LEFT JOIN sys_user shs ON shs.id = br.hs_user_id
+		LEFT JOIN sys_user srz ON srz.id = br.rz_user_id
+		LEFT JOIN area a ON a.id = b.region_id
+		<include refid="where" />
+		<include refid="orderBy" />
+		<include refid="limit" />
+  </select>
+  
+  <select id="getPageCount" parameterType="com.netcai.admin.entity.BuyerReceipt" resultType="int">
+		SELECT
+			count(1)
+		FROM
+			buyer_receipt br
+		LEFT JOIN buyer b ON br.buyer_id = b.buyer_id
+		LEFT JOIN sales s ON s.id = br.sale_id
+		LEFT JOIN delivery d ON d.id = br.delivery_id
+		LEFT JOIN sys_user shs ON shs.id = br.hs_user_id
+		LEFT JOIN sys_user srz ON srz.id = br.rz_user_id
+		LEFT JOIN area a ON a.id = b.region_id
+		<include refid="where" />
+	</select>
+  
+   <!-- 更改核实状态 -->
+  <update id="updateHSStatus">
+    update buyer_receipt set hs_status = #{status} where br_id = #{id}
+  </update>
+  
+   <!-- 更改入账状态-->
+  <update id="updateRZStatus">
+    update buyer_receipt set rz_status = #{status} where br_id = #{id}
+  </update>
+  
+     <!-- 更改实收金额状态-->
+  <update id="updateSSAmt">
+    update buyer_receipt set ss_amt = #{ssAmt},sk_status = 2,sk_time = now() where br_id = #{id}
+  </update>
+  
+   <!-- 更改备注-->
+  <update id="updateSKReamk">
+    update buyer_receipt set sk_reamk = #{skReamk} where br_id = #{id}
+  </update>
+  	
+	<!-- 批量		核实状态 -->
+	<update id="batchUpdateHSStatus" parameterType="java.util.List">
+		update buyer_receipt set hs_status = #{hSStatus} where br_id in
+		<foreach collection="ids" item="id" open="(" separator="," close=")">
+	  	 	#{id}
+	 	</foreach>
+	</update>
+	
+	<!-- 批量		收款状态 -->
+	<update id="batchUpdateRZStatus" parameterType="java.util.List">
+		update buyer_receipt set rz_status = #{rZStatus} where br_id in
+		<foreach collection="ids" item="id" open="(" separator="," close=")">
+	  	 	#{id}
+	 	</foreach>
+	</update>
+</mapper>

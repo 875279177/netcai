@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.admin.dao.SalesPlanDao">
+    <!-- 查询销售计划信息 -->
+	<resultMap type="com.netcai.admin.entity.SalesPlan" id="salesPlanMap">
+		<result property="spId" column="sp_id" />
+		<result property="spType" column="sp_type" />
+		<result property="spFmon" column="sp_fmon" />
+		<result property="saleId" column="sale_id" />
+		<result property="saleName" column="sale_name" />
+		<result property="areaId" column="area_id" />
+		<result property="areaName" column="area_name" />
+		<result property="goalAmt" column="goal_amt" />
+		<result property="onlineAmt" column="online_amt" />
+		<result property="greenAmt" column="green_amt" />
+		<result property="registerNum" column="register_num" />
+		<result property="createUserId" column="create_user_id" />
+		<result property="createTime" column="create_time" />
+	</resultMap>
+
+	<!-- 分页查询销售计划 -->
+	<select id="getAllSalesPlan" parameterType="com.netcai.admin.entity.SalesPlan" resultMap="salesPlanMap">
+		select sp.*,s.true_name as sale_name,a.area_name from sales_plan sp
+		left join area a on sp.area_id=a.id
+		left join sales s on s.id=sp.sale_id
+		where sp.sp_type=#{salesPlan.spType}
+		<if test=" salesPlan.saleId !=null">
+			and sp.sale_id = #{salesPlan.saleId}
+		</if>
+		<if test=" salesPlan.areaId !=null">
+			and sp.area_id = #{salesPlan.areaId}
+		</if>
+		<if test=" salesPlan.spFmon !=null and salesPlan.spFmon !=''">
+			and sp.sp_fmon = #{salesPlan.spFmon}   
+		</if>
+		order by sp.sp_fmon desc,sp.create_time desc
+		limit #{offset},#{pageSize} 
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" parameterType="com.netcai.admin.entity.SalesPlan" resultType="int">
+		select count(1) from sales_plan where sp_type=#{salesPlan.spType}
+		<if test=" salesPlan.saleId !=null">
+			and sale_id = #{salesPlan.saleId}
+		</if>
+		<if test=" salesPlan.areaId !=null">
+			and area_id = #{salesPlan.areaId}
+		</if>
+		<if test=" salesPlan.spFmon !=null and salesPlan.spFmon !=''">
+			and sp_fmon = #{salesPlan.spFmon}   
+		</if>
+	</select>
+	
+	<!-- 新增销售计划 -->
+    <insert id="insertSalesPlan" parameterType="com.netcai.admin.entity.SalesPlan">
+	  insert into sales_plan
+	  <trim prefix="(" suffix=")" suffixOverrides=",">
+	    <if test=" spType != null">
+			sp_type,
+		</if>
+	    <if test=" spFmon != null">
+			sp_fmon,
+		</if>
+		<if test=" saleId != null">
+			sale_id,
+		</if>
+		<if test=" areaId != null">
+			area_id,
+		</if>
+		<if test=" goalAmt != null">
+			goal_amt,
+		</if>
+		<if test=" onlineAmt != null">
+			online_amt,
+		</if>
+		<if test=" greenAmt != null">
+			green_amt,
+		</if>
+		<if test=" registerNum != null">
+			register_num,
+		</if>
+		<if test=" createUserId != null">
+			create_user_id,
+		</if>
+		create_time,
+	  </trim>
+	  <trim prefix="values (" suffix=")" suffixOverrides=",">
+	     <if test=" spType != null">
+			#{spType},
+		</if>
+	    <if test=" spFmon != null">
+			#{spFmon},
+		</if>
+		<if test=" saleId != null">
+			#{saleId},
+		</if>
+		<if test=" areaId != null">
+			#{areaId},
+		</if>
+		<if test=" goalAmt != null">
+			#{goalAmt},
+		</if>
+		<if test=" onlineAmt != null">
+			#{onlineAmt},
+		</if>
+		<if test=" greenAmt != null">
+			#{greenAmt},
+		</if>
+		<if test=" registerNum != null">
+			#{registerNum},
+		</if>
+		<if test=" createUserId != null">
+			#{createUserId},
+		</if>
+		now(),
+	  </trim>
+   </insert>
+ 
+   <!-- 更新销售目标 -->
+   <update id="updateSalesPlan" parameterType="com.netcai.admin.entity.SalesPlan">
+		update sales_plan
+		<set>
+			<trim suffixOverrides=",">
+			   	<if test=" spFmon != null">
+					sp_fmon=#{spFmon},
+				</if>
+				<if test=" saleId != null">
+					sale_id=#{saleId},
+				</if>
+				<if test=" areaId != null">
+					area_id=#{areaId},
+				</if>
+				<if test=" goalAmt != null">
+					goal_amt=#{goalAmt},
+				</if>
+				<if test=" onlineAmt != null">
+					online_amt=#{onlineAmt},
+				</if>
+				<if test=" greenAmt != null">
+					green_amt=#{greenAmt},
+				</if>
+				<if test=" registerNum != null">
+					register_num=#{registerNum},
+				</if>
+			</trim>
+		</set>
+		where sp_id = #{spId}
+    </update>
+    
+    <!-- 销售目标详情 -->
+    <select id="getSalesPlanById" resultMap="salesPlanMap">
+		select * from sales_plan where sp_id = #{spId}
+	</select>
+</mapper>

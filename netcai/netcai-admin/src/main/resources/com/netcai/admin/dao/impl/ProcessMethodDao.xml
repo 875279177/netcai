@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 加工方式xml anthor chenlei -->
+<mapper namespace="com.netcai.admin.dao.ProcessMethodDao">
+
+	<resultMap type="com.netcai.admin.entity.ProcessMethod" id="methodResult">
+		<result column="method_id" property="methodId" />
+		<result column="method_name" property="methodName" />
+		<result column="method_status" property="methodStatus" />
+		<result column="create_time" property="createTime" />
+	</resultMap>
+	
+	<!-- 分页查询加工方式信息 -->
+	<select id="getAllProcessMethod" resultMap="methodResult">
+		select * from process_method limit #{offset},#{pageSize}
+	</select>
+	
+	<!-- 查询总记录数 -->
+	<select id="getPageCount" resultType="int">
+		select count(1) from process_method
+	</select>
+
+	<!-- 新增加工方式 -->
+	<insert id="insertProcessMethod" parameterType="com.netcai.admin.entity.ProcessMethod">
+		insert into process_method
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test=" methodName != null">
+				method_name,
+			</if>
+			<if test=" methodStatus != null">
+				method_status,
+			</if>
+			<if test=" createTime != null">
+				create_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test=" methodName != null">
+				#{methodName},
+			</if>
+			<if test=" methodStatus != null">
+				#{methodStatus},
+			</if>
+			<if test=" createTime != null">
+				#{createTime},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 更新加工方式 -->
+	<update id="updateProcessMethod" parameterType="com.netcai.admin.entity.ProcessMethod">
+		update process_method
+		<set>
+			<trim suffixOverrides=",">
+				<if test=" methodName != null">
+					method_name = #{methodName},
+				</if>
+				<if test=" methodStatus != null">
+					method_status = #{methodStatus},
+				</if>
+				<if test=" createTime != null">
+					create_time = #{createTime},
+				</if>
+			</trim>
+		</set>
+		where method_id = #{methodId}
+	</update>
+	
+	<!-- 根据id查找加工方式-->
+	<select id="getProcessMethodById" parameterType="int" resultMap="methodResult">
+		select * from process_method where method_id = #{methodId}
+	</select>
+	
+	<!-- 取得所有在用的加工方式-->
+	<select id="getAllByStatus" resultMap="methodResult">
+		select * from process_method where method_status=1
+	</select>
+	
+	<!-- 取得商品分类的加工方式-->
+	<select id="getMethodByCategoryId" parameterType="int" resultMap="methodResult">
+		select pm.* from  category_method cm
+		inner join process_method pm on cm.method_id=pm.method_id
+		where cm.category_id =  #{categoryId}
+	</select>
+</mapper>

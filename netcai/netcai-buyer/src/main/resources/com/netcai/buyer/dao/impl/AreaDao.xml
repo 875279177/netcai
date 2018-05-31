@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.netcai.buyer.dao.AreaDao">
+
+  <resultMap type="com.netcai.buyer.entity.Area" id="areaMap">
+     <result column="id" property="id"/>
+     <result column="area_name" property="areaName"/>
+     <result column="sequence" property="sequence"/>
+     <result column="parent_id" property="parentId"/>
+     <result column="level" property="level"/>
+     <result column="status" property="status"/>
+     <result column="create_time" property="createTime"/>
+  </resultMap>
+	
+  <!-- 获取所有的区 -->
+  <select id="getAllRegion"  resultMap="areaMap">
+      select * from area where level = 3 and status=1 order by sequence asc
+  </select>
+  
+  <!-- 根据买家id查询区域起送价-->
+  <select id="getSendingPrice" parameterType="Long"  resultType="BigDecimal">
+      select a.sending_price from buyer b
+      inner join area a on b.region_id=a.id
+      where b.buyer_id=#{buyerId}
+  </select>
+</mapper>
