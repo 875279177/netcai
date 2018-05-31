@@ -1,4 +1,4 @@
-# neicai
+# Java开源生鲜电商平台(B2B平台)-neicai
 
 Java开源生鲜电商平台(B2B平台)
 
